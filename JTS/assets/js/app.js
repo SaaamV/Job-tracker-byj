@@ -1,7 +1,14 @@
 // app.js - Enhanced main application file
 
-let applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
-let contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
+// Global variables - make sure they're accessible everywhere
+window.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+window.contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
+window.resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
+
+// For backward compatibility
+let applications = window.applications;
+let contacts = window.contacts;
+let resumes = window.resumes;
 
 window.onload = function () {
   setDefaultDate();
@@ -36,6 +43,101 @@ function clearForm() {
     if (input.id === 'priority') input.value = 'Medium';
   });
   setDefaultDate();
+}
+
+// Message display function
+function showMessage(message, type = 'info') {
+  // Remove any existing messages
+  const existingMessages = document.querySelectorAll('.message-popup');
+  existingMessages.forEach(msg => msg.remove());
+  
+  // Create message element
+  const messageEl = document.createElement('div');
+  messageEl.className = `message-popup ${type}`;
+  messageEl.textContent = message;
+  
+  // Style the message
+  messageEl.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    max-width: 350px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease-out;
+  `;
+  
+  // Set background color based on type
+  switch (type) {
+    case 'success':
+      messageEl.style.background = 'linear-gradient(135deg, #27ae60, #229954)';
+      break;
+    case 'error':
+      messageEl.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+      break;
+    case 'warning':
+      messageEl.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+      break;
+    default:
+      messageEl.style.background = 'linear-gradient(135deg, #3498db, #2980b9)';
+  }
+  
+  // Add animation styles if not already present
+  if (!document.querySelector('#message-styles')) {
+    const style = document.createElement('style');
+    style.id = 'message-styles';
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // Add to DOM
+  document.body.appendChild(messageEl);
+  
+  // Auto-remove after 4 seconds
+  setTimeout(() => {
+    messageEl.style.animation = 'slideOut 0.3s ease-in';
+    setTimeout(() => {
+      if (messageEl.parentNode) {
+        messageEl.remove();
+      }
+    }, 300);
+  }, 4000);
+  
+  // Allow manual dismiss by clicking
+  messageEl.addEventListener('click', () => {
+    messageEl.style.animation = 'slideOut 0.3s ease-in';
+    setTimeout(() => {
+      if (messageEl.parentNode) {
+        messageEl.remove();
+      }
+    }, 300);
+  });
 }
 
 // Notification system for follow-ups and reminders
@@ -255,11 +357,6 @@ function initializeEnhancedFeatures() {
     }
   });
 }
-
-// Call enhanced initialization
-window.addEventListener('load', function() {
-  initializeEnhancedFeatures();
-});
 
 // Utility functions
 function formatDate(dateString) {

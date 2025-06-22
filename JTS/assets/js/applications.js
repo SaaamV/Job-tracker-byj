@@ -19,6 +19,7 @@ function addApplication() {
     dateAdded: new Date().toISOString()
   };
 
+  // Validate required fields
   if (!application.jobTitle || !application.company) {
     showMessage('Please fill in required fields (Job Title and Company)', 'error');
     return;
@@ -37,11 +38,29 @@ function addApplication() {
     }
   }
 
-  // Use API service to save
-  addApplicationAPI(application);
-  
-  clearForm();
-  showMessage('Application added successfully!', 'success');
+  try {
+    // Always save locally first (offline-first approach)
+    applications.push(application);
+    localStorage.setItem('jobApplications', JSON.stringify(applications));
+    
+    // Update UI immediately
+    renderApplications();
+    updateAnalytics();
+    clearForm();
+    showMessage('Application added successfully!', 'success');
+    
+    // Try to sync to server if API is available
+    if (window.apiService) {
+      apiService.saveApplication(application).catch(error => {
+        console.warn('Failed to sync to server, but saved locally:', error);
+        showMessage('Application saved locally. Will sync when connection is restored.', 'info');
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error adding application:', error);
+    showMessage('Failed to save application. Please try again.', 'error');
+  }
 }
 
 function renderApplications() {

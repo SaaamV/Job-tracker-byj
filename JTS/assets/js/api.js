@@ -115,7 +115,7 @@ class APIService {
   }
   
   async saveApplication(application) {
-    // Save locally first
+    // Save locally first (offline-first)
     const localApps = JSON.parse(localStorage.getItem('jobApplications') || '[]');
     
     if (application._id || application.id) {
@@ -125,29 +125,50 @@ class APIService {
         localApps[index] = application;
       }
     } else {
-      // Add new
-      application.id = Date.now();
-      localApps.push(application);
+      // Add new - check if it's already in the array
+      const exists = localApps.find(app => app.id === application.id);
+      if (!exists) {
+        localApps.push(application);
+      }
     }
     
     localStorage.setItem('jobApplications', JSON.stringify(localApps));
     
-    // Sync to server if online
+    // Update global applications array
+    window.applications = localApps;
+    
+    // Sync to server if online (but don't block the UI)
     if (this.isOnline) {
       try {
+        let serverResponse;
         if (application._id) {
-          return await this.makeRequest(`/applications/${application._id}`, {
+          serverResponse = await this.makeRequest(`/applications/${application._id}`, {
             method: 'PUT',
             body: JSON.stringify(application)
           });
         } else {
-          return await this.makeRequest('/applications', {
+          serverResponse = await this.makeRequest('/applications', {
             method: 'POST',
             body: JSON.stringify(application)
           });
         }
+        
+        // Update with server ID if new application
+        if (serverResponse && serverResponse._id && !application._id) {
+          application._id = serverResponse._id;
+          const updatedApps = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+          const appIndex = updatedApps.findIndex(app => app.id === application.id);
+          if (appIndex !== -1) {
+            updatedApps[appIndex] = application;
+            localStorage.setItem('jobApplications', JSON.stringify(updatedApps));
+          }
+        }
+        
+        return serverResponse || application;
       } catch (error) {
-        console.error('Failed to sync application:', error);
+        console.warn('Failed to sync application to server:', error);
+        // Return local application - don't fail the operation
+        return application;
       }
     }
     
@@ -406,6 +427,33 @@ async function addApplicationAPI(applicationData) {
     showMessage('Failed to save application. Please try again.', 'error');
   }
 }
+
+// Debug function to test application adding
+window.testAddApplication = function() {
+  const testApp = {
+    id: Date.now(),
+    jobTitle: 'Test Job ' + Date.now(),
+    company: 'Test Company',
+    jobPortal: 'LinkedIn',
+    applicationDate: new Date().toISOString().split('T')[0],
+    status: 'Applied',
+    priority: 'Medium',
+    dateAdded: new Date().toISOString()
+  };
+  
+  console.log('Adding test application:', testApp);
+  
+  // Add directly to applications array
+  window.applications.push(testApp);
+  localStorage.setItem('jobApplications', JSON.stringify(window.applications));
+  
+  // Update UI
+  renderApplications();
+  updateAnalytics();
+  
+  console.log('Test application added. Total applications:', window.applications.length);
+  showMessage('Test application added successfully!', 'success');
+};
 
 async function addContactAPI(contactData) {
   try {
