@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Job Tracking System</title>
+  <link rel="stylesheet" href="assets/css/styles.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <!-- Google APIs -->
+  <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Job Application Tracker</h1>
+            <p>Comprehensive system to track applications, analyze progress, and manage contacts</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('applications', this)">Applications</button>
+            <button class="tab" onclick="switchTab('analytics', this)">Analytics</button>
+            <button class="tab" onclick="switchTab('contacts', this)">Contacts</button>
+            <button class="tab" onclick="switchTab('resumes', this)">Resumes</button>
+            <button class="tab" onclick="switchTab('templates', this)">Email Templates</button>
+            <button class="tab" onclick="switchTab('export', this)">Export/Sync</button>
+        </div>
+        
+        <!-- Applications Tab -->
+        <div id="applications" class="tab-content active">
+            <div class="form-section">
+                <h3>Add New Application</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Job Title *</label>
+                        <input type="text" id="jobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Company *</label>
+                        <input type="text" id="company" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Job Portal</label>
+                        <select id="jobPortal">
+                            <option value="">Select Portal</option>
+                            <option value="LinkedIn">LinkedIn</option>
+                            <option value="Indeed">Indeed</option>
+                            <option value="Glassdoor">Glassdoor</option>
+                            <option value="Company Website">Company Website</option>
+                            <option value="AngelList">AngelList</option>
+                            <option value="Monster">Monster</option>
+                            <option value="ZipRecruiter">ZipRecruiter</option>
+                            <option value="Dice">Dice</option>
+                            <option value="CareerBuilder">CareerBuilder</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Job URL</label>
+                        <input type="url" id="jobUrl" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>Application Date</label>
+                        <input type="date" id="applicationDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="status">
+                            <option value="Applied">Applied</option>
+                            <option value="Under Review">Under Review</option>
+                            <option value="Phone Screen">Phone Screen</option>
+                            <option value="Technical Assessment">Technical Assessment</option>
+                            <option value="Interview Scheduled">Interview Scheduled</option>
+                            <option value="Final Interview">Final Interview</option>
+                            <option value="Offer">Offer</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Withdrawn">Withdrawn</option>
+                            <option value="On Hold">On Hold</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Resume Version</label>
+                        <select id="resumeVersion">
+                            <option value="">Select Resume</option>
+                            <!-- Will be populated dynamically from uploaded resumes -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="location" placeholder="City, State/Country">
+                    </div>
+                    <div class="form-group">
+                        <label>Salary Range</label>
+                        <input type="text" id="salaryRange" placeholder="e.g., $80k-$100k">
+                    </div>
+                    <div class="form-group">
+                        <label>Job Type</label>
+                        <select id="jobType">
+                            <option value="">Select Type</option>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Remote">Remote</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="On-site">On-site</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="priority">
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Follow-up Date</label>
+                        <input type="date" id="followUpDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="notes" rows="3" placeholder="Additional notes, interview feedback, etc."></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="addApplication()">Add Application</button>
+                <button class="btn" onclick="clearForm()">Clear Form</button>
+            </div>
+            
+            <div class="form-section">
+                <h3>My Applications</h3>
+                <div class="filter-section">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Filter by Status</label>
+                            <select id="statusFilter" onchange="filterApplications()">
+                                <option value="">All Statuses</option>
+                                <option value="Applied">Applied</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Phone Screen">Phone Screen</option>
+                                <option value="Interview Scheduled">Interview Scheduled</option>
+                                <option value="Final Interview">Final Interview</option>
+                                <option value="Offer">Offer</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Withdrawn">Withdrawn</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Filter by Company</label>
+                            <input type="text" id="companyFilter" placeholder="Company name..." onkeyup="filterApplications()">
+                        </div>
+                        <div class="form-group">
+                            <label>Sort by</label>
+                            <select id="sortBy" onchange="filterApplications()">
+                                <option value="date-desc">Date (Newest)</option>
+                                <option value="date-asc">Date (Oldest)</option>
+                                <option value="company">Company A-Z</option>
+                                <option value="status">Status</option>
+                                <option value="priority">Priority</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <table class="data-table" id="applicationsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Job Title</th>
+                            <th>Company</th>
+                            <th>Portal</th>
+                            <th>Status</th>
+                            <th>Resume</th>
+                            <th>Priority</th>
+                            <th>Follow-up</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationsBody">
+                        <!-- Applications will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="totalApps">0</h3>
+                    <p>Total Applications</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="interviewRate">0%</h3>
+                    <p>Interview Rate</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="responseRate">0%</h3>
+                    <p>Response Rate</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="offerRate">0%</h3>
+                    <p>Offer Rate</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="avgResponseTime">0</h3>
+                    <p>Avg Response Time (Days)</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="pendingFollowUps">0</h3>
+                    <p>Pending Follow-ups</p>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Application Status Distribution</h3>
+                <canvas id="statusChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Applications Over Time</h3>
+                <canvas id="timeChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Applications by Portal</h3>
+                <canvas id="portalChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Success Rate by Portal</h3>
+                <canvas id="successChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Contacts Tab -->
+        <div id="contacts" class="tab-content">
+            <div class="form-section">
+                <h3>Add New Contact</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Contact Name *</label>
+                        <input type="text" id="contactName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Company</label>
+                        <input type="text" id="contactCompany">
+                    </div>
+                    <div class="form-group">
+                        <label>Position</label>
+                        <input type="text" id="contactPosition">
+                    </div>
+                    <div class="form-group">
+                        <label>LinkedIn URL</label>
+                        <input type="url" id="linkedinUrl" placeholder="https://linkedin.com/in/...">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="contactEmail">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="contactPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Relationship</label>
+                        <select id="relationship">
+                            <option value="Potential Referral">Potential Referral</option>
+                            <option value="Recruiter">Recruiter</option>
+                            <option value="Hiring Manager">Hiring Manager</option>
+                            <option value="Employee">Employee</option>
+                            <option value="Network Contact">Network Contact</option>
+                            <option value="Alumni">Alumni</option>
+                            <option value="Industry Contact">Industry Contact</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Status</label>
+                        <select id="contactStatus">
+                            <option value="Not Contacted">Not Contacted</option>
+                            <option value="Reached Out">Reached Out</option>
+                            <option value="Responded">Responded</option>
+                            <option value="Meeting Scheduled">Meeting Scheduled</option>
+                            <option value="Referred">Referred</option>
+                            <option value="Cold Contact">Cold Contact</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Contact Date</label>
+                        <input type="date" id="lastContactDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Next Follow-up Date</label>
+                        <input type="date" id="nextFollowUpDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Tags</label>
+                        <input type="text" id="contactTags" placeholder="e.g., tech, startup, remote">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="contactNotes" rows="3" placeholder="How you met, conversation notes, etc."></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="addContact()">Add Contact</button>
+                <button class="btn" onclick="clearContactForm()">Clear Form</button>
+            </div>
+            
+            <div class="form-section">
+                <h3>My Contacts</h3>
+                <div class="filter-section">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Filter by Company</label>
+                            <input type="text" id="contactCompanyFilter" placeholder="Company name..." onkeyup="filterContacts()">
+                        </div>
+                        <div class="form-group">
+                            <label>Filter by Status</label>
+                            <select id="contactStatusFilter" onchange="filterContacts()">
+                                <option value="">All Statuses</option>
+                                <option value="Not Contacted">Not Contacted</option>
+                                <option value="Reached Out">Reached Out</option>
+                                <option value="Responded">Responded</option>
+                                <option value="Meeting Scheduled">Meeting Scheduled</option>
+                                <option value="Referred">Referred</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Filter by Relationship</label>
+                            <select id="relationshipFilter" onchange="filterContacts()">
+                                <option value="">All Relationships</option>
+                                <option value="Potential Referral">Potential Referral</option>
+                                <option value="Recruiter">Recruiter</option>
+                                <option value="Hiring Manager">Hiring Manager</option>
+                                <option value="Employee">Employee</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="contactsList">
+                    <!-- Contacts will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumes Tab -->
+        <div id="resumes" class="tab-content">
+            <div class="form-section">
+                <h3>Upload Resume</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Resume Name *</label>
+                        <input type="text" id="resumeName" placeholder="e.g., Senior Developer Resume">
+                    </div>
+                    <div class="form-group">
+                        <label>Resume Type</label>
+                        <select id="resumeType">
+                            <option value="General">General</option>
+                            <option value="Technical">Technical</option>
+                            <option value="Senior">Senior Level</option>
+                            <option value="Entry Level">Entry Level</option>
+                            <option value="Industry Specific">Industry Specific</option>
+                            <option value="Custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Upload Resume File</label>
+                        <input type="file" id="resumeFile" accept=".pdf,.doc,.docx">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="resumeDescription" rows="3" placeholder="Brief description of this resume version..."></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="uploadResume()">Upload Resume</button>
+            </div>
+
+            <div class="form-section">
+                <h3>My Resumes</h3>
+                <div id="resumesList">
+                    <!-- Resumes will be populated here -->
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>CV Template Generator</h3>
+                <div class="cv-template-section">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="cvName" placeholder="Your full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="cvEmail" placeholder="your.email@domain.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" id="cvPhone" placeholder="+1 (555) 123-4567">
+                        </div>
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" id="cvLocation" placeholder="City, State">
+                        </div>
+                        <div class="form-group">
+                            <label>LinkedIn</label>
+                            <input type="url" id="cvLinkedin" placeholder="https://linkedin.com/in/yourname">
+                        </div>
+                        <div class="form-group">
+                            <label>Website/Portfolio</label>
+                            <input type="url" id="cvWebsite" placeholder="https://yourwebsite.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Professional Summary</label>
+                        <textarea id="cvSummary" rows="4" placeholder="Brief professional summary highlighting your key skills and experience..."></textarea>
+                    </div>
+                    <button class="btn btn-success" onclick="generateCVTemplate()">Generate CV Template</button>
+                    <button class="btn" onclick="clearCVForm()">Clear Form</button>
+                </div>
+                <div id="cvPreview" class="cv-preview">
+                    <!-- CV preview will appear here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Templates Tab -->
+        <div id="templates" class="tab-content">
+            <div class="form-section">
+                <h3>Email Templates</h3>
+                <div class="template-selector">
+                    <label>Select Template Type:</label>
+                    <select id="templateType" onchange="loadTemplate()">
+                        <option value="">Choose a template...</option>
+                        <option value="cold-outreach">Cold Outreach</option>
+                        <option value="referral-request">Referral Request</option>
+                        <option value="thank-you">Thank You After Interview</option>
+                        <option value="follow-up">Follow-up Email</option>
+                        <option value="networking">Networking Email</option>
+                        <option value="recruiter-response">Recruiter Response</option>
+                        <option value="application-status">Application Status Inquiry</option>
+                        <option value="offer-negotiation">Offer Negotiation</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Email Composer</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>To (Contact)</label>
+                        <select id="emailContact">
+                            <option value="">Select a contact...</option>
+                            <!-- Will be populated with contacts -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" id="emailSubject" placeholder="Email subject line">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email Body</label>
+                    <textarea id="emailBody" rows="15" placeholder="Compose your email here..."></textarea>
+                </div>
+                <div class="email-actions">
+                    <button class="btn btn-success" onclick="copyEmail()">Copy to Clipboard</button>
+                    <button class="btn" onclick="openEmailClient()">Open in Email Client</button>
+                    <button class="btn" onclick="saveTemplate()">Save as Custom Template</button>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Template Preview</h3>
+                <div id="templatePreview" class="template-preview">
+                    Select a template above to see the preview.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Export/Sync Tab -->
+        <div id="export" class="tab-content">
+            <div class="export-section">
+                <h3>Export Your Data</h3>
+                <p>Download your job tracking data as Excel files for backup or further analysis</p>
+                <div class="export-buttons">
+                    <button class="btn" onclick="exportToExcel()">Export to Excel</button>
+                    <button class="btn btn-success" onclick="exportReport()">Generate Report</button>
+                    <button class="btn" onclick="exportToPDF()">Export to PDF</button>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Google Sheets Integration</h3>
+                <div class="google-sheets-section">
+                    <p>Sync your data with Google Sheets for cloud backup and collaboration.</p>
+                    <div id="googleAuth" class="auth-section">
+                        <button class="btn btn-success" onclick="signInToGoogle()">Connect Google Sheets</button>
+                        <p><small>Authorize access to create and sync your job tracking spreadsheet</small></p>
+                    </div>
+                    <div id="googleSyncOptions" class="sync-options" style="display: none;">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Spreadsheet Name</label>
+                                <input type="text" id="spreadsheetName" value="Job Tracker" placeholder="Enter spreadsheet name">
+                            </div>
+                            <div class="form-group">
+                                <label>Auto-sync</label>
+                                <select id="autoSync">
+                                    <option value="manual">Manual only</option>
+                                    <option value="hourly">Every hour</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="sync-buttons">
+                            <button class="btn btn-success" onclick="syncToGoogleSheets()">Sync Now</button>
+                            <button class="btn" onclick="createNewSpreadsheet()">Create New Spreadsheet</button>
+                            <button class="btn btn-danger" onclick="disconnectGoogle()">Disconnect</button>
+                        </div>
+                        <div id="syncStatus" class="sync-status">
+                            <!-- Sync status will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>Import Data</h3>
+                <div class="form-group">
+                    <label>Import from Excel/CSV</label>
+                    <input type="file" id="importFile" accept=".xlsx,.xls,.csv">
+                    <button class="btn" onclick="importData()">Import Data</button>
+                </div>
+                <div class="import-options">
+                    <label><input type="checkbox" id="replaceData"> Replace existing data (unchecked = merge)</label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Backup & Restore</h3>
+                <div class="backup-section">
+                    <button class="btn" onclick="createBackup()">Create Backup</button>
+                    <button class="btn" onclick="restoreBackup()">Restore from Backup</button>
+                    <p><small>Backup includes all applications, contacts, resumes, and settings</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  <!-- Linked Scripts -->
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/applications.js"></script>
+  <script src="assets/js/contacts.js"></script>
+  <script src="assets/js/analytics.js"></script>
+  <script src="assets/js/export.js"></script>
+  <script src="assets/js/resumes.js"></script>
+  <script src="assets/js/templates.js"></script>
+  <script src="assets/js/googlesheets.js"></script>
+</body>
+</html>
