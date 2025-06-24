@@ -22,7 +22,7 @@ app.use(limiter);
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://job-tracker-mario263.vercel.app', 'https://job-tracker-git-main-mario263.vercel.app']
+    ? ['https://job-tracker-chi-eight.vercel.app', 'https://*.vercel.app']
     : ['http://localhost:3000', 'http://127.0.0.1:5500', 'http://localhost:5500'],
   credentials: true
 }));

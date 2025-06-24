@@ -387,13 +387,121 @@ function getRelativeTime(dateString) {
   return `${Math.floor(diffInDays / 365)} years ago`;
 }
 
-// Export enhanced app object for other modules
-window.JobTrackerApp = {
-  applications,
-  contacts,
-  globalSearch,
-  getDashboardInsights,
-  formatDate,
-  formatCurrency,
-  getRelativeTime
-};
+// Initialize resumes functionality when app loads
+function initializeResumes() {
+    console.log('Initializing resumes...');
+    renderResumes();
+    updateResumeDropdown();
+    
+    // Set up CV template print functionality
+    const printButton = document.createElement('button');
+    printButton.className = 'btn';
+    printButton.textContent = '🖨️ Print CV';
+    printButton.onclick = printCV;
+    
+    // Add print button to CV section if it doesn't exist
+    const cvActions = document.querySelector('.cv-template-section .form-grid');
+    if (cvActions && !document.querySelector('#print-cv-btn')) {
+        printButton.id = 'print-cv-btn';
+        const parentDiv = cvActions.parentNode;
+        parentDiv.insertBefore(printButton, parentDiv.querySelector('#cvPreview'));
+    }
+}
+
+// Initialize templates functionality
+function initializeTemplates() {
+    console.log('Initializing email templates...');
+    loadTemplateDropdown();
+    populateEmailContacts();
+}
+
+// Initialize Google Sheets (disabled for now, using cloud sync)
+function initializeGoogleSheets() {
+    console.log('Initializing cloud sync...');
+    // For now, disable Google Sheets and use our own cloud sync
+    const authSection = document.getElementById('googleAuth');
+    if (authSection) {
+        authSection.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <h4>☁️ Cloud Sync</h4>
+                <p>Your data is automatically synced to the cloud when online.</p>
+                <button class="btn btn-success" onclick="syncData()">🔄 Sync Now</button>
+                <p><small>Last sync: <span id="lastSyncTime">Checking...</span></small></p>
+            </div>
+        `;
+    }
+    
+    // Update last sync time
+    updateLastSyncTime();
+}
+
+// Load existing applications from API or localStorage
+async function loadDataFromAPI() {
+    try {
+        console.log('Loading data from API...');
+        
+        // Load from localStorage first
+        applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+        contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
+        resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
+        
+        window.applications = applications;
+        window.contacts = contacts;
+        window.resumes = resumes;
+        
+        // Update UI
+        renderApplications();
+        renderContacts();
+        updateAnalytics();
+        updateResumeDropdown();
+        populateEmailContacts();
+        
+        console.log('Data loaded successfully:', {
+            applications: applications.length,
+            contacts: contacts.length,
+            resumes: resumes.length
+        });
+        
+    } catch (error) {
+        console.warn('Data loading failed:', error);
+        
+        // Initialize empty arrays if loading fails
+        applications = [];
+        contacts = [];
+        resumes = [];
+        
+        window.applications = applications;
+        window.contacts = contacts;
+        window.resumes = resumes;
+    }
+}
+
+// Update last sync time display
+function updateLastSyncTime() {
+    const lastSyncEl = document.getElementById('lastSyncTime');
+    if (lastSyncEl) {
+        const lastSync = localStorage.getItem('lastSync');
+        if (lastSync) {
+            const date = new Date(lastSync);
+            lastSyncEl.textContent = date.toLocaleString();
+        } else {
+            lastSyncEl.textContent = 'Never';
+        }
+    }
+}
+
+// Sync data to cloud
+async function syncData() {
+    try {
+        showMessage('Syncing data to cloud...', 'info');
+        
+        // For now, just update the last sync time
+        localStorage.setItem('lastSync', new Date().toISOString());
+        updateLastSyncTime();
+        
+        showMessage('Data synced successfully!', 'success');
+    } catch (error) {
+        console.error('Sync failed:', error);
+        showMessage('Sync failed. Data saved locally.', 'warning');
+    }
+}

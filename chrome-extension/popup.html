@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Tracker Auto-Fill</title>
+  <style>
+    body {
+      width: 350px;
+      min-height: 400px;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0 0 5px 0;
+      font-size: 1.4em;
+      font-weight: 600;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 0.9em;
+    }
+
+    .content {
+      padding: 20px;
+      background: white;
+    }
+
+    .quick-action {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .quick-action h3 {
+      margin: 0 0 10px 0;
+      color: #2c3e50;
+      font-size: 1.1em;
+    }
+
+    .quick-action p {
+      margin: 0 0 15px 0;
+      color: #666;
+      font-size: 0.9em;
+      line-height: 1.4;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin: 5px 0;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #27ae60, #229954);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .stat-item {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #dee2e6;
+    }
+
+    .stat-number {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #3498db;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.8em;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.9em;
+    }
+
+    .status-connected {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-offline {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 15px;
+      background: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+    }
+
+    .footer a {
+      color: #3498db;
+      text-decoration: none;
+      font-size: 0.9em;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .recent-activity {
+      margin-top: 15px;
+    }
+
+    .recent-activity h4 {
+      margin: 0 0 10px 0;
+      color: #2c3e50;
+      font-size: 1em;
+    }
+
+    .activity-item {
+      background: #f8f9fa;
+      padding: 8px;
+      border-radius: 6px;
+      margin: 5px 0;
+      font-size: 0.8em;
+      color: #666;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 Job Tracker</h1>
+    <p>Auto-fill & Track Applications</p>
+  </div>
+
+  <div class="content">
+    <div class="quick-action">
+      <h3>🎯 Current Page</h3>
+      <p id="page-status">Analyzing current page...</p>
+      <button class="btn btn-success" id="track-current">Track This Job</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <span class="stat-number" id="total-apps">-</span>
+        <div class="stat-label">Total Applications</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" id="this-week">-</span>
+        <div class="stat-label">This Week</div>
+      </div>
+    </div>
+
+    <div class="status-indicator" id="connection-status">
+      <div class="status-dot"></div>
+      <span>Checking connection...</span>
+    </div>
+
+    <div class="quick-action">
+      <h3>🚀 Quick Actions</h3>
+      <button class="btn" id="open-tracker">Open Job Tracker</button>
+      <button class="btn btn-secondary" id="view-applications">View Applications</button>
+    </div>
+
+    <div class="recent-activity">
+      <h4>📋 Recent Activity</h4>
+      <div id="recent-list">
+        <div class="loading">Loading recent applications...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="#" id="settings-link">⚙️ Settings</a> |
+    <a href="#" id="help-link">❓ Help</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
