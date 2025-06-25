@@ -24,10 +24,5 @@
     "backend/server.js": {
       "maxDuration": 30
     }
-  },
-  "env": {
-    "MONGODB_URI": "mongodb+srv://sharmaabhishek263:Abhishek1@jobtrackingsystem.ryqz8r9.mongodb.net/JobTrackingDB?retryWrites=true&w=majority&appName=JobTrackingSystem",
-    "NODE_ENV": "production",
-    "JWT_SECRET": "your_super_secret_jwt_key_make_it_long_and_secure_123456789_abhishek_job_tracker"
   }
 }

@@ -1,0 +1,66 @@
+# Environment variables - NEVER COMMIT THESE
+.env
+.env.local
+.env.production
+.env.development
+.env.example
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Secrets and sensitive files
+*secret*
+*password*
+*key*
+!public-key*
+*credentials*
+*config.json
+*-config.js
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Backup files
+*.backup
+*.bak
