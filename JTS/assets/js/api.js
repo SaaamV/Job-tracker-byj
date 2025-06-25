@@ -2,12 +2,16 @@
 
 class APIService {
   constructor() {
-    // Use environment-specific base URL
-    this.baseURL = window.location.origin;
-    
-    // For development, you might want to use a different URL
-    if (window.location.hostname === 'localhost') {
+    // Determine the correct API base URL
+    if (window.location.hostname === 'localhost' && window.location.port === '8080') {
+      // Development: Frontend on 8080, Backend on 5000
       this.baseURL = 'http://localhost:5000';
+    } else if (window.location.hostname === 'localhost') {
+      // Other localhost scenarios
+      this.baseURL = 'http://localhost:5000';
+    } else {
+      // Production: Same origin as frontend
+      this.baseURL = window.location.origin;
     }
     
     console.log('API Service initialized with base URL:', this.baseURL);

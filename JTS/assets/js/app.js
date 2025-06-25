@@ -1,507 +1,552 @@
-// app.js - Enhanced main application file
+// app.js - Enhanced Job Tracker with Modern UI and API Integration
 
-// Global variables - make sure they're accessible everywhere
-window.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
-window.contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
-window.resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
-
-// For backward compatibility
-let applications = window.applications;
-let contacts = window.contacts;
-let resumes = window.resumes;
-
-window.onload = function () {
-  setDefaultDate();
-  loadDataFromAPI(); // Use API service instead of direct localStorage
-  initializeResumes();
-  initializeTemplates();
-  initializeGoogleSheets();
-  setupNotifications();
-  initializeEnhancedFeatures();
+// Global state management
+window.jobTracker = {
+  applications: [],
+  contacts: [],
+  resumes: [],
+  currentTab: 'applications',
+  isOnline: navigator.onLine,
+  syncStatus: 'idle'
 };
 
-function setDefaultDate() {
-  document.getElementById('applicationDate').value = new Date().toISOString().split('T')[0];
-}
-
-function switchTab(tabName, element) {
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-
-  document.getElementById(tabName).classList.add('active');
-  element.classList.add('active');
-
-  if (tabName === 'analytics') updateAnalytics();
-  if (tabName === 'templates') populateEmailContacts();
-  if (tabName === 'resumes') renderResumes();
-}
-
-function clearForm() {
-  document.querySelectorAll('#applications input, #applications select, #applications textarea').forEach(input => {
-    if (input.type !== 'date') input.value = '';
-    if (input.id === 'status') input.value = 'Applied';
-    if (input.id === 'priority') input.value = 'Medium';
-  });
-  setDefaultDate();
-}
-
-// Message display function
-function showMessage(message, type = 'info') {
-  // Remove any existing messages
-  const existingMessages = document.querySelectorAll('.message-popup');
-  existingMessages.forEach(msg => msg.remove());
+// Initialize the application
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('🚀 Initializing Job Tracker with Apple-inspired design...');
   
-  // Create message element
-  const messageEl = document.createElement('div');
-  messageEl.className = `message-popup ${type}`;
-  messageEl.textContent = message;
-  
-  // Style the message
-  messageEl.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
-    padding: 15px 20px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 600;
-    max-width: 350px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    animation: slideIn 0.3s ease-out;
-  `;
-  
-  // Set background color based on type
-  switch (type) {
-    case 'success':
-      messageEl.style.background = 'linear-gradient(135deg, #27ae60, #229954)';
-      break;
-    case 'error':
-      messageEl.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
-      break;
-    case 'warning':
-      messageEl.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
-      break;
-    default:
-      messageEl.style.background = 'linear-gradient(135deg, #3498db, #2980b9)';
+  try {
+    // Initialize all components
+    await initializeApp();
+    console.log('✅ Job Tracker initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize Job Tracker:', error);
+    showErrorMessage('Failed to initialize application. Please refresh the page.');
   }
+});
+
+// Main initialization function
+async function initializeApp() {
+  // Check API health and load data
+  await loadAllData();
   
-  // Add animation styles if not already present
-  if (!document.querySelector('#message-styles')) {
-    const style = document.createElement('style');
-    style.id = 'message-styles';
-    style.textContent = `
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
+  // Initialize UI components
+  initializeUI();
+  
+  // Set up event listeners
+  setupEventListeners();
+  
+  // Set default values
+  setDefaultValues();
+  
+  // Update analytics
+  updateAnalytics();
+}
+
+// Load all data from API or localStorage
+async function loadAllData() {
+  try {
+    console.log('Loading data...');
+    
+    // Load applications with hybrid approach
+    if (window.apiService) {
+      window.jobTracker.applications = await window.apiService.getApplicationsHybrid();
+    } else {
+      window.jobTracker.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+    }
+    console.log(`Loaded ${window.jobTracker.applications.length} applications`);
+    
+    // Load contacts
+    window.jobTracker.contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
+    console.log(`Loaded ${window.jobTracker.contacts.length} contacts`);
+    
+    // Load resumes from localStorage (file data)
+    window.jobTracker.resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
+    console.log(`Loaded ${window.jobTracker.resumes.length} resumes`);
+    
+    // Update global references for backward compatibility
+    window.applications = window.jobTracker.applications;
+    window.contacts = window.jobTracker.contacts;
+    window.resumes = window.jobTracker.resumes;
+    
+  } catch (error) {
+    console.error('Error loading data:', error);
+    
+    // Fallback to localStorage
+    window.jobTracker.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+    window.jobTracker.contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
+    window.jobTracker.resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
+  }
+}
+
+// Initialize UI components
+function initializeUI() {
+  // Render initial data
+  renderApplications();
+  renderContacts();
+  renderResumes();
+  updateResumeDropdown();
+}
+
+// Enhanced tab switching with animations
+function switchTab(tabName, tabElement) {
+  console.log(`Switching to ${tabName} tab`);
+  
+  // Remove active class from all tabs and content
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  // Add active class to clicked tab
+  tabElement.classList.add('active');
+  
+  // Show corresponding content with animation
+  const targetContent = document.getElementById(tabName);
+  if (targetContent) {
+    setTimeout(() => {
+      targetContent.classList.add('active');
       
-      @keyframes slideOut {
-        from {
-          transform: translateX(0);
-          opacity: 1;
-        }
-        to {
-          transform: translateX(100%);
-          opacity: 0;
-        }
+      // Load tab-specific data if needed
+      if (tabName === 'analytics') {
+        updateAnalytics();
+      } else if (tabName === 'contacts') {
+        renderContacts();
+      } else if (tabName === 'resumes') {
+        renderResumes();
       }
+    }, 100);
+  }
+  
+  // Update global state
+  window.jobTracker.currentTab = tabName;
+}
+
+// Setup event listeners
+function setupEventListeners() {
+  // Online/offline status
+  window.addEventListener('online', handleOnlineStatus);
+  window.addEventListener('offline', handleOfflineStatus);
+}
+
+// Enhanced application rendering with animations
+function renderApplications() {
+  const tbody = document.getElementById('applicationsBody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = '';
+  
+  if (window.jobTracker.applications.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+          <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">📋</div>
+          No applications yet. Add your first application above!
+        </td>
+      </tr>
     `;
-    document.head.appendChild(style);
+    return;
   }
   
-  // Add to DOM
-  document.body.appendChild(messageEl);
-  
-  // Auto-remove after 4 seconds
-  setTimeout(() => {
-    messageEl.style.animation = 'slideOut 0.3s ease-in';
-    setTimeout(() => {
-      if (messageEl.parentNode) {
-        messageEl.remove();
-      }
-    }, 300);
-  }, 4000);
-  
-  // Allow manual dismiss by clicking
-  messageEl.addEventListener('click', () => {
-    messageEl.style.animation = 'slideOut 0.3s ease-in';
-    setTimeout(() => {
-      if (messageEl.parentNode) {
-        messageEl.remove();
-      }
-    }, 300);
+  window.jobTracker.applications.forEach((app, index) => {
+    const row = document.createElement('tr');
+    
+    // Apply priority styling
+    if (app.priority === 'High') {
+      row.classList.add('priority-high');
+    } else if (app.priority === 'Medium') {
+      row.classList.add('priority-medium');
+    } else if (app.priority === 'Low') {
+      row.classList.add('priority-low');
+    }
+    
+    row.innerHTML = `
+      <td>${formatDate(app.applicationDate)}</td>
+      <td><strong>${escapeHtml(app.jobTitle)}</strong></td>
+      <td>${escapeHtml(app.company)}</td>
+      <td>${app.jobPortal || 'N/A'}</td>
+      <td><span class="status-badge status-${app.status.toLowerCase().replace(/\\s+/g, '-')}">${app.status}</span></td>
+      <td>${app.resumeVersion || 'N/A'}</td>
+      <td>
+        <span class="priority-badge priority-${app.priority.toLowerCase()}">${app.priority}</span>
+      </td>
+      <td>${app.followUpDate ? formatDate(app.followUpDate) : 'N/A'}</td>
+      <td>
+        <div class="action-buttons">
+          <button class="btn btn-sm" onclick="editApplication(${app.id || index})" title="Edit">
+            ✏️
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteApplication(${app.id || index})" title="Delete">
+            🗑️
+          </button>
+          ${app.jobUrl ? `<a href="${app.jobUrl}" target="_blank" class="btn btn-sm" title="View Job">🔗</a>` : ''}
+        </div>
+      </td>
+    `;
+    
+    tbody.appendChild(row);
   });
 }
 
-// Notification system for follow-ups and reminders
-function setupNotifications() {
-  checkFollowUpReminders();
-  // Check every hour for new reminders
-  setInterval(checkFollowUpReminders, 60 * 60 * 1000);
+// Enhanced contact rendering
+function renderContacts() {
+  const contactsList = document.getElementById('contactsList');
+  if (!contactsList) return;
+  
+  contactsList.innerHTML = '';
+  
+  if (window.jobTracker.contacts.length === 0) {
+    contactsList.innerHTML = `
+      <div class="empty-state" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+        <h3>No contacts yet</h3>
+        <p>Start building your professional network by adding contacts above.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  window.jobTracker.contacts.forEach((contact, index) => {
+    const contactCard = document.createElement('div');
+    contactCard.className = 'contact-card';
+    
+    contactCard.innerHTML = `
+      <h4>${escapeHtml(contact.name)}</h4>
+      ${contact.company ? `<p><strong>Company:</strong> ${escapeHtml(contact.company)}</p>` : ''}
+      ${contact.position ? `<p><strong>Position:</strong> ${escapeHtml(contact.position)}</p>` : ''}
+      ${contact.email ? `<p><strong>Email:</strong> <a href="mailto:${contact.email}">${contact.email}</a></p>` : ''}
+      ${contact.phone ? `<p><strong>Phone:</strong> <a href="tel:${contact.phone}">${contact.phone}</a></p>` : ''}
+      ${contact.linkedinUrl ? `<p><strong>LinkedIn:</strong> <a href="${contact.linkedinUrl}" target="_blank">View Profile</a></p>` : ''}
+      <p><strong>Relationship:</strong> ${contact.relationship}</p>
+      <p><strong>Status:</strong> <span class="status-badge">${contact.contactStatus}</span></p>
+      ${contact.tags ? `<p><strong>Tags:</strong> ${escapeHtml(contact.tags)}</p>` : ''}
+      ${contact.notes ? `<p><strong>Notes:</strong> ${escapeHtml(contact.notes)}</p>` : ''}
+      
+      <div class="contact-actions">
+        <button class="btn btn-sm" onclick="editContact(${contact.id || index})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteContact(${contact.id || index})">Delete</button>
+        ${contact.email ? `<button class="btn btn-sm btn-primary" onclick="composeEmail('${contact.email}', '${contact.name}')">Email</button>` : ''}
+      </div>
+    `;
+    
+    contactsList.appendChild(contactCard);
+  });
 }
 
-function checkFollowUpReminders() {
-  const today = new Date().toISOString().split('T')[0];
-  const overdue = [];
-  const dueToday = [];
+// Set default values for forms
+function setDefaultValues() {
+  // Set default application date to today
+  const applicationDateInput = document.getElementById('applicationDate');
+  if (applicationDateInput && !applicationDateInput.value) {
+    applicationDateInput.value = new Date().toISOString().split('T')[0];
+  }
   
-  // Check application follow-ups
+  // Set default status
+  const statusSelect = document.getElementById('status');
+  if (statusSelect && !statusSelect.value) {
+    statusSelect.value = 'Applied';
+  }
+  
+  // Set default priority
+  const prioritySelect = document.getElementById('priority');
+  if (prioritySelect && !prioritySelect.value) {
+    prioritySelect.value = 'Medium';
+  }
+}
+
+// Enhanced application adding with validation and API sync
+async function addApplication() {
+  console.log('Adding new application...');
+  
+  // Get form data
+  const applicationData = {
+    id: Date.now() + Math.random(),
+    jobTitle: document.getElementById('jobTitle').value.trim(),
+    company: document.getElementById('company').value.trim(),
+    jobPortal: document.getElementById('jobPortal').value,
+    jobUrl: document.getElementById('jobUrl').value.trim(),
+    applicationDate: document.getElementById('applicationDate').value || new Date().toISOString().split('T')[0],
+    status: document.getElementById('status').value,
+    resumeVersion: document.getElementById('resumeVersion').value,
+    location: document.getElementById('location').value.trim(),
+    salaryRange: document.getElementById('salaryRange').value.trim(),
+    jobType: document.getElementById('jobType').value,
+    priority: document.getElementById('priority').value,
+    followUpDate: document.getElementById('followUpDate').value,
+    notes: document.getElementById('notes').value.trim(),
+    dateAdded: new Date().toISOString()
+  };
+  
+  // Validate required fields
+  if (!applicationData.jobTitle || !applicationData.company) {
+    showErrorMessage('Please fill in Job Title and Company');
+    return;
+  }
+  
+  try {
+    // Add to local state immediately for responsive UI
+    window.jobTracker.applications.push(applicationData);
+    
+    // Update localStorage as backup
+    localStorage.setItem('jobApplications', JSON.stringify(window.jobTracker.applications));
+    
+    // Try to save to API if available
+    if (window.apiService) {
+      try {
+        await window.apiService.saveApplication(applicationData);
+        showSuccessMessage('Application saved successfully!');
+      } catch (error) {
+        console.log('Saved locally, will sync when online');
+        showInfoMessage('Application saved locally. Will sync when connection is restored.');
+      }
+    } else {
+      showSuccessMessage('Application saved successfully!');
+    }
+    
+    // Update UI
+    renderApplications();
+    updateAnalytics();
+    clearForm();
+    
+  } catch (error) {
+    console.error('Error adding application:', error);
+    showErrorMessage('Failed to save application. Please try again.');
+    
+    // Remove from local state if it was added
+    window.jobTracker.applications.pop();
+  }
+}
+
+// Enhanced analytics with modern charts
+function updateAnalytics() {
+  const applications = window.jobTracker.applications;
+  
+  if (applications.length === 0) {
+    // Show empty state
+    updateStatsCards({
+      totalApps: 0,
+      interviewRate: 0,
+      responseRate: 0,
+      offerRate: 0,
+      avgResponseTime: 0,
+      pendingFollowUps: 0
+    });
+    return;
+  }
+  
+  // Calculate statistics
+  const stats = calculateStats(applications);
+  updateStatsCards(stats);
+  
+  // Update charts with animations
+  updateCharts(applications);
+}
+
+// Calculate application statistics
+function calculateStats(applications) {
+  const total = applications.length;
+  
+  if (total === 0) {
+    return {
+      totalApps: 0,
+      interviewRate: 0,
+      responseRate: 0,
+      offerRate: 0,
+      avgResponseTime: 0,
+      pendingFollowUps: 0
+    };
+  }
+  
+  // Count different statuses
+  const statusCounts = {};
   applications.forEach(app => {
-    if (app.followUpDate) {
-      if (app.followUpDate < today) {
-        overdue.push(`Follow up on ${app.jobTitle} at ${app.company}`);
-      } else if (app.followUpDate === today) {
-        dueToday.push(`Follow up on ${app.jobTitle} at ${app.company}`);
-      }
-    }
+    statusCounts[app.status] = (statusCounts[app.status] || 0) + 1;
   });
   
-  // Check contact follow-ups
-  contacts.forEach(contact => {
-    if (contact.nextFollowUpDate) {
-      if (contact.nextFollowUpDate < today) {
-        overdue.push(`Follow up with ${contact.name} at ${contact.company || 'Unknown company'}`);
-      } else if (contact.nextFollowUpDate === today) {
-        dueToday.push(`Follow up with ${contact.name} at ${contact.company || 'Unknown company'}`);
-      }
-    }
-  });
+  // Calculate rates
+  const interviewStatuses = ['Phone Screen', 'Technical Assessment', 'Interview Scheduled', 'Final Interview'];
+  const responseStatuses = ['Under Review', 'Phone Screen', 'Technical Assessment', 'Interview Scheduled', 'Final Interview', 'Offer', 'Rejected'];
   
-  // Show notifications
-  if (overdue.length > 0) {
-    showMessage(`You have ${overdue.length} overdue follow-up(s): ${overdue.slice(0, 3).join(', ')}${overdue.length > 3 ? '...' : ''}`, 'warning');
-  }
+  const interviewCount = interviewStatuses.reduce((sum, status) => sum + (statusCounts[status] || 0), 0);
+  const responseCount = responseStatuses.reduce((sum, status) => sum + (statusCounts[status] || 0), 0);
+  const offerCount = statusCounts['Offer'] || 0;
   
-  if (dueToday.length > 0) {
-    showMessage(`You have ${dueToday.length} follow-up(s) due today: ${dueToday.slice(0, 3).join(', ')}${dueToday.length > 3 ? '...' : ''}`, 'info');
-  }
-}
-
-// Enhanced search functionality
-function globalSearch(query) {
-  if (!query) return [];
-  
-  const results = [];
-  const searchTerm = query.toLowerCase();
-  
-  // Search applications
-  applications.forEach(app => {
-    if (app.jobTitle.toLowerCase().includes(searchTerm) ||
-        app.company.toLowerCase().includes(searchTerm) ||
-        (app.notes && app.notes.toLowerCase().includes(searchTerm))) {
-      results.push({
-        type: 'application',
-        data: app,
-        relevance: calculateRelevance(app, searchTerm)
-      });
-    }
-  });
-  
-  // Search contacts
-  contacts.forEach(contact => {
-    if (contact.name.toLowerCase().includes(searchTerm) ||
-        (contact.company && contact.company.toLowerCase().includes(searchTerm)) ||
-        (contact.notes && contact.notes.toLowerCase().includes(searchTerm))) {
-      results.push({
-        type: 'contact',
-        data: contact,
-        relevance: calculateRelevance(contact, searchTerm)
-      });
-    }
-  });
-  
-  return results.sort((a, b) => b.relevance - a.relevance);
-}
-
-function calculateRelevance(item, searchTerm) {
-  let score = 0;
-  const fields = Object.values(item).join(' ').toLowerCase();
-  
-  // Exact matches get higher scores
-  if (fields.includes(searchTerm)) score += 10;
-  
-  // Partial matches
-  searchTerm.split(' ').forEach(term => {
-    if (fields.includes(term)) score += 2;
-  });
-  
-  return score;
-}
-
-// Dashboard insights
-function getDashboardInsights() {
-  const insights = [];
-  const now = new Date();
-  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  
-  // Recent activity
-  const recentApps = applications.filter(app => new Date(app.dateAdded) > lastWeek);
-  if (recentApps.length > 0) {
-    insights.push(`You've applied to ${recentApps.length} job(s) this week. Keep up the momentum!`);
-  }
-  
-  // Response rate analysis
-  const totalApps = applications.length;
-  const responses = applications.filter(app => 
-    ['Under Review', 'Phone Screen', 'Interview Scheduled', 'Final Interview', 'Offer'].includes(app.status)
-  ).length;
-  
-  const responseRate = totalApps > 0 ? (responses / totalApps) * 100 : 0;
-  
-  if (responseRate < 20 && totalApps > 10) {
-    insights.push('Your response rate is below 20%. Consider reviewing your resume and application strategy.');
-  } else if (responseRate > 40) {
-    insights.push('Great response rate! Your applications are getting noticed.');
-  }
-  
-  // Follow-up reminders
+  // Calculate pending follow-ups
+  const today = new Date();
   const pendingFollowUps = applications.filter(app => {
     if (!app.followUpDate) return false;
     const followUpDate = new Date(app.followUpDate);
-    return followUpDate <= now && !['Offer', 'Rejected', 'Withdrawn'].includes(app.status);
+    return followUpDate <= today && !['Offer', 'Rejected', 'Withdrawn'].includes(app.status);
   }).length;
   
-  if (pendingFollowUps > 0) {
-    insights.push(`You have ${pendingFollowUps} application(s) that need follow-up.`);
-  }
-  
-  // Networking insights
-  const activeContacts = contacts.filter(contact => contact.status !== 'Not Contacted').length;
-  if (activeContacts < contacts.length * 0.3 && contacts.length > 5) {
-    insights.push('Consider reaching out to more of your contacts for networking opportunities.');
-  }
-  
-  return insights;
+  return {
+    totalApps: total,
+    interviewRate: Math.round((interviewCount / total) * 100),
+    responseRate: Math.round((responseCount / total) * 100),
+    offerRate: Math.round((offerCount / total) * 100),
+    avgResponseTime: calculateAverageResponseTime(applications),
+    pendingFollowUps: pendingFollowUps
+  };
 }
 
-// Data validation and cleanup
-function validateAndCleanData() {
-  let cleanedApps = 0;
-  let cleanedContacts = 0;
+// Update stats cards with animation
+function updateStatsCards(stats) {
+  const statsElements = {
+    totalApps: document.getElementById('totalApps'),
+    interviewRate: document.getElementById('interviewRate'),
+    responseRate: document.getElementById('responseRate'),
+    offerRate: document.getElementById('offerRate'),
+    avgResponseTime: document.getElementById('avgResponseTime'),
+    pendingFollowUps: document.getElementById('pendingFollowUps')
+  };
   
-  // Clean applications
-  applications = applications.filter(app => {
-    if (!app.jobTitle || !app.company) {
-      cleanedApps++;
-      return false;
+  Object.entries(stats).forEach(([key, value]) => {
+    const element = statsElements[key];
+    if (element) {
+      // Animate number change
+      animateNumber(element, value, key.includes('Rate') ? '%' : (key === 'avgResponseTime' ? ' days' : ''));
     }
-    
-    // Ensure required fields have defaults
-    app.status = app.status || 'Applied';
-    app.priority = app.priority || 'Medium';
-    app.dateAdded = app.dateAdded || new Date().toISOString();
-    
-    return true;
   });
-  
-  // Clean contacts
-  contacts = contacts.filter(contact => {
-    if (!contact.name) {
-      cleanedContacts++;
-      return false;
-    }
-    
-    // Ensure required fields have defaults
-    contact.relationship = contact.relationship || 'Network Contact';
-    contact.status = contact.status || 'Not Contacted';
-    contact.dateAdded = contact.dateAdded || new Date().toISOString();
-    
-    return true;
-  });
-  
-  if (cleanedApps > 0 || cleanedContacts > 0) {
-    localStorage.setItem('jobApplications', JSON.stringify(applications));
-    localStorage.setItem('jobContacts', JSON.stringify(contacts));
-    console.log(`Cleaned ${cleanedApps} applications and ${cleanedContacts} contacts`);
-  }
 }
 
-// Auto-save functionality
-function setupAutoSave() {
-  // Save data every 5 minutes
-  setInterval(() => {
-    localStorage.setItem('jobApplications', JSON.stringify(applications));
-    localStorage.setItem('jobContacts', JSON.stringify(contacts));
-    console.log('Auto-saved data');
-  }, 5 * 60 * 1000);
-}
-
-// Initialize enhanced features
-function initializeEnhancedFeatures() {
-  validateAndCleanData();
-  setupAutoSave();
-  
-  // Add keyboard shortcuts
-  document.addEventListener('keydown', function(e) {
-    // Ctrl/Cmd + S for manual save
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      e.preventDefault();
-      localStorage.setItem('jobApplications', JSON.stringify(applications));
-      localStorage.setItem('jobContacts', JSON.stringify(contacts));
-      showMessage('Data saved manually!', 'success');
-    }
-    
-    // Ctrl/Cmd + N for new application
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !e.shiftKey) {
-      e.preventDefault();
-      switchTab('applications', document.querySelector('.tab'));
-      document.getElementById('jobTitle').focus();
-    }
-  });
+// Update charts with Chart.js
+function updateCharts(applications) {
+  updateStatusChart(applications);
+  updateTimeChart(applications);
+  updatePortalChart(applications);
 }
 
 // Utility functions
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString();
-}
-
-function formatCurrency(amount) {
-  if (!amount) return 'N/A';
-  // Simple currency formatting
-  if (amount.includes('$')) return amount;
-  return `$${amount}`;
-}
-
-function getRelativeTime(dateString) {
-  if (!dateString) return 'N/A';
-  
   const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now - date;
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  return date.toLocaleDateString();
+}
+
+function escapeHtml(text) {
+  if (typeof text !== 'string') return text;
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showSuccessMessage(message) {
+  showMessage(message, 'success');
+}
+
+function showErrorMessage(message) {
+  showMessage(message, 'error');
+}
+
+function showInfoMessage(message) {
+  showMessage(message, 'info');
+}
+
+function showMessage(message, type = 'info') {
+  // Create message element
+  const messageEl = document.createElement('div');
+  messageEl.className = `${type}-message`;
+  messageEl.textContent = message;
+  messageEl.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 300px;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideInRight 0.3s ease-out;
+  `;
   
-  if (diffInDays === 0) return 'Today';
-  if (diffInDays === 1) return 'Yesterday';
-  if (diffInDays < 7) return `${diffInDays} days ago`;
-  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-  if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
-  return `${Math.floor(diffInDays / 365)} years ago`;
+  document.body.appendChild(messageEl);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    messageEl.style.animation = 'slideOutRight 0.3s ease-out';
+    setTimeout(() => {
+      if (messageEl.parentNode) {
+        messageEl.parentNode.removeChild(messageEl);
+      }
+    }, 300);
+  }, 5000);
 }
 
-// Initialize resumes functionality when app loads
-function initializeResumes() {
-    console.log('Initializing resumes...');
-    renderResumes();
-    updateResumeDropdown();
+function animateNumber(element, targetValue, suffix = '') {
+  const startValue = parseInt(element.textContent) || 0;
+  const duration = 1000;
+  const startTime = performance.now();
+  
+  function updateNumber(currentTime) {
+    const elapsedTime = currentTime - startTime;
+    const progress = Math.min(elapsedTime / duration, 1);
     
-    // Set up CV template print functionality
-    const printButton = document.createElement('button');
-    printButton.className = 'btn';
-    printButton.textContent = '🖨️ Print CV';
-    printButton.onclick = printCV;
+    // Easing function for smooth animation
+    const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+    const currentValue = Math.round(startValue + (targetValue - startValue) * easeOutQuart);
     
-    // Add print button to CV section if it doesn't exist
-    const cvActions = document.querySelector('.cv-template-section .form-grid');
-    if (cvActions && !document.querySelector('#print-cv-btn')) {
-        printButton.id = 'print-cv-btn';
-        const parentDiv = cvActions.parentNode;
-        parentDiv.insertBefore(printButton, parentDiv.querySelector('#cvPreview'));
-    }
-}
-
-// Initialize templates functionality
-function initializeTemplates() {
-    console.log('Initializing email templates...');
-    loadTemplateDropdown();
-    populateEmailContacts();
-}
-
-// Initialize Google Sheets (disabled for now, using cloud sync)
-function initializeGoogleSheets() {
-    console.log('Initializing cloud sync...');
-    // For now, disable Google Sheets and use our own cloud sync
-    const authSection = document.getElementById('googleAuth');
-    if (authSection) {
-        authSection.innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-                <h4>☁️ Cloud Sync</h4>
-                <p>Your data is automatically synced to the cloud when online.</p>
-                <button class="btn btn-success" onclick="syncData()">🔄 Sync Now</button>
-                <p><small>Last sync: <span id="lastSyncTime">Checking...</span></small></p>
-            </div>
-        `;
-    }
+    element.textContent = currentValue + suffix;
     
-    // Update last sync time
-    updateLastSyncTime();
+    if (progress < 1) {
+      requestAnimationFrame(updateNumber);
+    }
+  }
+  
+  requestAnimationFrame(updateNumber);
 }
 
-// Load existing applications from API or localStorage
-async function loadDataFromAPI() {
-    try {
-        console.log('Loading data from API...');
-        
-        // Load from localStorage first
-        applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
-        contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
-        resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
-        
-        window.applications = applications;
-        window.contacts = contacts;
-        window.resumes = resumes;
-        
-        // Update UI
-        renderApplications();
-        renderContacts();
-        updateAnalytics();
-        updateResumeDropdown();
-        populateEmailContacts();
-        
-        console.log('Data loaded successfully:', {
-            applications: applications.length,
-            contacts: contacts.length,
-            resumes: resumes.length
-        });
-        
-    } catch (error) {
-        console.warn('Data loading failed:', error);
-        
-        // Initialize empty arrays if loading fails
-        applications = [];
-        contacts = [];
-        resumes = [];
-        
-        window.applications = applications;
-        window.contacts = contacts;
-        window.resumes = resumes;
-    }
+function calculateAverageResponseTime(applications) {
+  const responseTimes = applications
+    .filter(app => app.status !== 'Applied' && app.applicationDate)
+    .map(app => {
+      const appDate = new Date(app.applicationDate);
+      const today = new Date();
+      return Math.floor((today - appDate) / (1000 * 60 * 60 * 24));
+    });
+  
+  if (responseTimes.length === 0) return 0;
+  
+  const average = responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+  return Math.round(average);
 }
 
-// Update last sync time display
-function updateLastSyncTime() {
-    const lastSyncEl = document.getElementById('lastSyncTime');
-    if (lastSyncEl) {
-        const lastSync = localStorage.getItem('lastSync');
-        if (lastSync) {
-            const date = new Date(lastSync);
-            lastSyncEl.textContent = date.toLocaleString();
-        } else {
-            lastSyncEl.textContent = 'Never';
-        }
-    }
+function handleOnlineStatus() {
+  window.jobTracker.isOnline = true;
+  showInfoMessage('Back online! Syncing data...');
+  
+  // Try to sync pending data
+  if (window.apiService && window.apiService.syncPendingData) {
+    window.apiService.syncPendingData();
+  }
 }
 
-// Sync data to cloud
-async function syncData() {
-    try {
-        showMessage('Syncing data to cloud...', 'info');
-        
-        // For now, just update the last sync time
-        localStorage.setItem('lastSync', new Date().toISOString());
-        updateLastSyncTime();
-        
-        showMessage('Data synced successfully!', 'success');
-    } catch (error) {
-        console.error('Sync failed:', error);
-        showMessage('Sync failed. Data saved locally.', 'warning');
-    }
+function handleOfflineStatus() {
+  window.jobTracker.isOnline = false;
+  showInfoMessage('Working offline. Data will sync when connection is restored.');
 }
+
+// Clear application form
+function clearForm() {
+  const inputs = document.querySelectorAll('#applications input, #applications select, #applications textarea');
+  inputs.forEach(input => {
+    if (input.id === 'applicationDate') {
+      input.value = new Date().toISOString().split('T')[0];
+    } else if (input.id === 'status') {
+      input.value = 'Applied';
+    } else if (input.id === 'priority') {
+      input.value = 'Medium';
+    } else {
+      input.value = '';
+    }
+  });
+}
+
+// Make functions globally available
+window.switchTab = switchTab;
+window.addApplication = addApplication;
+window.clearForm = clearForm;
+window.updateAnalytics = updateAnalytics;
+
+console.log('Enhanced Job Tracker app.js loaded successfully');

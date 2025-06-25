@@ -15,47 +15,56 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
+    console.log('Attempting to connect to MongoDB...');
+
     const conn = await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      // Modern MongoDB connection options
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       bufferCommands: false,
-      bufferMaxEntries: 0,
+      // Removed deprecated options:
+      // - useNewUrlParser (default in Mongoose 6+)
+      // - useUnifiedTopology (default in Mongoose 6+) 
+      // - bufferMaxEntries (deprecated)
     });
 
     isConnected = true;
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     
     // Handle connection events
     mongoose.connection.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
+      console.error('❌ MongoDB connection error:', err);
       isConnected = false;
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
+      console.log('⚠️  MongoDB disconnected');
       isConnected = false;
     });
 
     mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected');
+      console.log('✅ MongoDB reconnected');
       isConnected = true;
     });
 
     return conn;
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
+    console.error('❌ MongoDB connection failed:', error.message);
     isConnected = false;
     
-    // Don't exit process in serverless environment
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
+    // In development, don't exit - allow app to continue without DB
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 Continuing in offline mode...');
+      return null;
     }
     
     throw error;
   }
 };
 
+// Export connection status checker
+const isMongoConnected = () => isConnected;
+
 module.exports = connectDB;
+module.exports.isConnected = isMongoConnected;

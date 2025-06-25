@@ -194,9 +194,10 @@ body::before {
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   white-space: nowrap;
   min-width: 120px;
+  z-index: 1;
 }
 
 .tab::before {
@@ -210,6 +211,7 @@ body::before {
   opacity: 0;
   transition: opacity 0.3s ease;
   border-radius: var(--radius-lg);
+  z-index: -1;
 }
 
 .tab:hover::before {
@@ -219,15 +221,31 @@ body::before {
 .tab.active {
   color: white;
   transform: translateY(-2px);
+  z-index: 10;
+  position: relative;
+  font-weight: 600;
 }
 
 .tab.active::before {
   opacity: 1;
 }
 
+/* Ensure text is always visible */
+.tab,
+.tab.active {
+  font-size: 0.95rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove problematic span styling */
+.tab.active span,
 .tab span {
   position: relative;
-  z-index: 1;
+  z-index: 11;
+  color: inherit;
 }
 
 /* Tab Content with Staggered Animation */
@@ -713,11 +731,37 @@ input[type="file"] {
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  color: var(--text-primary);
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 input[type="file"]:hover {
   border-color: var(--primary);
   background: var(--surface);
+}
+
+/* Fix file input text visibility */
+input[type="file"]::-webkit-file-upload-button {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-right: var(--spacing-md);
+  font-weight: 500;
+}
+
+input[type="file"]::file-selector-button {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-right: var(--spacing-md);
+  font-weight: 500;
 }
 
 /* Responsive Design */
