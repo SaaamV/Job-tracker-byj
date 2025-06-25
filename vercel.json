@@ -19,10 +19,5 @@
       "src": "/(.*)",
       "dest": "JTS/$1"
     }
-  ],
-  "functions": {
-    "backend/server.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
