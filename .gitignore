@@ -64,3 +64,6 @@ coverage/
 # Backup files
 *.backup
 *.bak
+
+.env
+*.env
