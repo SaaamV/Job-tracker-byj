@@ -1,4 +1,4 @@
-// content.js - Job data extraction and auto-fill functionality
+// content.js - FIXED Job data extraction and auto-fill functionality
 
 // Job Tracker Auto-Fill Extension
 class JobTrackerExtension {
@@ -6,12 +6,13 @@ class JobTrackerExtension {
     this.jobData = {};
     this.currentSite = this.detectJobSite();
     this.isTracking = false;
-    this.apiUrl = 'job-tracker-5q3lneriz-mario263s-projects.vercel.app'; // Your deployed API
+    this.apiUrl = 'https://job-tracker-chi-eight.vercel.app'; // Fixed API URL
     
     this.init();
   }
 
   init() {
+    console.log('Job Tracker Extension initializing...');
     this.addFloatingButton();
     this.detectJobData();
     this.setupAutoDetection();
@@ -79,18 +80,21 @@ class JobTrackerExtension {
         '.top-card-layout__title',
         '.jobs-unified-top-card__job-title h1',
         'h1.t-24.t-bold.inline',
-        '.job-details-jobs-unified-top-card__job-title h1'
+        '.job-details-jobs-unified-top-card__job-title h1',
+        '.jobs-unified-top-card__job-title a'
       ]),
       company: this.getTextContent([
         '.topcard__org-name-link',
         '.jobs-unified-top-card__company-name a',
         '.job-details-jobs-unified-top-card__company-name a',
-        '.topcard__flavor--metadata a'
+        '.topcard__flavor--metadata a',
+        '.jobs-unified-top-card__company-name'
       ]),
       location: this.getTextContent([
         '.topcard__flavor--bullet',
         '.jobs-unified-top-card__bullet',
-        '.job-details-jobs-unified-top-card__primary-description-text'
+        '.job-details-jobs-unified-top-card__primary-description-text',
+        '.jobs-unified-top-card__primary-description'
       ]),
       jobUrl: window.location.href.split('?')[0],
       jobPortal: 'LinkedIn',
@@ -115,16 +119,19 @@ class JobTrackerExtension {
       jobTitle: this.getTextContent([
         '[data-testid="jobsearch-JobInfoHeader-title"]',
         '.jobsearch-JobInfoHeader-title',
-        'h1.icl-u-xs-mb--xs.icl-u-xs-mt--none.jobsearch-JobInfoHeader-title'
+        'h1.icl-u-xs-mb--xs.icl-u-xs-mt--none.jobsearch-JobInfoHeader-title',
+        'h1[data-testid="jobsearch-JobInfoHeader-title"]'
       ]),
       company: this.getTextContent([
         '[data-testid="inlineHeader-companyName"]',
         '.icl-u-lg-mr--sm.icl-u-xs-mr--xs',
-        'a[data-testid="inlineHeader-companyName"]'
+        'a[data-testid="inlineHeader-companyName"]',
+        '[data-testid="inlineHeader-companyName"] span'
       ]),
       location: this.getTextContent([
         '[data-testid="job-location"]',
-        '.icl-u-colorForeground--secondary.icl-u-xs-mt--xs'
+        '.icl-u-colorForeground--secondary.icl-u-xs-mt--xs',
+        '[data-testid="job-location"] div'
       ]),
       jobUrl: window.location.href.split('?')[0],
       jobPortal: 'Indeed',
@@ -143,11 +150,13 @@ class JobTrackerExtension {
     return {
       jobTitle: this.getTextContent([
         '[data-test="job-title"]',
-        '.css-17x46n0.e1tk4kwz5'
+        '.css-17x46n0.e1tk4kwz5',
+        'h1[data-test="job-title"]'
       ]),
       company: this.getTextContent([
         '[data-test="employer-name"]',
-        '.css-87uc0g.e1tk4kwz1'
+        '.css-87uc0g.e1tk4kwz1',
+        'span[data-test="employer-name"]'
       ]),
       location: this.getTextContent([
         '[data-test="job-location"]',
@@ -170,7 +179,8 @@ class JobTrackerExtension {
     return {
       jobTitle: this.getTextContent([
         '[data-test="JobTitle"]',
-        '.styles_jobTitle__3vWnh'
+        '.styles_jobTitle__3vWnh',
+        'h1[data-test="JobTitle"]'
       ]),
       company: this.getTextContent([
         '[data-test="StartupLink"]',
@@ -279,6 +289,7 @@ class JobTrackerExtension {
   }
 
   showJobTracker() {
+    console.log('Showing job tracker modal...');
     this.detectJobData(); // Refresh data
     
     // Remove existing modal if any
@@ -485,7 +496,7 @@ class JobTrackerExtension {
     this.showStatus('Saving application...', 'loading');
 
     try {
-      // Save to local storage first
+      // Save to local storage first (Chrome extension storage)
       await this.saveToLocalStorage(formData);
       
       // Try to save to API
@@ -499,11 +510,14 @@ class JobTrackerExtension {
 
       // Close modal after short delay
       setTimeout(() => {
-        document.getElementById('job-tracker-modal').remove();
+        const modal = document.getElementById('job-tracker-modal');
+        if (modal) {
+          modal.remove();
+        }
         
         if (openTracker) {
           // Open main tracker application
-          window.open('https://job-tracker-chi-eight.vercel.app/#', '_blank');
+          window.open(this.apiUrl, '_blank');
         }
       }, 2000);
 
@@ -515,15 +529,15 @@ class JobTrackerExtension {
 
   collectFormData() {
     return {
-      jobTitle: document.getElementById('jt-jobTitle').value,
-      company: document.getElementById('jt-company').value,
+      jobTitle: document.getElementById('jt-jobTitle').value.trim(),
+      company: document.getElementById('jt-company').value.trim(),
       jobPortal: document.getElementById('jt-jobPortal').value,
       status: document.getElementById('jt-status').value,
-      location: document.getElementById('jt-location').value,
+      location: document.getElementById('jt-location').value.trim(),
       priority: document.getElementById('jt-priority').value,
       jobType: document.getElementById('jt-jobType').value,
-      salaryRange: document.getElementById('jt-salaryRange').value,
-      notes: document.getElementById('jt-notes').value,
+      salaryRange: document.getElementById('jt-salaryRange').value.trim(),
+      notes: document.getElementById('jt-notes').value.trim(),
       jobUrl: this.jobData.jobUrl || window.location.href,
       applicationDate: new Date().toISOString().split('T')[0],
       dateAdded: new Date().toISOString(),
@@ -534,20 +548,34 @@ class JobTrackerExtension {
   }
 
   async saveToLocalStorage(applicationData) {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(['jobApplications'], (result) => {
-        const applications = result.jobApplications || [];
-        applications.push(applicationData);
-        
-        chrome.storage.local.set({ jobApplications: applications }, () => {
-          resolve();
+    return new Promise((resolve, reject) => {
+      try {
+        chrome.storage.local.get(['jobApplications'], (result) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          
+          const applications = result.jobApplications || [];
+          applications.push(applicationData);
+          
+          chrome.storage.local.set({ jobApplications: applications }, () => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+              return;
+            }
+            console.log('Application saved to Chrome storage:', applicationData.jobTitle);
+            resolve();
+          });
         });
-      });
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 
   async saveToAPI(applicationData) {
-    const response = await fetch(`${this.apiUrl}/applications`, {
+    const response = await fetch(`${this.apiUrl}/api/applications`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -556,7 +584,7 @@ class JobTrackerExtension {
     });
 
     if (!response.ok) {
-      throw new Error('API request failed');
+      throw new Error(`API request failed: ${response.status}`);
     }
 
     return response.json();
@@ -666,92 +694,31 @@ class JobTrackerExtension {
   }
 }
 
-// Site-specific enhancements
-class LinkedInEnhancer extends JobTrackerExtension {
-  constructor() {
-    super();
-    this.enhanceLinkedIn();
-  }
-
-  enhanceLinkedIn() {
-    // Add quick save button to job postings
-    this.addQuickSaveToJobCards();
-    
-    // Auto-detect "Easy Apply" submissions
-    this.watchEasyApply();
-  }
-
-  addQuickSaveToJobCards() {
-    const observer = new MutationObserver(() => {
-      const jobCards = document.querySelectorAll('.job-card-container, .jobs-search-results__list-item');
-      
-      jobCards.forEach(card => {
-        if (card.querySelector('.job-tracker-quick-save')) return;
-        
-        const quickSaveBtn = document.createElement('button');
-        quickSaveBtn.className = 'job-tracker-quick-save';
-        quickSaveBtn.innerHTML = '📊';
-        quickSaveBtn.title = 'Quick save to Job Tracker';
-        
-        quickSaveBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Extract data from card
-          const title = card.querySelector('.job-card-list__title, .jobs-unified-top-card__job-title')?.textContent?.trim();
-          const company = card.querySelector('.job-card-container__company-name, .jobs-unified-top-card__company-name')?.textContent?.trim();
-          
-          if (title && company) {
-            this.jobData = { ...this.jobData, jobTitle: title, company: company };
-            this.showJobTracker();
-          }
-        });
-        
-        const actionsArea = card.querySelector('.job-card-container__actions, .jobs-unified-top-card__content--two-pane');
-        if (actionsArea) {
-          actionsArea.style.position = 'relative';
-          actionsArea.appendChild(quickSaveBtn);
-        }
-      });
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
-  watchEasyApply() {
-    document.addEventListener('click', (e) => {
-      if (e.target.matches('[aria-label*="Easy Apply"], .jobs-apply-button--top-card')) {
-        setTimeout(() => {
-          this.watchEasyApplyModal();
-        }, 1000);
-      }
-    });
-  }
-
-  watchEasyApplyModal() {
-    const modal = document.querySelector('.jobs-easy-apply-modal');
-    if (!modal) return;
-
-    const submitButton = modal.querySelector('[aria-label*="Submit"], .jobs-apply-form__submit-button');
-    if (submitButton) {
-      submitButton.addEventListener('click', () => {
-        setTimeout(() => {
-          this.showQuickSavePrompt();
-        }, 2000);
-      });
+// Message listener for popup communication
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Content script received message:', request);
+  
+  if (request.action === 'showJobTracker') {
+    // Initialize extension if not already done
+    if (!window.jobTrackerExtension) {
+      window.jobTrackerExtension = new JobTrackerExtension();
+    } else {
+      window.jobTrackerExtension.showJobTracker();
     }
+    sendResponse({ success: true });
   }
-}
+  
+  return true; // Keep message channel open for async response
+});
 
 // Initialize extension based on site
 function initializeExtension() {
   const hostname = window.location.hostname.toLowerCase();
   
-  if (hostname.includes('linkedin')) {
-    new LinkedInEnhancer();
-  } else {
-    new JobTrackerExtension();
-  }
+  console.log('Initializing Job Tracker Extension on:', hostname);
+  
+  // Create global instance
+  window.jobTrackerExtension = new JobTrackerExtension();
 }
 
 // Wait for DOM to be ready

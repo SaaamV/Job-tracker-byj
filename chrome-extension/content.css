@@ -1,4 +1,4 @@
-/* content.css - Job Tracker Extension Styles */
+/* content.css - Fixed Chrome Extension styles */
 
 /* Floating Button */
 .job-tracker-floating-btn {
@@ -6,48 +6,44 @@
   bottom: 20px;
   right: 20px;
   z-index: 10000;
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 50px;
   padding: 12px 20px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(52, 152, 219, 0.4);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   transition: all 0.3s ease;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-  max-width: 200px;
+  min-width: 140px;
+  justify-content: center;
 }
 
 .job-tracker-floating-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(52, 152, 219, 0.6);
-  background: linear-gradient(135deg, #2980b9, #3498db);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 
-.job-tracker-btn-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.job-tracker-btn-content svg {
+.job-tracker-floating-btn svg {
   width: 20px;
   height: 20px;
 }
 
-/* Modal Styles */
+/* Modal Overlay */
 .job-tracker-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 10001;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  z-index: 20000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .job-tracker-overlay {
@@ -57,6 +53,7 @@
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,19 +63,19 @@
 
 .job-tracker-content {
   background: white;
-  border-radius: 15px;
-  max-width: 800px;
+  border-radius: 16px;
+  max-width: 700px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  animation: modalAppear 0.3s ease-out;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
 }
 
-@keyframes modalAppear {
+@keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: scale(0.8) translateY(20px);
+    transform: scale(0.95) translateY(-20px);
   }
   to {
     opacity: 1;
@@ -86,19 +83,21 @@
   }
 }
 
+/* Modal Header */
 .job-tracker-header {
-  background: linear-gradient(135deg, #2c3e50, #3498db);
-  color: white;
-  padding: 20px 30px;
-  border-radius: 15px 15px 0 0;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9ecef;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
 }
 
 .job-tracker-header h3 {
   margin: 0;
-  font-size: 1.4em;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -106,238 +105,294 @@
   background: none;
   border: none;
   color: white;
-  font-size: 2em;
+  font-size: 24px;
   cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s ease;
+  transition: background-color 0.2s;
 }
 
 .job-tracker-close:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Modal Body */
 .job-tracker-body {
-  padding: 30px;
+  padding: 24px;
 }
 
 .job-tracker-section {
-  margin-bottom: 25px;
+  margin-bottom: 24px;
 }
 
 .job-tracker-section h4 {
-  margin: 0 0 15px 0;
-  color: #2c3e50;
-  font-size: 1.1em;
+  margin: 0 0 12px 0;
+  font-size: 16px;
   font-weight: 600;
+  color: #2c3e50;
 }
 
 .job-tracker-detected {
   background: #f8f9fa;
-  border: 2px solid #e9ecef;
+  border: 1px solid #e9ecef;
   border-radius: 8px;
-  padding: 15px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.job-tracker-detected div {
+  margin: 8px 0;
   font-size: 14px;
+  color: #495057;
 }
 
-.job-tracker-detected > div {
-  margin-bottom: 8px;
+.job-tracker-detected strong {
+  color: #2c3e50;
+  font-weight: 600;
 }
 
-.job-tracker-detected > div:last-child {
-  margin-bottom: 0;
-}
-
+/* Form Styles - CRITICAL FIXES FOR NARROW FIELDS */
 .job-tracker-form {
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .job-tracker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px; /* Increased gap */
   margin-bottom: 20px;
 }
 
 .job-tracker-field {
   display: flex;
   flex-direction: column;
+  gap: 8px; /* Increased gap */
+  min-width: 0; /* CRITICAL: Prevent overflow */
 }
 
 .job-tracker-field-full {
   display: flex;
   flex-direction: column;
+  gap: 8px;
   margin-bottom: 20px;
+  min-width: 0;
 }
 
-.job-tracker-field label,
-.job-tracker-field-full label {
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #495057;
+.job-tracker-field label {
   font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap; /* Prevent label wrapping */
 }
 
 .job-tracker-field input,
 .job-tracker-field select,
-.job-tracker-field-full input,
 .job-tracker-field-full textarea {
-  padding: 12px;
-  border: 2px solid #dee2e6;
+  padding: 14px 16px; /* Increased padding for better touch targets */
+  border: 2px solid #e9ecef;
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
-  transition: border-color 0.3s ease;
+  transition: all 0.2s ease;
+  background: white !important;
+  min-width: 0 !important; /* CRITICAL: Prevents flex items from overflowing */
+  width: 100% !important; /* CRITICAL: Ensures full width within container */
+  box-sizing: border-box !important; /* CRITICAL: Includes padding in width calculation */
+  flex-shrink: 1; /* Allow shrinking */
+  max-width: 100%; /* Prevent overflow */
 }
 
 .job-tracker-field input:focus,
 .job-tracker-field select:focus,
-.job-tracker-field-full input:focus,
 .job-tracker-field-full textarea:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  outline: none !important;
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
 }
 
+/* CRITICAL FIX: Ensure dropdowns are wide enough and visible */
+.job-tracker-field select {
+  min-width: 250px !important; /* Increased minimum width */
+  cursor: pointer !important;
+  appearance: none !important; /* Remove default styling */
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 16px center !important;
+  background-size: 14px !important;
+  padding-right: 45px !important; /* Make room for dropdown arrow */
+  text-overflow: ellipsis; /* Handle long text */
+  overflow: hidden;
+}
+
+/* Ensure options in dropdown are visible and properly sized */
+.job-tracker-field select option {
+  padding: 10px 16px !important;
+  background: white !important;
+  color: #2c3e50 !important;
+  min-height: 24px !important;
+  font-size: 14px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Make sure select dropdown shows properly on different sites */
+.job-tracker-field select::-ms-expand {
+  display: none !important; /* Hide default arrow in IE */
+}
+
+/* Fix for Firefox */
+.job-tracker-field select::-moz-focus-inner {
+  border: 0 !important;
+}
+
+/* Buttons */
 .job-tracker-actions {
   display: flex;
-  gap: 15px;
-  margin-top: 25px;
+  gap: 12px;
   flex-wrap: wrap;
+  margin-top: 24px;
 }
 
 .job-tracker-btn-primary {
-  background: linear-gradient(135deg, #27ae60, #229954);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 15px 25px;
+  padding: 14px 24px;
   border-radius: 8px;
-  cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s ease;
-  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 160px;
 }
 
 .job-tracker-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .job-tracker-btn-secondary {
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
   color: white;
   border: none;
-  padding: 15px 25px;
+  padding: 14px 24px;
   border-radius: 8px;
-  cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s ease;
-  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 160px;
 }
 
 .job-tracker-btn-secondary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+  box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
 }
 
 .job-tracker-btn-cancel {
-  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  background: #6c757d;
   color: white;
   border: none;
-  padding: 15px 25px;
+  padding: 14px 24px;
   border-radius: 8px;
-  cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s ease;
-  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .job-tracker-btn-cancel:hover {
+  background: #5a6268;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
 }
 
+/* Status Messages */
 .job-tracker-status {
-  padding: 15px 30px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
   text-align: center;
-  font-weight: 600;
-  border-radius: 0 0 15px 15px;
 }
 
 .job-tracker-status.success {
   background: #d4edda;
   color: #155724;
-  border-top: 2px solid #c3e6cb;
+  border: 1px solid #c3e6cb;
 }
 
 .job-tracker-status.error {
   background: #f8d7da;
   color: #721c24;
-  border-top: 2px solid #f5c6cb;
+  border: 1px solid #f5c6cb;
 }
 
 .job-tracker-status.warning {
   background: #fff3cd;
   color: #856404;
-  border-top: 2px solid #ffeaa7;
+  border: 1px solid #ffeaa7;
 }
 
 .job-tracker-status.loading {
   background: #d1ecf1;
   color: #0c5460;
-  border-top: 2px solid #bee5eb;
+  border: 1px solid #bee5eb;
 }
 
-/* Quick Save Button for LinkedIn */
+/* Quick Save Button for LinkedIn job cards */
 .job-tracker-quick-save {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 50%;
   width: 32px;
   height: 32px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
   transition: all 0.2s ease;
   z-index: 1000;
 }
 
 .job-tracker-quick-save:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.5);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-/* Notification Styles */
+/* Notification styles */
 .job-tracker-notification {
   position: fixed;
-  top: 20px;
+  bottom: 80px;
   right: 20px;
-  z-index: 10002;
+  z-index: 15000;
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  padding: 20px;
   max-width: 350px;
-  animation: notificationSlide 0.3s ease-out;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  border-left: 5px solid #3498db;
+  border: 1px solid #e9ecef;
+  animation: notificationSlideIn 0.3s ease-out;
 }
 
-@keyframes notificationSlide {
+@keyframes notificationSlideIn {
   from {
     opacity: 0;
     transform: translateX(100%);
@@ -349,124 +404,134 @@
 }
 
 .job-tracker-notification-content {
-  padding: 20px;
-}
-
-.job-tracker-notification-text {
-  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .job-tracker-notification-text strong {
   color: #2c3e50;
   font-size: 16px;
-  display: block;
-  margin-bottom: 5px;
+  font-weight: 600;
 }
 
 .job-tracker-notification-text p {
-  margin: 0;
+  margin: 4px 0 0 0;
   color: #666;
   font-size: 14px;
-  line-height: 1.4;
 }
 
 .job-tracker-notification-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .job-tracker-btn-small {
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
   transition: all 0.2s ease;
-  font-family: inherit;
 }
 
 .job-tracker-btn-small.job-tracker-btn-primary {
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
-.job-tracker-btn-small.job-tracker-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-}
-
 .job-tracker-btn-small.job-tracker-btn-cancel {
-  background: #f8f9fa;
-  color: #666;
-  border: 1px solid #dee2e6;
-}
-
-.job-tracker-btn-small.job-tracker-btn-cancel:hover {
   background: #e9ecef;
+  color: #6c757d;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .job-tracker-floating-btn {
-    bottom: 15px;
-    right: 15px;
-    padding: 10px 15px;
+  .job-tracker-overlay {
+    padding: 10px;
   }
-
-  .job-tracker-floating-btn span {
-    display: none;
-  }
-
+  
   .job-tracker-content {
-    margin: 10px;
     max-height: 95vh;
   }
-
-  .job-tracker-header {
-    padding: 15px 20px;
-  }
-
-  .job-tracker-body {
-    padding: 20px;
-  }
-
+  
   .job-tracker-grid {
-    grid-template-columns: 1fr;
-    gap: 15px;
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 16px;
   }
-
+  
+  .job-tracker-field select {
+    min-width: 100% !important; /* Full width on mobile */
+  }
+  
   .job-tracker-actions {
     flex-direction: column;
   }
-
-  .job-tracker-notification {
-    top: 10px;
+  
+  .job-tracker-btn-primary,
+  .job-tracker-btn-secondary {
+    min-width: auto;
+  }
+  
+  .job-tracker-floating-btn {
+    bottom: 10px;
     right: 10px;
-    left: 10px;
-    max-width: none;
+    padding: 10px 16px;
+    font-size: 12px;
+    min-width: 120px;
+  }
+  
+  .job-tracker-notification {
+    bottom: 70px;
+    right: 10px;
+    max-width: calc(100vw - 20px);
   }
 }
 
-/* Site-specific adjustments */
-body[data-job-tracker-site="linkedin"] .job-tracker-floating-btn {
-  background: linear-gradient(135deg, #0077b5, #005885);
+/* Override any site-specific styles that might interfere */
+.job-tracker-modal * {
+  box-sizing: border-box !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-body[data-job-tracker-site="indeed"] .job-tracker-floating-btn {
-  background: linear-gradient(135deg, #2557a7, #1a4480);
+.job-tracker-modal input,
+.job-tracker-modal select,
+.job-tracker-modal textarea {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-color: white !important;
+  color: #2c3e50 !important;
+  line-height: normal !important;
 }
 
-body[data-job-tracker-site="glassdoor"] .job-tracker-floating-btn {
-  background: linear-gradient(135deg, #0caa41, #0a8a35);
+/* Force override for problematic sites */
+.job-tracker-modal input[type="text"],
+.job-tracker-modal input[type="url"],
+.job-tracker-modal input[type="date"],
+.job-tracker-modal select,
+.job-tracker-modal textarea {
+  min-height: 44px !important; /* Minimum touch target size */
+  font-size: 14px !important;
+  padding: 14px 16px !important;
+  border: 2px solid #e9ecef !important;
+  border-radius: 8px !important;
+  background: white !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-/* Hide on print */
-@media print {
-  .job-tracker-floating-btn,
-  .job-tracker-modal,
-  .job-tracker-notification,
-  .job-tracker-quick-save {
-    display: none !important;
-  }
+/* Ensure our modal appears above everything else */
+.job-tracker-modal {
+  position: fixed !important;
+  z-index: 2147483647 !important; /* Maximum z-index value */
+}
+
+/* Fix for sites that might have conflicting CSS */
+.job-tracker-field select {
+  height: auto !important;
+  line-height: normal !important;
+  vertical-align: baseline !important;
 }
