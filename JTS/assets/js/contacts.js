@@ -141,6 +141,25 @@ function deleteContact(id) {
   }
 }
 
+// Make all contact functions globally available
+window.addContact = addContact;
+window.renderContacts = renderContacts;
+window.filterContacts = filterContacts;
+window.deleteContact = deleteContact;
+window.editContact = editContact;
+window.updateContactStatus = updateContactStatus;
+window.composeEmailToContact = composeEmailToContact;
+window.clearContactForm = clearContactForm;
+window.importContacts = importContacts;
+window.exportContacts = exportContacts;
+window.selectAllContacts = selectAllContacts;
+window.bulkUpdateContactStatus = bulkUpdateContactStatus;
+window.getNetworkingSuggestions = getNetworkingSuggestions;
+window.getPopularTags = getPopularTags;
+window.addTagToContact = addTagToContact;
+
+console.log('Contacts module loaded and functions exposed globally');
+
 function editContact(id) {
   const contact = contacts.find(c => c.id === id);
   if (!contact) return;

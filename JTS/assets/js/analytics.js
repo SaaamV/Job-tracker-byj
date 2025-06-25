@@ -1,3 +1,123 @@
+// renderApplications function - ensures it's available
+function renderApplications() {
+  console.log('renderApplications() called from analytics');
+  
+  const tbody = document.getElementById('applicationsBody');
+  if (!tbody) {
+    console.error('Applications table body not found');
+    return;
+  }
+  
+  // Ensure applications array exists
+  if (!window.applications || !Array.isArray(window.applications)) {
+    window.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+    applications = window.applications;
+  }
+  
+  tbody.innerHTML = '';
+
+  let filteredApps = getFilteredApplications();
+
+  if (filteredApps.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">No applications found. Add your first application above!</td></tr>';
+    return;
+  }
+
+  filteredApps.forEach(app => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${formatDate(app.applicationDate)}</td>
+      <td><strong>${app.jobTitle}</strong></td>
+      <td>${app.company}</td>
+      <td>${app.jobPortal || 'N/A'}</td>
+      <td><span class="status-${(app.status || '').toLowerCase().replace(/\s+/g, '-')}">${app.status}</span></td>
+      <td>${app.resumeVersion || 'N/A'}</td>
+      <td><span class="priority-${(app.priority || 'medium').toLowerCase()}">${app.priority}</span></td>
+      <td>${getFollowUpStatus(app.followUpDate)}</td>
+      <td>
+        ${app.jobUrl ? `<a href="${app.jobUrl}" target="_blank" title="View Job Posting">🔗</a> | ` : ''}
+        <a href="#" onclick="editApplication(${app.id})" title="Edit">✏️</a> |
+        <a href="#" onclick="duplicateApplication(${app.id})" title="Duplicate">📋</a> |
+        <a href="#" onclick="deleteApplication(${app.id})" style="color: red;" title="Delete">🗑️</a>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  console.log('Rendered applications:', filteredApps.length);
+}
+
+function getFilteredApplications() {
+  const apps = window.applications || [];
+  let filtered = [...apps];
+  
+  // Filter by status
+  const statusFilter = document.getElementById('statusFilter')?.value;
+  if (statusFilter) {
+    filtered = filtered.filter(app => app.status === statusFilter);
+  }
+  
+  // Filter by company
+  const companyFilter = document.getElementById('companyFilter')?.value?.toLowerCase();
+  if (companyFilter) {
+    filtered = filtered.filter(app => 
+      app.company.toLowerCase().includes(companyFilter)
+    );
+  }
+  
+  // Sort applications
+  const sortBy = document.getElementById('sortBy')?.value || 'date-desc';
+  filtered.sort((a, b) => {
+    switch (sortBy) {
+      case 'date-asc':
+        return new Date(a.applicationDate) - new Date(b.applicationDate);
+      case 'date-desc':
+        return new Date(b.applicationDate) - new Date(a.applicationDate);
+      case 'company':
+        return a.company.localeCompare(b.company);
+      case 'status':
+        return a.status.localeCompare(b.status);
+      case 'priority':
+        const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+        return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+      default:
+        return new Date(b.dateAdded || b.applicationDate) - new Date(a.dateAdded || a.applicationDate);
+    }
+  });
+  
+  return filtered;
+}
+
+function getFollowUpStatus(followUpDate) {
+  if (!followUpDate) return 'N/A';
+  
+  const today = new Date().toISOString().split('T')[0];
+  const followUp = followUpDate;
+  
+  if (followUp < today) {
+    return `<span style="color: #e74c3c; font-weight: bold;">Overdue</span>`;
+  } else if (followUp === today) {
+    return `<span style="color: #f39c12; font-weight: bold;">Today</span>`;
+  } else {
+    return `<span style="color: #27ae60;">${formatDate(followUp)}</span>`;
+  }
+}
+
+function formatDate(dateString) {
+  if (!dateString) return 'N/A';
+  try {
+    return new Date(dateString).toLocaleDateString();
+  } catch (e) {
+    return dateString;
+  }
+}
+
+// Make sure renderApplications is available globally
+window.renderApplications = renderApplications;
+window.getFilteredApplications = getFilteredApplications;
+window.getFollowUpStatus = getFollowUpStatus;
+window.formatDate = formatDate;
+
 // analytics.js - Fixed chart sizing and performance issues
 
 let statusChart = null;
