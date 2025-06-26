@@ -7,6 +7,7 @@ class JobTrackerExtension {
     this.currentSite = this.detectJobSite();
     this.isTracking = false;
     this.apiUrl = 'https://job-tracker-42vf48icv-mario263s-projects.vercel.app'; // Updated deployment URL
+    this.backupApiUrl = 'http://localhost:3001'; // Local development URL
     
     this.init();
   }

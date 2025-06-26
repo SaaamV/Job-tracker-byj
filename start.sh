@@ -2,9 +2,9 @@
 
 echo "Starting Job Tracker Development Environment..."
 
-# Kill any existing processes on ports 5000 and 8080
+# Kill any existing processes on ports 3001 and 8080
 echo "🧹 Cleaning up existing processes..."
-lsof -ti:5000 | xargs kill -9 2>/dev/null || true
+lsof -ti:3001 | xargs kill -9 2>/dev/null || true
 lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 
 # Wait a moment for ports to be freed
@@ -15,7 +15,7 @@ if [ "$NODE_ENV" != "production" ]; then
     echo "🔧 Development mode - starting local servers..."
     
     # Start backend server first
-    echo "📡 Starting backend server on port 5000..."
+    echo "📡 Starting backend server on port 3001..."
     cd backend
     
     # Install dependencies if needed
@@ -33,13 +33,13 @@ MONGODB_URI=mongodb+srv://sharmaabhishek263:Abhishek1@jobtrack.bc5ykhu.mongodb.n
 
 # Application Configuration
 NODE_ENV=development
-PORT=5000
+PORT=3001
 
 # JWT Secret - CHANGE THIS TO A SECURE RANDOM STRING
 JWT_SECRET=your_secure_jwt_secret_key_change_this
 
 # API Configuration
-API_BASE_URL=http://localhost:5000
+API_BASE_URL=http://localhost:3001
 EOF
         echo "✅ .env file created with your MongoDB credentials"
     fi
@@ -58,9 +58,9 @@ EOF
     BACKEND_READY=false
     for i in {1..15}; do  # Increased retry attempts
         # First check if the port is even open
-        if nc -z localhost 5000 2>/dev/null; then
+        if nc -z localhost 3001 2>/dev/null; then
             # Then check if the health endpoint returns valid JSON
-            HEALTH_RESPONSE=$(curl -s http://localhost:5000/api/health 2>/dev/null)
+            HEALTH_RESPONSE=$(curl -s http://localhost:3001/api/health 2>/dev/null)
             if [ $? -eq 0 ] && echo "$HEALTH_RESPONSE" | grep -q "status"; then
                 echo "✅ Backend is healthy and ready!"
                 echo "📋 Health status: $HEALTH_RESPONSE"
@@ -74,9 +74,9 @@ EOF
     
     if [ "$BACKEND_READY" = false ]; then
         echo "❌ Backend failed to start properly."
-        echo "🔍 This could be due to:"
+        echo "⚠️  This could be due to:"
         echo "   - MongoDB connection issues (check your .env file)"
-        echo "   - Port 5000 already in use"
+        echo "   - Port 3001 already in use"
         echo "   - Missing dependencies (try: cd backend && npm install)"
         echo "💡 Don't worry - the frontend will work with localStorage!"
     fi
@@ -117,9 +117,9 @@ EOF
     echo "🎉 Job Tracker is running!"
     echo "==============================================="
     echo "📱 Frontend:     http://localhost:8080"
-    echo "🔧 Backend API:  http://localhost:5000"
-    echo "🏥 Health Check: http://localhost:5000/api/health"
-    echo "📊 Applications: http://localhost:5000/api/applications"
+    echo "🔧 Backend API:  http://localhost:3001"
+    echo "🏥 Health Check: http://localhost:3001/api/health"
+    echo "📊 Applications: http://localhost:3001/api/applications"
     echo "==============================================="
     echo ""
     
@@ -149,7 +149,7 @@ EOF
             kill $FRONTEND_PID 2>/dev/null || true
         fi
         # Kill any remaining processes on our ports
-        lsof -ti:5000 | xargs kill -9 2>/dev/null || true
+        lsof -ti:3001 | xargs kill -9 2>/dev/null || true
         lsof -ti:8080 | xargs kill -9 2>/dev/null || true
         echo "✅ Cleanup complete"
         exit 0
