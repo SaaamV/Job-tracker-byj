@@ -3,8 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Job Tracking System</title>
+  <title>Job Tracking System - Enhanced</title>
   <link rel="stylesheet" href="assets/css/styles.css"/>
+  <link rel="stylesheet" href="assets/css/enhanced-animations.css"/>
+  <link rel="stylesheet" href="assets/css/input-fix.css"/>
+  <!-- CRITICAL: Load this CSS LAST to fix dropdown visibility -->
+  <link rel="stylesheet" href="assets/css/critical-dropdown-fix.css"/>
+  <!-- Apple-style enhancements -->
+  <link rel="stylesheet" href="assets/css/apple-enhancements.css"/>
+  <!-- Load critical fixes FIRST -->
+  <script src="assets/js/immediate-fix.js"></script>
+  <script src="assets/js/ultra-performance.js"></script>
+  <script src="assets/js/error-handler.js"></script>
+  <script src="assets/js/input-fix.js"></script>
+  <!-- CRITICAL: Load dropdown fix early -->
+  <script src="assets/js/critical-dropdown-fix.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   <!-- Google APIs -->
@@ -898,6 +911,7 @@
   </script>
   <script src="assets/js/templates.js"></script>
   <script src="assets/js/googlesheets.js"></script>
+  <script src="assets/js/apple-animations.js"></script>
   
   <!-- MongoDB Connection Fix for Vercel -->
   <script>

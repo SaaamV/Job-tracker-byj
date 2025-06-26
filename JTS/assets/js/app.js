@@ -47,12 +47,25 @@ async function loadAllData() {
   try {
     console.log('Loading data...');
     
-    // Load applications with hybrid approach
+    // Check if apiService is available and working
     if (window.apiService) {
-      window.jobTracker.applications = await window.apiService.getApplicationsHybrid();
+      try {
+        // Test connection to backend on correct port
+        const health = await window.apiService.checkHealth();
+        if (health.status === 'OK') {
+          console.log('✅ API connection successful');
+          window.jobTracker.applications = await window.apiService.getApplicationsHybrid();
+        } else {
+          throw new Error('API health check failed');
+        }
+      } catch (apiError) {
+        console.log('⚠️ API unavailable, using localStorage:', apiError.message);
+        window.jobTracker.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+      }
     } else {
       window.jobTracker.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
     }
+    
     console.log(`Loaded ${window.jobTracker.applications.length} applications`);
     
     // Load contacts

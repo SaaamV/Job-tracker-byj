@@ -1,3 +1,6 @@
+// Load environment variables first
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
@@ -88,14 +91,29 @@ function handleOfflineContactsRoute(req, res) {
 // Initialize database connection
 async function initializeDatabase() {
   try {
+    console.log('🔍 Checking MongoDB configuration...');
+    console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+    console.log('MONGODB_URI preview:', process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'undefined');
+    
     if (process.env.MONGODB_URI) {
+      console.log('🚀 Attempting to connect to MongoDB...');
       const connection = await connectDB();
       if (connection) {
         isMongoConnected = true;
-        applicationsRouter = require('./routes/applications');
-        contactsRouter = require('./routes/contacts');
-        console.log('✅ Database connected and routes loaded');
+        try {
+          applicationsRouter = require('./routes/applications');
+          contactsRouter = require('./routes/contacts');
+          console.log('✅ Database connected and routes loaded');
+        } catch (routeError) {
+          console.log('⚠️ Routes failed to load:', routeError.message);
+          isMongoConnected = false;
+        }
+      } else {
+        console.log('⚠️ Database connection returned null - running in offline mode');
       }
+    } else {
+      console.log('⚠️ MONGODB_URI not found in environment variables');
+      console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('MONGO')));
     }
   } catch (error) {
     console.log('⚠️ Running in offline mode:', error.message);

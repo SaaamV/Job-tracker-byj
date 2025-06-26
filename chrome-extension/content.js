@@ -6,8 +6,11 @@ class JobTrackerExtension {
     this.jobData = {};
     this.currentSite = this.detectJobSite();
     this.isTracking = false;
-    this.apiUrl = 'https://job-tracker-42vf48icv-mario263s-projects.vercel.app'; // Updated deployment URL
-    this.backupApiUrl = 'http://localhost:3001'; // Local development URL
+    
+    // FIXED: Use the correct local URL first, then fallback to production
+    this.primaryApiUrl = 'http://localhost:3001'; // Local development URL
+    this.fallbackApiUrl = 'https://job-tracker-42vf48icv-mario263s-projects.vercel.app'; // Production fallback
+    this.frontendUrl = 'http://localhost:8080'; // Local frontend URL
     
     this.init();
   }
@@ -486,7 +489,7 @@ class JobTrackerExtension {
     }
   }
 
-  // FIXED: Enhanced save functionality with proper error handling and sync
+  // FIXED: Enhanced save functionality with proper API handling
   async saveApplication(openTracker = false) {
     const formData = this.collectFormData();
     
@@ -498,28 +501,31 @@ class JobTrackerExtension {
     this.showStatus('Saving application...', 'loading');
 
     try {
-      // FIXED: Always save to Chrome extension storage first
-      await this.saveToExtensionStorage(formData);
+      // Always save to local storage first for immediate response
+      await this.saveToLocalStorage(formData);
       
-      // FIXED: Try to save to both local and remote APIs
+      // Try to save to API (local first, then fallback)
       let apiSaveSuccess = false;
+      let workingApiUrl = null;
       
       try {
         // Try local API first
-        await this.saveToAPI(this.apiUrl, formData);
+        await this.saveToAPI(this.primaryApiUrl, formData);
         apiSaveSuccess = true;
-        this.showStatus('✅ Application saved and synced successfully!', 'success');
+        workingApiUrl = this.primaryApiUrl;
+        this.showStatus('✅ Application saved and synced to local server!', 'success');
       } catch (localError) {
         console.warn('Local API save failed:', localError);
         
         try {
-          // Try backup API
-          await this.saveToAPI(this.backupApiUrl, formData);
+          // Try production API as fallback
+          await this.saveToAPI(this.fallbackApiUrl, formData);
           apiSaveSuccess = true;
+          workingApiUrl = this.fallbackApiUrl;
           this.showStatus('✅ Application saved and synced to cloud!', 'success');
         } catch (remoteError) {
           console.warn('Remote API save failed:', remoteError);
-          this.showStatus('⚠️ Application saved locally - will sync when online', 'warning');
+          this.showStatus('⚠️ Application saved locally - will sync when server is online', 'warning');
         }
       }
 
@@ -531,11 +537,16 @@ class JobTrackerExtension {
         }
         
         if (openTracker) {
-          // FIXED: Try to open local tracker first, then fallback to remote
-          if (apiSaveSuccess) {
-            window.open(this.apiUrl, '_blank');
+          // Open the tracker in the frontend
+          if (apiSaveSuccess && workingApiUrl === this.primaryApiUrl) {
+            // If local API worked, open local frontend
+            window.open(this.frontendUrl, '_blank');
+          } else if (apiSaveSuccess) {
+            // If only production API worked, open production frontend
+            window.open(this.fallbackApiUrl, '_blank');
           } else {
-            window.open(this.backupApiUrl, '_blank');
+            // If no API worked, still try to open local frontend
+            window.open(this.frontendUrl, '_blank');
           }
         }
       }, 2000);
@@ -566,8 +577,8 @@ class JobTrackerExtension {
     };
   }
 
-  // FIXED: Enhanced Chrome extension storage
-  async saveToExtensionStorage(applicationData) {
+  // Enhanced Chrome extension storage
+  async saveToLocalStorage(applicationData) {
     return new Promise((resolve, reject) => {
       try {
         chrome.storage.local.get(['jobApplications'], (result) => {
@@ -607,7 +618,7 @@ class JobTrackerExtension {
     });
   }
 
-  // FIXED: Enhanced API save with better error handling
+  // Enhanced API save with better error handling
   async saveToAPI(apiUrl, applicationData) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -766,322 +777,6 @@ function initializeExtension() {
   const hostname = window.location.hostname.toLowerCase();
   
   console.log('🚀 Initializing Job Tracker Extension on:', hostname);
-  
-  // Create global instance
-  window.jobTrackerExtension = new JobTrackerExtension();
-}
-
-// Wait for DOM to be ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeExtension);
-} else {
-  initializeExtension();
-}
-              </div>
-            </form>
-          </div>
-          
-          <div class="job-tracker-status" id="jt-status-message" style="display: none;"></div>
-        </div>
-      </div>
-    `;
-  }
-
-  setupModalEvents(modal) {
-    // Close modal
-    modal.querySelector('#job-tracker-close').addEventListener('click', () => {
-      modal.remove();
-    });
-
-    modal.querySelector('#jt-cancel').addEventListener('click', () => {
-      modal.remove();
-    });
-
-    // Close on overlay click
-    modal.querySelector('.job-tracker-overlay').addEventListener('click', (e) => {
-      if (e.target.classList.contains('job-tracker-overlay')) {
-        modal.remove();
-      }
-    });
-
-    // Save application
-    modal.querySelector('#jt-save').addEventListener('click', () => {
-      this.saveApplication(false);
-    });
-
-    // Save and open tracker
-    modal.querySelector('#jt-save-open').addEventListener('click', () => {
-      this.saveApplication(true);
-    });
-
-    // Prevent form submission
-    modal.querySelector('#job-tracker-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-    });
-  }
-
-  prefillForm() {
-    const formData = {
-      'jt-jobTitle': this.jobData.jobTitle,
-      'jt-company': this.jobData.company,
-      'jt-jobPortal': this.jobData.jobPortal,
-      'jt-location': this.jobData.location,
-      'jt-jobType': this.jobData.jobType,
-      'jt-salaryRange': this.jobData.salaryRange
-    };
-
-    Object.entries(formData).forEach(([id, value]) => {
-      const element = document.getElementById(id);
-      if (element && value) {
-        element.value = value;
-      }
-    });
-
-    // Set job URL in hidden field
-    const jobUrlInput = document.getElementById('jt-jobUrl');
-    if (jobUrlInput) {
-      jobUrlInput.value = this.jobData.jobUrl;
-    } else {
-      // Create hidden field for job URL
-      const hiddenInput = document.createElement('input');
-      hiddenInput.type = 'hidden';
-      hiddenInput.id = 'jt-jobUrl';
-      hiddenInput.value = this.jobData.jobUrl;
-      document.getElementById('job-tracker-form').appendChild(hiddenInput);
-    }
-  }
-
-  async saveApplication(openTracker = false) {
-    const formData = this.collectFormData();
-    
-    if (!formData.jobTitle || !formData.company) {
-      this.showStatus('Please fill in required fields (Job Title and Company)', 'error');
-      return;
-    }
-
-    this.showStatus('Saving application...', 'loading');
-
-    try {
-      // Save to local storage first (Chrome extension storage)
-      await this.saveToLocalStorage(formData);
-      
-      // Try to save to API
-      try {
-        await this.saveToAPI(formData);
-        this.showStatus('✅ Application saved successfully!', 'success');
-      } catch (apiError) {
-        console.warn('API save failed, saved locally:', apiError);
-        this.showStatus('⚠️ Saved locally (will sync when online)', 'warning');
-      }
-
-      // Close modal after short delay
-      setTimeout(() => {
-        const modal = document.getElementById('job-tracker-modal');
-        if (modal) {
-          modal.remove();
-        }
-        
-        if (openTracker) {
-          // Open main tracker application
-          window.open(this.apiUrl, '_blank');
-        }
-      }, 2000);
-
-    } catch (error) {
-      console.error('Save failed:', error);
-      this.showStatus('❌ Failed to save application', 'error');
-    }
-  }
-
-  collectFormData() {
-    return {
-      jobTitle: document.getElementById('jt-jobTitle').value.trim(),
-      company: document.getElementById('jt-company').value.trim(),
-      jobPortal: document.getElementById('jt-jobPortal').value,
-      status: document.getElementById('jt-status').value,
-      location: document.getElementById('jt-location').value.trim(),
-      priority: document.getElementById('jt-priority').value,
-      jobType: document.getElementById('jt-jobType').value,
-      salaryRange: document.getElementById('jt-salaryRange').value.trim(),
-      notes: document.getElementById('jt-notes').value.trim(),
-      jobUrl: this.jobData.jobUrl || window.location.href,
-      applicationDate: new Date().toISOString().split('T')[0],
-      dateAdded: new Date().toISOString(),
-      id: Date.now() + Math.random(),
-      resumeVersion: '',
-      followUpDate: ''
-    };
-  }
-
-  async saveToLocalStorage(applicationData) {
-    return new Promise((resolve, reject) => {
-      try {
-        chrome.storage.local.get(['jobApplications'], (result) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          
-          const applications = result.jobApplications || [];
-          applications.push(applicationData);
-          
-          chrome.storage.local.set({ jobApplications: applications }, () => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-              return;
-            }
-            console.log('Application saved to Chrome storage:', applicationData.jobTitle);
-            resolve();
-          });
-        });
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  async saveToAPI(applicationData) {
-    const response = await fetch(`${this.apiUrl}/api/applications`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(applicationData)
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  showStatus(message, type) {
-    const statusEl = document.getElementById('jt-status-message');
-    if (statusEl) {
-      statusEl.textContent = message;
-      statusEl.className = `job-tracker-status ${type}`;
-      statusEl.style.display = 'block';
-    }
-  }
-
-  setupAutoDetection() {
-    // Watch for URL changes (for SPAs)
-    let currentUrl = window.location.href;
-    
-    const urlObserver = new MutationObserver(() => {
-      if (window.location.href !== currentUrl) {
-        currentUrl = window.location.href;
-        setTimeout(() => {
-          this.detectJobData();
-        }, 2000); // Wait for content to load
-      }
-    });
-
-    urlObserver.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
-    // Watch for form submissions (application submissions)
-    this.watchForApplicationSubmission();
-  }
-
-  watchForApplicationSubmission() {
-    // Common application form selectors
-    const applicationSelectors = [
-      'button[type="submit"]',
-      'input[type="submit"]',
-      '[class*="apply"]',
-      '[class*="submit"]',
-      '[id*="apply"]',
-      '[id*="submit"]'
-    ];
-
-    applicationSelectors.forEach(selector => {
-      document.addEventListener('click', (e) => {
-        if (e.target.matches(selector)) {
-          const buttonText = e.target.textContent.toLowerCase();
-          if (buttonText.includes('apply') || buttonText.includes('submit')) {
-            // Delay to allow form submission
-            setTimeout(() => {
-              this.showQuickSavePrompt();
-            }, 1000);
-          }
-        }
-      });
-    });
-  }
-
-  showQuickSavePrompt() {
-    // Don't show if already tracking or if modal is open
-    if (this.isTracking || document.getElementById('job-tracker-modal')) {
-      return;
-    }
-
-    // Quick notification to save the application
-    const notification = document.createElement('div');
-    notification.className = 'job-tracker-notification';
-    notification.innerHTML = `
-      <div class="job-tracker-notification-content">
-        <div class="job-tracker-notification-text">
-          <strong>Job application submitted!</strong>
-          <p>Would you like to track this application?</p>
-        </div>
-        <div class="job-tracker-notification-actions">
-          <button class="job-tracker-btn-small job-tracker-btn-primary" id="quick-track">
-            📊 Track It
-          </button>
-          <button class="job-tracker-btn-small job-tracker-btn-cancel" id="quick-dismiss">
-            ✕
-          </button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(notification);
-
-    // Auto-dismiss after 8 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-      }
-    }, 8000);
-
-    // Event listeners
-    notification.querySelector('#quick-track').addEventListener('click', () => {
-      notification.remove();
-      this.showJobTracker();
-    });
-
-    notification.querySelector('#quick-dismiss').addEventListener('click', () => {
-      notification.remove();
-    });
-  }
-}
-
-// Message listener for popup communication
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('Content script received message:', request);
-  
-  if (request.action === 'showJobTracker') {
-    // Initialize extension if not already done
-    if (!window.jobTrackerExtension) {
-      window.jobTrackerExtension = new JobTrackerExtension();
-    } else {
-      window.jobTrackerExtension.showJobTracker();
-    }
-    sendResponse({ success: true });
-  }
-  
-  return true; // Keep message channel open for async response
-});
-
-// Initialize extension based on site
-function initializeExtension() {
-  const hostname = window.location.hostname.toLowerCase();
-  
-  console.log('Initializing Job Tracker Extension on:', hostname);
   
   // Create global instance
   window.jobTrackerExtension = new JobTrackerExtension();

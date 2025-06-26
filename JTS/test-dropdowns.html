@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Tracker - Test Page</title>
+  <link rel="stylesheet" href="assets/css/styles.css"/>
+  <link rel="stylesheet" href="assets/css/enhanced-animations.css"/>
+  <link rel="stylesheet" href="assets/css/input-fix.css"/>
+  <link rel="stylesheet" href="assets/css/critical-dropdown-fix.css"/>
+  <link rel="stylesheet" href="assets/css/apple-enhancements.css"/>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Dropdown Test Page</h1>
+      <p>Testing dropdown text visibility fixes</p>
+    </div>
+    
+    <div class="form-section">
+      <h3>Dropdown Text Visibility Test</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Job Portal Test</label>
+          <select id="testJobPortal">
+            <option value="">Select Portal</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="Indeed">Indeed</option>
+            <option value="Glassdoor">Glassdoor</option>
+            <option value="Company Website">Company Website</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Status Test</label>
+          <select id="testStatus">
+            <option value="Applied">Applied</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Phone Screen">Phone Screen</option>
+            <option value="Interview">Interview</option>
+            <option value="Offer">Offer</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Priority Test</label>
+          <select id="testPriority">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Text Input Test</label>
+          <input type="text" placeholder="Type here to test text visibility">
+        </div>
+      </div>
+      
+      <div style="margin-top: 2rem;">
+        <button class="btn btn-success" onclick="testDropdowns()">Test Dropdown Values</button>
+        <button class="btn" onclick="clearValues()">Clear All</button>
+      </div>
+      
+      <div id="testResults" style="margin-top: 1rem; padding: 1rem; background: #f0f0f0; border-radius: 8px; display: none;">
+        <h4>Test Results:</h4>
+        <div id="resultContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load JavaScript fixes -->
+  <script src="assets/js/critical-dropdown-fix.js"></script>
+  <script src="assets/js/apple-animations.js"></script>
+  
+  <script>
+    function testDropdowns() {
+      const portal = document.getElementById('testJobPortal').value;
+      const status = document.getElementById('testStatus').value;
+      const priority = document.getElementById('testPriority').value;
+      
+      const results = document.getElementById('testResults');
+      const content = document.getElementById('resultContent');
+      
+      content.innerHTML = `
+        <p><strong>Job Portal:</strong> ${portal || 'Not selected'}</p>
+        <p><strong>Status:</strong> ${status}</p>
+        <p><strong>Priority:</strong> ${priority}</p>
+        <p style="color: green; font-weight: bold;">✅ If you can read this text clearly in the dropdowns, the fix is working!</p>
+      `;
+      
+      results.style.display = 'block';
+      
+      // Show notification
+      if (window.showNotification) {
+        window.showNotification('Dropdown test completed! Check if text is visible.', 'success');
+      }
+    }
+    
+    function clearValues() {
+      document.getElementById('testJobPortal').value = '';
+      document.getElementById('testStatus').value = 'Applied';
+      document.getElementById('testPriority').value = 'Medium';
+      document.getElementById('testResults').style.display = 'none';
+      
+      if (window.showNotification) {
+        window.showNotification('Values cleared!', 'info');
+      }
+    }
+    
+    // Test function to force input visibility
+    function runVisibilityTest() {
+      console.log('🧪 Running dropdown visibility test...');
+      
+      const selects = document.querySelectorAll('select');
+      selects.forEach((select, index) => {
+        const computedStyle = window.getComputedStyle(select);
+        console.log(`Select ${index + 1}:`, {
+          color: computedStyle.color,
+          backgroundColor: computedStyle.backgroundColor,
+          visibility: computedStyle.visibility
+        });
+      });
+      
+      console.log('✅ Visibility test complete - check console for results');
+    }
+    
+    // Run test after page loads
+    window.addEventListener('load', () => {
+      setTimeout(runVisibilityTest, 1000);
+    });
+  </script>
+</body>
+</html>
