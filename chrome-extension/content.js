@@ -7,10 +7,10 @@ class JobTrackerExtension {
     this.currentSite = this.detectJobSite();
     this.isTracking = false;
     
-    // FIXED: Use the correct local URL first, then fallback to production
-    this.primaryApiUrl = 'http://localhost:3001'; // Local development URL
-    this.fallbackApiUrl = 'https://job-tracker-42vf48icv-mario263s-projects.vercel.app'; // Production fallback
-    this.frontendUrl = 'http://localhost:8080'; // Local frontend URL
+    // Use production Vercel URL as primary, with local as fallback for development
+    this.primaryApiUrl = 'https://job-tracker-chi-eight.vercel.app'; // Production Vercel URL
+    this.fallbackApiUrl = 'http://localhost:3001'; // Local development fallback
+    this.frontendUrl = 'https://job-tracker-chi-eight.vercel.app'; // Production frontend URL
     
     this.init();
   }

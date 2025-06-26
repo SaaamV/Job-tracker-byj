@@ -2,7 +2,7 @@
 
 class JobTrackerPopup {
   constructor() {
-    this.apiUrl = 'https://job-tracker-42vf48icv-mario263s-projects.vercel.app'; // Updated deployment URL
+    this.apiUrl = 'https://job-tracker-chi-eight.vercel.app'; // Production Vercel URL
     this.init();
   }
 
