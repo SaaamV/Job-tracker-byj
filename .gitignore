@@ -3,8 +3,9 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Environment variables
+# Environment variables (CRITICAL - never commit these)
 .env
 .env.local
 .env.development.local
@@ -14,6 +15,9 @@ yarn-error.log*
 # Build outputs
 dist/
 build/
+.next/
+.nuxt/
+.vercel/
 *.tgz
 *.tar.gz
 
@@ -26,13 +30,7 @@ pids
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov
-
-# NYC test coverage
 .nyc_output
-
-# Dependency directories
-node_modules/
-jspm_packages/
 
 # Optional npm cache directory
 .npm
@@ -49,41 +47,75 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
-
-# Vercel
-.vercel
-
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
 # Windows
 Thumbs.db
+Thumbs.db:encryptable
 ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
 Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
 
 # VS Code
 .vscode/
+*.code-workspace
 
-# WebStorm
+# WebStorm/IntelliJ
 .idea/
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
 
 # Temporary files
 *.tmp
 *.temp
+*.log
+*.cache
 
 # Logs
-logs
+logs/
 *.log
 
-# Chrome extension (if we don't want to track the packaged extension)
+# Chrome extension build files
 chrome-extension/*.crx
 chrome-extension/*.pem
+chrome-extension/build/
 
-# Database files (if any)
+# Database files
 *.db
 *.sqlite
 *.sqlite3
@@ -91,3 +123,42 @@ chrome-extension/*.pem
 # Backup files
 *.backup
 *.bak
+*.old
+*.orig
+
+# Shell script outputs
+*.out
+
+# Compressed files
+*.zip
+*.rar
+*.7z
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Editor backup files
+*~
+#*#
+*.swp
+*.swo
+
+# Package files
+*.dmg
+*.pkg
+*.deb
+*.rpm
+
+# Generated documentation
+docs/_build/
+
+# Local development only files
+debug.sh
+test.sh
+local-*.sh
