@@ -489,7 +489,7 @@ class JobTrackerExtension {
     }
   }
 
-  // FIXED: Enhanced save functionality with proper API handling
+  // FIXED: Enhanced save functionality with immediate website notification
   async saveApplication(openTracker = false) {
     const formData = this.collectFormData();
     
@@ -504,6 +504,9 @@ class JobTrackerExtension {
       // Always save to local storage first for immediate response
       await this.saveToLocalStorage(formData);
       
+      // IMPORTANT: Notify website immediately about new application
+      this.notifyWebsiteOfNewApplication(formData);
+      
       // Try to save to API (local first, then fallback)
       let apiSaveSuccess = false;
       let workingApiUrl = null;
@@ -513,20 +516,10 @@ class JobTrackerExtension {
         await this.saveToAPI(this.primaryApiUrl, formData);
         apiSaveSuccess = true;
         workingApiUrl = this.primaryApiUrl;
-        this.showStatus('✅ Application saved and synced to local server!', 'success');
+        this.showStatus('✅ Application saved and synced to cloud!', 'success');
       } catch (localError) {
-        console.warn('Local API save failed:', localError);
-        
-        try {
-          // Try production API as fallback
-          await this.saveToAPI(this.fallbackApiUrl, formData);
-          apiSaveSuccess = true;
-          workingApiUrl = this.fallbackApiUrl;
-          this.showStatus('✅ Application saved and synced to cloud!', 'success');
-        } catch (remoteError) {
-          console.warn('Remote API save failed:', remoteError);
-          this.showStatus('⚠️ Application saved locally - will sync when server is online', 'warning');
-        }
+        console.warn('API save failed:', localError);
+        this.showStatus('✅ Application saved locally - will sync when online', 'success');
       }
 
       // Close modal after delay
@@ -538,16 +531,7 @@ class JobTrackerExtension {
         
         if (openTracker) {
           // Open the tracker in the frontend
-          if (apiSaveSuccess && workingApiUrl === this.primaryApiUrl) {
-            // If local API worked, open local frontend
-            window.open(this.frontendUrl, '_blank');
-          } else if (apiSaveSuccess) {
-            // If only production API worked, open production frontend
-            window.open(this.fallbackApiUrl, '_blank');
-          } else {
-            // If no API worked, still try to open local frontend
-            window.open(this.frontendUrl, '_blank');
-          }
+          window.open(this.frontendUrl, '_blank');
         }
       }, 2000);
 
@@ -616,6 +600,37 @@ class JobTrackerExtension {
         }
       }
     });
+  }
+
+  // NEW: Notify website immediately about new application
+  notifyWebsiteOfNewApplication(applicationData) {
+    try {
+      // Try to find and notify any open job tracker tabs
+      chrome.tabs.query({ url: `${this.frontendUrl}/*` }, (tabs) => {
+        tabs.forEach(tab => {
+          chrome.tabs.sendMessage(tab.id, {
+            action: 'applicationAdded',
+            application: applicationData
+          }, (response) => {
+            if (chrome.runtime.lastError) {
+              console.log('Could not notify tab:', chrome.runtime.lastError.message);
+            } else {
+              console.log('✅ Notified website tab about new application');
+            }
+          });
+        });
+      });
+      
+      // Also trigger storage event for immediate sync
+      const event = new CustomEvent('applicationAdded', {
+        detail: applicationData
+      });
+      window.dispatchEvent(event);
+      
+      console.log('✅ Application notification sent');
+    } catch (error) {
+      console.warn('Failed to notify website:', error);
+    }
   }
 
   // Enhanced API save with better error handling

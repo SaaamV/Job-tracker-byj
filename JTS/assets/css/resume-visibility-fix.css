@@ -1,0 +1,126 @@
+/* URGENT Resume Section Fix - Force Visible Text */
+
+/* Target the specific resume list container */
+#resumesList {
+  background: transparent !important;
+}
+
+/* Force all content in resume section to have dark text on light background */
+#resumesList > div,
+#resumesList div[style*="background"],
+div[style*="border: 1px solid #ddd"] {
+  background: #f9f9f9 !important;
+  color: #333 !important;
+  border: 1px solid #ddd !important;
+}
+
+/* Force all text elements to be dark */
+#resumesList h4,
+#resumesList p,
+#resumesList strong,
+#resumesList span,
+#resumesList div {
+  color: #333 !important;
+}
+
+/* Override any inline styles */
+#resumesList [style*="color"] {
+  color: #333 !important;
+}
+
+/* Make sure resume cards are visible */
+.resume-card {
+  background: #f9f9f9 !important;
+  color: #333 !important;
+  border: 1px solid #ddd !important;
+  padding: 16px !important;
+  margin: 10px 0 !important;
+  border-radius: 8px !important;
+}
+
+/* Resume card text elements */
+.resume-card * {
+  color: #333 !important;
+  background: transparent !important;
+}
+
+.resume-card h4 {
+  color: #333 !important;
+  margin: 0 0 8px 0 !important;
+}
+
+.resume-card p {
+  color: #666 !important;
+  margin: 4px 0 !important;
+}
+
+.resume-card strong {
+  color: #333 !important;
+}
+
+/* Resume buttons - keep them colored */
+.resume-card button {
+  background: #007bff !important;
+  color: white !important;
+  border: none !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+}
+
+.resume-card .btn-danger {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+/* CV Preview fixes */
+.cv-preview {
+  background: white !important;
+  color: #333 !important;
+  border: 1px solid #ddd !important;
+}
+
+.cv-preview * {
+  color: #333 !important;
+}
+
+/* Force override any glassmorphism effects in resume section */
+#resumes .form-section {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: none !important;
+}
+
+/* Dark mode specific fixes */
+@media (prefers-color-scheme: dark) {
+  #resumesList > div,
+  #resumesList div[style*="background"],
+  div[style*="border: 1px solid #ddd"] {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+    border: 1px solid #48484a !important;
+  }
+  
+  .resume-card {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+    border: 1px solid #48484a !important;
+  }
+  
+  .resume-card * {
+    color: #ffffff !important;
+  }
+  
+  .resume-card p {
+    color: #a1a1a6 !important;
+  }
+  
+  .cv-preview {
+    background: #1c1c1e !important;
+    color: #ffffff !important;
+    border: 1px solid #48484a !important;
+  }
+  
+  .cv-preview * {
+    color: #ffffff !important;
+  }
+}
