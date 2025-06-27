@@ -1,0 +1,67 @@
+/* TARGETED FIX: My Resumes Section Background */
+
+/* Force the My Resumes section to have gray background like other sections */
+#resumesList,
+#resumesList > div,
+#resumesList .resume-card {
+  background: #f5f5f7 !important;
+  border: 1px solid #e5e5e7 !important;
+  color: #333 !important;
+}
+
+/* Specifically target the resume cards in the list */
+div[style*="border: 1px solid #ddd"],
+div[style*="background: #f9f9f9"] {
+  background: #f5f5f7 !important;
+  border: 1px solid #e5e5e7 !important;
+}
+
+/* Override any inline styles that might be setting white background */
+#resumesList div[style] {
+  background: #f5f5f7 !important;
+  border: 1px solid #e5e5e7 !important;
+  color: #333 !important;
+}
+
+/* Make sure text is visible */
+#resumesList h4,
+#resumesList p,
+#resumesList strong,
+#resumesList span {
+  color: #333 !important;
+  background: transparent !important;
+}
+
+/* Ensure buttons remain properly styled */
+#resumesList button {
+  background: #007bff !important;
+  color: white !important;
+  border: none !important;
+}
+
+#resumesList .btn-danger {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  #resumesList,
+  #resumesList > div,
+  #resumesList .resume-card,
+  div[style*="border: 1px solid #ddd"],
+  div[style*="background: #f9f9f9"] {
+    background: #2c2c2e !important;
+    border: 1px solid #48484a !important;
+    color: #ffffff !important;
+  }
+  
+  #resumesList h4,
+  #resumesList strong {
+    color: #ffffff !important;
+  }
+  
+  #resumesList p {
+    color: #a1a1a6 !important;
+  }
+}

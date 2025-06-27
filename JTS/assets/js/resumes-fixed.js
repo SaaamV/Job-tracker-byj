@@ -121,31 +121,64 @@
 
         resumes.forEach(resume => {
             const card = document.createElement('div');
+            
+            // CRITICAL: Set ID and class for CSS targeting
+            card.id = `resume-card-${resume.id}`;
             card.className = 'resume-card';
-            card.style.cssText = `
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                padding: 16px;
-                margin: 10px 0;
-                background: #f9f9f9;
-            `;
+            
+            // FORCE GRAY BACKGROUND - NEVER WHITE!
+            card.setAttribute('style', `
+                background: #f5f5f7 !important;
+                border: 1px solid #e5e5e7 !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 10px 0 !important;
+                color: #333 !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            `);
             
             card.innerHTML = `
-                <div class="resume-info" style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 8px 0; color: #333;">${resume.name}</h4>
-                        <p style="margin: 4px 0; color: #666;"><strong>Type:</strong> ${resume.type}</p>
-                        <p style="margin: 4px 0; color: #666;"><strong>File:</strong> ${resume.fileName} (${formatFileSize(resume.fileSize)})</p>
-                        <p style="margin: 4px 0; color: #666;"><strong>Uploaded:</strong> ${new Date(resume.uploadDate).toLocaleDateString()}</p>
-                        ${resume.description ? `<p style="margin: 4px 0; color: #666;"><strong>Description:</strong> ${resume.description}</p>` : ''}
+                <div class="resume-info" style="display: flex; justify-content: space-between; align-items: flex-start; background: transparent !important;">
+                    <div style="flex: 1; background: transparent !important;">
+                        <h4 style="margin: 0 0 8px 0; color: #333 !important; font-weight: 600; background: transparent !important;">${resume.name}</h4>
+                        <p style="margin: 4px 0; color: #666 !important; background: transparent !important;"><strong style="color: #333 !important; background: transparent !important;">Type:</strong> ${resume.type}</p>
+                        <p style="margin: 4px 0; color: #666 !important; background: transparent !important;"><strong style="color: #333 !important; background: transparent !important;">File:</strong> ${resume.fileName} (${formatFileSize(resume.fileSize)})</p>
+                        <p style="margin: 4px 0; color: #666 !important; background: transparent !important;"><strong style="color: #333 !important; background: transparent !important;">Uploaded:</strong> ${new Date(resume.uploadDate).toLocaleDateString()}</p>
+                        ${resume.description ? `<p style="margin: 4px 0; color: #666 !important; background: transparent !important;"><strong style="color: #333 !important; background: transparent !important;">Description:</strong> ${resume.description}</p>` : ''}
                     </div>
-                    <div class="resume-actions" style="display: flex; gap: 8px; flex-direction: column;">
-                        <button class="btn" onclick="downloadResume(${resume.id})" style="padding: 6px 12px; border: 1px solid #007bff; background: #007bff; color: white; border-radius: 4px; cursor: pointer;">Download</button>
-                        <button class="btn btn-danger" onclick="deleteResume(${resume.id})" style="padding: 6px 12px; border: 1px solid #dc3545; background: #dc3545; color: white; border-radius: 4px; cursor: pointer;">Delete</button>
+                    <div class="resume-actions" style="display: flex; gap: 8px; flex-direction: column; background: transparent !important;">
+                        <button class="btn download-btn" onclick="downloadResume(${resume.id})" style="padding: 6px 12px; border: none; background: #007bff !important; color: white !important; border-radius: 4px; cursor: pointer;">Download</button>
+                        <button class="btn btn-danger delete-btn" onclick="deleteResume(${resume.id})" style="padding: 6px 12px; border: none; background: #dc3545 !important; color: white !important; border-radius: 4px; cursor: pointer;">Delete</button>
                     </div>
                 </div>
             `;
+            
             resumesList.appendChild(card);
+            
+            // AGGRESSIVE: Force background again after DOM insertion
+            requestAnimationFrame(() => {
+                card.style.setProperty('background', '#f5f5f7', 'important');
+                card.style.setProperty('border', '1px solid #e5e5e7', 'important');
+                card.style.setProperty('color', '#333', 'important');
+                
+                // Also fix all child elements
+                const allChildren = card.querySelectorAll('*:not(button)');
+                allChildren.forEach(child => {
+                    if (!child.classList.contains('btn')) {
+                        child.style.setProperty('background', 'transparent', 'important');
+                        child.style.setProperty('color', child.tagName === 'STRONG' ? '#333' : '#666', 'important');
+                    }
+                });
+            });
+            
+            // Double-check after a short delay
+            setTimeout(() => {
+                if (card.style.background !== 'rgb(245, 245, 247)') {
+                    card.style.setProperty('background', '#f5f5f7', 'important');
+                    console.log('🔧 Fixed resume card background that tried to turn white');
+                }
+            }, 500);
         });
         
         console.log('Rendered resumes:', resumes.length);
