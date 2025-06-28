@@ -4,6 +4,50 @@
   
   console.log('🎨 Loading Apple-inspired animations...');
   
+  // ===== USER INPUT TRACKING =====
+  // Track user input state to disable animations during typing
+  let isUserTyping = false;
+  let typingTimeout = null;
+  
+  function setupTypingDetection() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+      // User starts typing
+      input.addEventListener('input', function() {
+        if (!isUserTyping) {
+          isUserTyping = true;
+          document.body.classList.add('user-typing');
+          console.log('🔒 User started typing - animations paused');
+        }
+        
+        // Reset timeout on every keystroke
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          isUserTyping = false;
+          document.body.classList.remove('user-typing');
+          console.log('🔓 User stopped typing - animations resumed');
+        }, 2000); // 2 seconds after last keystroke
+      });
+      
+      // User focuses on input
+      input.addEventListener('focus', function() {
+        isUserTyping = true;
+        document.body.classList.add('user-typing');
+        clearTimeout(typingTimeout);
+      });
+      
+      // User leaves input
+      input.addEventListener('blur', function() {
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          isUserTyping = false;
+          document.body.classList.remove('user-typing');
+        }, 500); // Short delay after blur
+      });
+    });
+  }
+  
   // Particle System
   function createParticleSystem() {
     const container = document.createElement('div');
@@ -91,12 +135,14 @@
     });
   }
   
-  // Magnetic Button Effects
+  // Magnetic Button Effects - WITH USER TYPING CHECK
   function addMagneticEffects() {
     const buttons = document.querySelectorAll('.btn');
     
     buttons.forEach(button => {
       button.addEventListener('mouseenter', function() {
+        // Don't animate if user is typing
+        if (isUserTyping) return;
         this.style.transform = 'translateY(-3px) scale(1.02)';
       });
       
@@ -109,6 +155,8 @@
       });
       
       button.addEventListener('mouseup', function() {
+        // Don't animate if user is typing
+        if (isUserTyping) return;
         this.style.transform = 'translateY(-3px) scale(1.02)';
       });
     });
@@ -141,12 +189,15 @@
     });
   }
   
-  // Enhanced Hover Effects for Cards
+  // Enhanced Hover Effects for Cards - WITH USER TYPING CHECK
   function enhanceCardHoverEffects() {
     const cards = document.querySelectorAll('.form-section, .stat-card, .chart-container');
     
     cards.forEach(card => {
       card.addEventListener('mouseenter', function(e) {
+        // Don't animate if user is typing
+        if (isUserTyping) return;
+        
         const rect = this.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -165,6 +216,9 @@
       });
       
       card.addEventListener('mousemove', function(e) {
+        // Don't animate if user is typing
+        if (isUserTyping) return;
+        
         const rect = this.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -249,7 +303,7 @@
     });
   }
   
-  // Enhanced Input Focus Effects
+  // Enhanced Input Focus Effects - MODIFIED FOR STATIC BEHAVIOR DURING TYPING
   function enhanceInputFocus() {
     const inputs = document.querySelectorAll('input, select, textarea');
     
@@ -257,12 +311,19 @@
       input.addEventListener('focus', function() {
         this.parentElement.classList.add('focused');
         
-        // Add subtle scale animation
-        this.style.transform = 'translateY(-2px) scale(1.01)';
+        // Only add transform animation if user is not typing
+        if (!isUserTyping) {
+          this.style.transform = 'translateY(-2px) scale(1.01)';
+        }
       });
       
       input.addEventListener('blur', function() {
         this.parentElement.classList.remove('focused');
+        this.style.transform = 'translateY(0) scale(1)';
+      });
+      
+      // Remove transforms when user starts typing
+      input.addEventListener('input', function() {
         this.style.transform = 'translateY(0) scale(1)';
       });
     });
@@ -365,6 +426,9 @@
     // Setup performance optimizations first
     setupPerformanceOptimizations();
     
+    // Setup typing detection - CRITICAL FOR FIXING MOVEMENT ISSUE
+    setupTypingDetection();
+    
     // Check if reduced motion is enabled
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
@@ -395,6 +459,7 @@
   
   // Re-enhance elements after dynamic content changes
   window.enhanceNewElements = function() {
+    setupTypingDetection(); // Re-setup typing detection for new elements
     addMagneticEffects();
     enhanceInputFocus();
     animateCounters();

@@ -2,7 +2,7 @@
 
 class JobTrackerBackground {
   constructor() {
-    this.apiUrl = 'https://job-tracker-mario263.vercel.app/api';
+    this.apiUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app/api';
     this.init();
   }
 
@@ -60,7 +60,7 @@ class JobTrackerBackground {
 
     // Open welcome page
     chrome.tabs.create({
-      url: 'https://job-tracker-chi-eight.vercel.app/#'
+      url: 'https://job-tracker-git-main-mario263s-projects.vercel.app/#'
     });
   }
 

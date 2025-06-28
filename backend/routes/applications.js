@@ -12,10 +12,17 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch applications' });
   }
 });
-
 // POST new application
 router.post('/', async (req, res) => {
   try {
+    // 🚫 Remove _id and id if frontend accidentally sends them
+    if ('_id' in req.body) {
+      delete req.body._id;
+    }
+    if ('id' in req.body) {
+      delete req.body.id;
+    }
+
     const application = new Application(req.body);
     const savedApplication = await application.save();
     res.status(201).json(savedApplication);
@@ -24,6 +31,17 @@ router.post('/', async (req, res) => {
     res.status(400).json({ error: 'Failed to create application', details: error.message });
   }
 });
+// // POST new application
+// router.post('/', async (req, res) => {
+//   try {
+//     const application = new Application(req.body);
+//     const savedApplication = await application.save();
+//     res.status(201).json(savedApplication);
+//   } catch (error) {
+//     console.error('Error creating application:', error);
+//     res.status(400).json({ error: 'Failed to create application', details: error.message });
+//   }
+// });
 
 // PUT update application
 router.put('/:id', async (req, res) => {

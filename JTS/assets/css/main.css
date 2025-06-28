@@ -1,0 +1,2695 @@
+
+
+/* ===== Styles ===== */
+/* Modern Apple-inspired CSS for Job Tracker */
+
+/* CSS Variables for Dynamic Theming */
+:root {
+  /* Apple-inspired Color Palette */
+  --primary: #007AFF;
+  --primary-light: #5AC8FA;
+  --primary-dark: #0051D5;
+  --secondary: #34C759;
+  --warning: #FF9500;
+  --danger: #FF3B30;
+  --success: #34C759;
+  
+  /* Neutral Colors */
+  --background: #F2F2F7;
+  --surface: #FFFFFF;
+  --surface-secondary: #F9F9F9;
+  --surface-tertiary: rgba(255, 255, 255, 0.85);
+  
+  /* Text Colors */
+  --text-primary: #1D1D1F;
+  --text-secondary: #8E8E93;
+  --text-tertiary: #C7C7CC;
+  
+  /* Border and Shadow */
+  --border: rgba(0, 0, 0, 0.1);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-large: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #000000;
+    --surface: #1C1C1E;
+    --surface-secondary: #2C2C2E;
+    --surface-tertiary: rgba(28, 28, 30, 0.85);
+    
+    --text-primary: #FFFFFF;
+    --text-secondary: #8E8E93;
+    --text-tertiary: #48484A;
+    
+    --border: rgba(255, 255, 255, 0.15);
+    --glass-bg: rgba(0, 0, 0, 0.25);
+    --glass-border: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Force white text in dark mode */
+  input, select, textarea {
+    color: #FFFFFF !important;
+    background: #2c2c2e !important; /* Dark gray for dark mode */
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    color: #FFFFFF !important;
+    background: #38383a !important; /* Slightly lighter gray on focus */
+  }
+  
+  input:hover, select:hover, textarea:hover {
+    background: #38383a !important;
+  }
+  
+  select option {
+    color: #FFFFFF !important;
+    background: #1C1C1E !important;
+  }
+}
+
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background: var(--background);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Animated Background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3), transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3), transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 226, 0.3), transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-20px) rotate(0.5deg); }
+  66% { transform: translateY(-10px) rotate(-0.5deg); }
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  position: relative;
+  z-index: 1;
+}
+
+/* Header with Glassmorphism */
+.header {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-xl);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--glass-shadow);
+  animation: slideInDown 0.8s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 3s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(10deg); }
+}
+
+.header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Tabs with Modern Design */
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xs);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-large);
+  overflow-x: auto;
+  animation: slideInUp 0.8s ease-out 0.2s both;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+  white-space: nowrap;
+  min-width: 120px;
+  z-index: 1;
+}
+
+.tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: var(--radius-lg);
+  z-index: -1;
+}
+
+.tab:hover::before {
+  opacity: 0.1;
+}
+
+.tab.active {
+  color: white;
+  transform: translateY(-2px);
+  z-index: 10;
+  position: relative;
+  font-weight: 600;
+}
+
+.tab.active::before {
+  opacity: 1;
+}
+
+/* Ensure text is always visible */
+.tab,
+.tab.active {
+  font-size: 0.95rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove problematic span styling */
+.tab.active span,
+.tab span {
+  position: relative;
+  z-index: 11;
+  color: inherit;
+}
+
+/* Tab Content with Staggered Animation */
+.tab-content {
+  display: none;
+  animation: fadeInScale 0.6s ease-out;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Form Sections with Glass Effect */
+.form-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--glass-shadow);
+  animation: slideInUp 0.6s ease-out;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(31, 38, 135, 0.4);
+}
+
+.form-section h3 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  position: relative;
+}
+
+.form-section h3::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 2px;
+}
+
+/* Form Grid with Responsive Design */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Modern Input Styles with Gray Background */
+input, select, textarea {
+  padding: var(--spacing-md);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #e8e8ed !important; /* Medium gray background to match image */
+  color: var(--text-primary) !important;
+  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+  transform: translateY(-2px);
+  background: #e0e0e5 !important; /* Slightly darker gray on focus */
+  color: var(--text-primary) !important;
+}
+
+input:hover, select:hover, textarea:hover {
+  border-color: var(--primary-light);
+  background: #e0e0e5 !important;
+}
+
+/* Fix for select options */
+select option {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Fix for placeholder text */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary) !important;
+  opacity: 0.7;
+}
+
+/* Force text color in all states */
+input[type="text"],
+input[type="email"],
+input[type="url"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea {
+  color: var(--text-primary) !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+  color: var(--text-primary) !important;
+  background: var(--surface) !important;
+}
+
+/* Modern Button Styles */
+.btn {
+  padding: var(--spacing-md) var(--spacing-xl);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  text-decoration: none;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(-1px);
+}
+
+/* Button Variants */
+.btn-success {
+  background: linear-gradient(135deg, var(--success), #30d158);
+  color: white;
+  border-color: var(--success);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border-color: var(--primary);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--danger), #ff6b6b);
+  color: white;
+  border-color: var(--danger);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, var(--warning), #ffa726);
+  color: white;
+  border-color: var(--warning);
+}
+
+/* Stats Grid with Card Animation */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  text-align: center;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInUp 0.6s ease-out;
+  animation-delay: calc(var(--delay, 0) * 0.1s);
+}
+
+.stat-card:nth-child(1) { --delay: 1; }
+.stat-card:nth-child(2) { --delay: 2; }
+.stat-card:nth-child(3) { --delay: 3; }
+.stat-card:nth-child(4) { --delay: 4; }
+.stat-card:nth-child(5) { --delay: 5; }
+.stat-card:nth-child(6) { --delay: 6; }
+
+.stat-card:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 20px 50px rgba(31, 38, 135, 0.4);
+}
+
+.stat-card h3 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card p {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Modern Data Table */
+.data-table {
+  width: 100%;
+  background: var(--surface);
+  border-collapse: collapse;
+  table-layout: auto; /* Allow table to adjust column widths automatically */
+  margin: 0;
+  min-width: 900px; /* Ensure minimum width for proper display */
+}
+
+.data-table th {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: var(--spacing-lg);
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Define minimum column widths for better content visibility */
+.data-table th:nth-child(1) { min-width: 90px; } /* DATE */
+.data-table th:nth-child(2) { min-width: 180px; } /* JOB TITLE */
+.data-table th:nth-child(3) { min-width: 140px; } /* COMPANY */
+.data-table th:nth-child(4) { min-width: 100px; } /* PORTAL */
+.data-table th:nth-child(5) { min-width: 120px; } /* STATUS */
+.data-table th:nth-child(6) { min-width: 100px; } /* RESUME */
+.data-table th:nth-child(7) { min-width: 80px; }  /* PRIORITY */
+.data-table th:nth-child(8) { min-width: 100px; } /* FOLLOW-UP */
+.data-table th:nth-child(9) { min-width: 120px; } /* ACTIONS */
+
+.data-table td {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.3s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  vertical-align: middle;
+}
+
+/* Apply same minimum width constraints to td */
+.data-table td:nth-child(1) { min-width: 90px; }
+.data-table td:nth-child(2) { min-width: 180px; }
+.data-table td:nth-child(3) { min-width: 140px; }
+.data-table td:nth-child(4) { min-width: 100px; }
+.data-table td:nth-child(5) { min-width: 120px; }
+.data-table td:nth-child(6) { min-width: 100px; }
+.data-table td:nth-child(7) { min-width: 80px; }
+.data-table td:nth-child(8) { min-width: 100px; }
+.data-table td:nth-child(9) { min-width: 120px; }
+
+.data-table tr:hover td {
+  background: var(--surface-secondary);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table Container for Horizontal Scroll */
+.table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-large);
+  background: var(--surface);
+  animation: slideInUp 0.6s ease-out;
+}
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--surface-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: var(--radius-sm);
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+}
+
+/* Chart Containers with Glass Effect */
+.chart-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--glass-shadow);
+  animation: slideInUp 0.6s ease-out;
+  transition: transform 0.3s ease;
+}
+
+.chart-container:hover {
+  transform: translateY(-5px);
+}
+
+.chart-container h3 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.chart-container canvas {
+  border-radius: var(--radius-md);
+}
+
+/* Filter Section */
+.filter-section {
+  background: var(--surface-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--border);
+}
+
+/* Contact Cards */
+.contact-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInUp 0.6s ease-out;
+}
+
+.contact-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(31, 38, 135, 0.4);
+}
+
+.contact-card h4 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+}
+
+.contact-card p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.contact-card .contact-actions {
+  margin-top: var(--spacing-md);
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-applied { background: var(--primary); color: white; }
+.status-interview { background: var(--warning); color: white; }
+.status-offer { background: var(--success); color: white; }
+.status-rejected { background: var(--danger); color: white; }
+.status-review { background: var(--primary-light); color: white; }
+
+/* Priority Indicators */
+.priority-high { 
+  border-left: 4px solid var(--danger);
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.priority-medium { 
+  border-left: 4px solid var(--warning);
+  background: rgba(255, 149, 0, 0.1);
+}
+
+.priority-low { 
+  border-left: 4px solid var(--success);
+  background: rgba(52, 199, 89, 0.1);
+}
+
+/* Loading States */
+.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Export Section */
+.export-section {
+  text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--glass-shadow);
+}
+
+.export-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--spacing-lg);
+}
+
+/* Google Sheets Integration */
+.google-sheets-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--glass-shadow);
+}
+
+.auth-section, .sync-options {
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+.sync-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--spacing-lg);
+}
+
+.sync-status {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+}
+
+/* Template Preview */
+.template-preview {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+  font-family: 'Georgia', serif;
+  line-height: 1.8;
+  box-shadow: var(--shadow);
+}
+
+/* CV Preview */
+.cv-preview {
+  margin-top: var(--spacing-xl);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-large);
+  background: var(--surface);
+}
+
+/* Resume Cards */
+.resume-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.resume-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(31, 38, 135, 0.4);
+}
+
+/* File Upload Styling */
+input[type="file"] {
+  width: 100%;
+  padding: var(--spacing-lg);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-secondary);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+input[type="file"]:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+/* Fix file input text visibility */
+input[type="file"]::-webkit-file-upload-button {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-right: var(--spacing-md);
+  font-weight: 500;
+}
+
+input[type="file"]::file-selector-button {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-right: var(--spacing-md);
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-md);
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .tab {
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  /* Mobile table improvements */
+  .table-container {
+    font-size: 0.85rem;
+    border-radius: var(--radius-md);
+  }
+  
+  .data-table {
+    min-width: 800px; /* Reduced minimum width for mobile */
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  /* Adjust minimum widths for mobile */
+  .data-table th:nth-child(1),
+  .data-table td:nth-child(1) { min-width: 80px; }
+  .data-table th:nth-child(2),
+  .data-table td:nth-child(2) { min-width: 150px; }
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3) { min-width: 120px; }
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4) { min-width: 80px; }
+  .data-table th:nth-child(5),
+  .data-table td:nth-child(5) { min-width: 100px; }
+  .data-table th:nth-child(6),
+  .data-table td:nth-child(6) { min-width: 80px; }
+  .data-table th:nth-child(7),
+  .data-table td:nth-child(7) { min-width: 70px; }
+  .data-table th:nth-child(8),
+  .data-table td:nth-child(8) { min-width: 90px; }
+  .data-table th:nth-child(9),
+  .data-table td:nth-child(9) { min-width: 100px; }
+  
+  .export-buttons,
+  .sync-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .contact-card .contact-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header {
+    padding: var(--spacing-lg);
+  }
+  
+  .form-section {
+    padding: var(--spacing-lg);
+  }
+  
+  .stat-card {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus Indicators */
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-secondary);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white !important;
+  }
+  
+  .tabs,
+  .btn,
+  .form-section {
+    display: none !important;
+  }
+  
+  .data-table {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+}
+
+/* Success Messages */
+.success-message {
+  background: linear-gradient(135deg, var(--success), #30d158);
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin: var(--spacing-md) 0;
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* Error Messages */
+.error-message {
+  background: linear-gradient(135deg, var(--danger), #ff6b6b);
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin: var(--spacing-md) 0;
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* Info Messages */
+.info-message {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin: var(--spacing-md) 0;
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* Tooltip Styles */
+.tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: var(--surface);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+}
+
+/* Micro-interactions */
+.clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.clickable:active {
+  transform: scale(0.98);
+}
+
+/* Special Effects */
+.glow {
+  box-shadow: 0 0 20px rgba(0, 122, 255, 0.5);
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* ===== Enhanced Animations ===== */
+/* Enhanced Apple-Inspired Animations - Overlay for existing styles */
+
+/* Enhanced Animated Background with Particles */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.4), transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.4), transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 226, 0.4), transparent 50%);
+  animation: backgroundFlow 30s ease-in-out infinite;
+  z-index: -2;
+  pointer-events: none;
+}
+
+@keyframes backgroundFlow {
+  0%, 100% { 
+    transform: translateX(0) translateY(0) rotate(0deg);
+    filter: hue-rotate(0deg);
+  }
+  25% { 
+    transform: translateX(-20px) translateY(-30px) rotate(0.5deg);
+    filter: hue-rotate(90deg);
+  }
+  50% { 
+    transform: translateX(20px) translateY(-20px) rotate(-0.5deg);
+    filter: hue-rotate(180deg);
+  }
+  75% { 
+    transform: translateX(-10px) translateY(10px) rotate(0.3deg);
+    filter: hue-rotate(270deg);
+  }
+}
+
+/* Particle System */
+.particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(45deg, var(--primary), var(--primary-light));
+  border-radius: 50%;
+  animation: particleFloat 20s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(100vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100px) translateX(200px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Enhanced Header with 3D Effect */
+.header {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+.header h1 {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light), var(--secondary));
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 4s ease-in-out infinite;
+  text-shadow: 0 0 30px rgba(0, 122, 255, 0.3);
+}
+
+@keyframes gradientFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.header p {
+  animation: textGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes textGlow {
+  0% { text-shadow: 0 0 5px rgba(142, 142, 147, 0.5); }
+  100% { text-shadow: 0 0 20px rgba(142, 142, 147, 0.8); }
+}
+
+/* Enhanced Tabs with Morphing Effect */
+.tabs {
+  position: relative;
+}
+
+.tab-indicator {
+  position: absolute;
+  height: calc(100% - 8px);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: var(--radius-lg);
+  top: 4px;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 0;
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+  pointer-events: none;
+}
+
+/* Enhanced Tab hover effects */
+.tab:hover {
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.tab.active {
+  color: white;
+  font-weight: 600;
+  transform: translateY(-1px);
+}
+
+/* Enhanced Cards with 3D Hover Effects */
+.form-section,
+.stat-card,
+.contact-card,
+.chart-container {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.form-section::before,
+.stat-card::before,
+.contact-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent, rgba(255, 255, 255, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.form-section:hover::before,
+.stat-card:hover::before,
+.contact-card:hover::before {
+  opacity: 1;
+}
+
+.form-section:hover {
+  transform: translateY(-10px) rotateX(5deg);
+  box-shadow: 0 25px 50px rgba(31, 38, 135, 0.4);
+}
+
+/* Enhanced Stats Cards with Counter Animation */
+.stat-card {
+  cursor: pointer;
+  animation: statCardFloat 6s ease-in-out infinite;
+  animation-delay: calc(var(--delay, 0) * 0.5s);
+}
+
+.stat-card:nth-child(1) { --delay: 0; }
+.stat-card:nth-child(2) { --delay: 1; }
+.stat-card:nth-child(3) { --delay: 2; }
+.stat-card:nth-child(4) { --delay: 3; }
+.stat-card:nth-child(5) { --delay: 4; }
+.stat-card:nth-child(6) { --delay: 5; }
+
+@keyframes statCardFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+.stat-card:hover {
+  transform: translateY(-15px) scale(1.05) rotateY(5deg);
+  box-shadow: 0 30px 60px rgba(31, 38, 135, 0.4);
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.stat-card:hover::after {
+  left: 100%;
+}
+
+/* Enhanced Buttons with Ripple Effect */
+.btn {
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+  pointer-events: none;
+}
+
+.btn:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+.btn:hover {
+  transform: translateY(-3px) rotateX(5deg);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced Form Inputs with Focus Effects - FIXED TEXT VISIBILITY */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 
+    0 0 0 4px rgba(0, 122, 255, 0.1),
+    0 8px 25px rgba(0, 122, 255, 0.15);
+  transform: translateY(-2px) scale(1.02);
+  background: var(--surface) !important; /* Use theme background instead of white */
+  color: var(--text-primary) !important; /* Ensure text is visible */
+}
+
+/* Fix for all input elements */
+input, select, textarea {
+  color: var(--text-primary) !important;
+  background: var(--surface) !important;
+}
+
+/* Specific select dropdown fixes */
+select {
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  appearance: menulist;
+}
+
+select:focus {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Option styling for better visibility */
+select option {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  padding: 8px;
+}
+
+/* Date input specific fixes */
+input[type="date"],
+input[type="datetime-local"] {
+  color: var(--text-primary) !important;
+  background: var(--surface) !important;
+}
+
+input[type="date"]:focus,
+input[type="datetime-local"]:focus {
+  color: var(--text-primary) !important;
+  background: var(--surface) !important;
+}
+
+/* Notification System */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--glass-shadow);
+  z-index: 1000;
+  transform: translateX(400px);
+  animation: notificationSlide 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  color: var(--text-primary);
+  min-width: 300px;
+  max-width: 400px;
+}
+
+@keyframes notificationSlide {
+  0% { transform: translateX(400px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+.notification-success {
+  border-left: 4px solid var(--success);
+  background: rgba(52, 199, 89, 0.1);
+}
+
+.notification-error {
+  border-left: 4px solid var(--danger);
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.notification-info {
+  border-left: 4px solid var(--primary);
+  background: rgba(0, 122, 255, 0.1);
+}
+
+/* Enhanced Loading Animation */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Ripple Effect Styles */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Focus Enhancement */
+.focused {
+  transform: scale(1.02);
+}
+
+/* Magnetic Effect for Cards */
+.magnetic-card {
+  transition: transform 0.1s ease-out;
+}
+
+/* Tab Content Enhanced Transitions */
+.tab-content {
+  animation: contentFadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes contentFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Contact Card Hover Enhancement */
+.contact-card:hover {
+  transform: translateY(-5px) rotateX(2deg);
+  box-shadow: 0 15px 40px rgba(31, 38, 135, 0.4);
+}
+
+/* Data Table Row Animation */
+.data-table tr {
+  transition: all 0.3s ease;
+}
+
+.data-table tr:hover {
+  transform: translateX(5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart Container Enhancement */
+.chart-container:hover {
+  transform: translateY(-5px) rotateX(2deg);
+  box-shadow: 0 20px 40px rgba(31, 38, 135, 0.3);
+}
+
+/* File Input Enhancement */
+input[type="file"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 122, 255, 0.2);
+}
+
+/* Scroll Reveal Animation */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 768px) {
+  .form-section:hover {
+    transform: translateY(-5px);
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-10px) scale(1.02);
+  }
+  
+  .tab-indicator {
+    display: none;
+  }
+  
+  .particle {
+    display: none; /* Hide particles on mobile for performance */
+  }
+}
+
+/* Performance Optimization */
+@media (prefers-reduced-motion: reduce) {
+  .particle,
+  .shimmer,
+  .backgroundFlow {
+    animation: none !important;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Low FPS Mode */
+.reduced-animations .particle {
+  display: none !important;
+}
+
+.reduced-animations body::after {
+  animation: none !important;
+}
+
+.reduced-animations .stat-card {
+  animation: none !important;
+}
+
+.reduced-animations .form-section:hover,
+.reduced-animations .stat-card:hover,
+.reduced-animations .contact-card:hover {
+  transform: none !important;
+}
+
+/* GPU Acceleration for Better Performance */
+.form-section,
+.stat-card,
+.contact-card,
+.btn,
+.tab,
+.chart-container,
+.header {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Webkit Optimizations */
+.form-section,
+.stat-card,
+.contact-card {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+
+/* ===== Input Fix ===== */
+/* Input Text Visibility Fix */
+
+/* Force dark text on light backgrounds */
+body:not(.dark-mode) input,
+body:not(.dark-mode) select,
+body:not(.dark-mode) textarea {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+}
+
+body:not(.dark-mode) input:focus,
+body:not(.dark-mode) select:focus,
+body:not(.dark-mode) textarea:focus {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+}
+
+body:not(.dark-mode) input::placeholder,
+body:not(.dark-mode) textarea::placeholder {
+  color: #8E8E93 !important;
+}
+
+body:not(.dark-mode) select option {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+}
+
+/* Specific fix for the issue you're seeing */
+.form-group input,
+.form-group select,
+.form-group textarea {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+/* Fix for autofilled inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #1D1D1F !important;
+  -webkit-box-shadow: 0 0 0 30px #FFFFFF inset !important;
+  box-shadow: 0 0 0 30px #FFFFFF inset !important;
+}
+
+/* Fix for select dropdowns */
+select {
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  appearance: menulist;
+  color: #1D1D1F !important;
+}
+
+select:focus {
+  color: #1D1D1F !important;
+}
+
+/* Ensure visibility on all input types */
+input[type="text"],
+input[type="email"],
+input[type="url"],
+input[type="tel"],
+input[type="date"],
+input[type="password"],
+input[type="number"] {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+/* Override any enhanced-animations styles that might be interfering */
+.enhanced input,
+.enhanced select,
+.enhanced textarea {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+}
+/* ===== Critical Dropdown Fix ===== */
+/* CRITICAL FIX: Dropdown Text Visibility Issue */
+/* Priority: Load this CSS LAST to override all conflicting styles */
+
+/* Force text visibility in all input elements - HIGHEST PRIORITY */
+input,
+select,
+textarea,
+.form-group input,
+.form-group select,
+.form-group textarea {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+  appearance: menulist !important;
+}
+
+/* Focus states - maintain visibility */
+input:focus,
+select:focus,
+textarea:focus,
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+  border-color: #007AFF !important;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1) !important;
+}
+
+/* Hover states */
+input:hover,
+select:hover,
+textarea:hover {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+/* Active states */
+input:active,
+select:active,
+textarea:active {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+/* Select dropdown options */
+select option {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  padding: 8px 12px !important;
+}
+
+/* Specific dropdown IDs that were problematic */
+#jobPortal,
+#status,
+#resumeVersion,
+#jobType,
+#priority,
+#statusFilter,
+#sortBy,
+#contactStatus,
+#relationship,
+#contactStatusFilter,
+#relationshipFilter,
+#resumeType,
+#templateType,
+#emailContact,
+#autoSync {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+#jobPortal:focus,
+#status:focus,
+#resumeVersion:focus,
+#jobType:focus,
+#priority:focus,
+#statusFilter:focus,
+#sortBy:focus,
+#contactStatus:focus,
+#relationship:focus,
+#contactStatusFilter:focus,
+#relationshipFilter:focus,
+#resumeType:focus,
+#templateType:focus,
+#emailContact:focus,
+#autoSync:focus {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+/* Options for specific dropdowns */
+#jobPortal option,
+#status option,
+#resumeVersion option,
+#jobType option,
+#priority option,
+#statusFilter option,
+#sortBy option,
+#contactStatus option,
+#relationship option,
+#contactStatusFilter option,
+#relationshipFilter option,
+#resumeType option,
+#templateType option,
+#emailContact option,
+#autoSync option {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+}
+
+/* Fix for placeholder text */
+input::placeholder,
+textarea::placeholder {
+  color: #8E8E93 !important;
+  opacity: 0.7 !important;
+}
+
+/* Fix for autofilled inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #1D1D1F !important;
+  -webkit-box-shadow: 0 0 0 30px #FFFFFF inset !important;
+  box-shadow: 0 0 0 30px #FFFFFF inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Date inputs */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="time"]:focus {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+/* Override any enhanced animation conflicts */
+.enhanced input,
+.enhanced select,
+.enhanced textarea,
+.enhanced input:focus,
+.enhanced select:focus,
+.enhanced textarea:focus,
+.enhanced input:hover,
+.enhanced select:hover,
+.enhanced textarea:hover {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+  -webkit-text-fill-color: #1D1D1F !important;
+}
+
+/* Mobile fixes */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    color: #1D1D1F !important;
+    background: #FFFFFF !important;
+    -webkit-text-fill-color: #1D1D1F !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+/* Ensure no animations interfere with text visibility */
+input:focus,
+select:focus,
+textarea:focus {
+  animation: none !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Final catch-all override */
+* input,
+* select,
+* textarea {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+}
+
+.form-group * input,
+.form-group * select,
+.form-group * textarea {
+  color: #1D1D1F !important;
+  background: #FFFFFF !important;
+}
+
+/* ===== Apple Enhancements ===== */
+/* Apple-Inspired Dynamic Animations and Enhancements */
+
+/* Particle System for Background */
+.particles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: linear-gradient(45deg, var(--primary), var(--primary-light));
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: particleFloat 15s linear infinite;
+}
+
+.particle:nth-child(odd) {
+  background: linear-gradient(45deg, var(--secondary), var(--success));
+  animation-duration: 20s;
+}
+
+.particle:nth-child(3n) {
+  width: 2px;
+  height: 2px;
+  animation-duration: 25s;
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(100vh) translateX(-50px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-100px) translateX(50px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Enhanced Tab Indicator */
+.tab-indicator {
+  position: absolute;
+  height: calc(100% - 12px);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: var(--radius-lg);
+  top: 6px;
+  left: 6px;
+  width: 120px;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 1;
+  box-shadow: 
+    0 4px 20px rgba(0, 122, 255, 0.4),
+    0 2px 10px rgba(0, 122, 255, 0.2);
+  pointer-events: none;
+}
+
+/* Enhanced Hover Effects for Cards */
+.form-section {
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.form-section:hover {
+  transform: translateY(-12px) rotateX(5deg);
+  box-shadow: 
+    0 25px 60px rgba(31, 38, 135, 0.4),
+    0 10px 30px rgba(0, 122, 255, 0.2);
+}
+
+.stat-card {
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-15px) scale(1.05) rotateY(5deg);
+  box-shadow: 
+    0 30px 70px rgba(31, 38, 135, 0.4),
+    0 15px 40px rgba(0, 122, 255, 0.3);
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border: none;
+  box-shadow: 0 8px 30px rgba(0, 122, 255, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 1000;
+}
+
+.fab:hover {
+  transform: scale(1.1) translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 122, 255, 0.4);
+}
+
+/* Notification System */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transform: translateX(400px);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  color: #1D1D1F;
+  font-weight: 600;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.notification-success {
+  border-left: 4px solid #34C759;
+  background: rgba(52, 199, 89, 0.1);
+}
+
+.notification-error {
+  border-left: 4px solid #FF3B30;
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.notification-info {
+  border-left: 4px solid #007AFF;
+  background: rgba(0, 122, 255, 0.1);
+}
+
+/* Ripple Effect */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Enhanced Input Focus */
+.form-group.focused label {
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+/* Staggered Animations */
+.form-grid .form-group {
+  animation: slideInUp 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.form-grid .form-group:nth-child(1) { animation-delay: 0.1s; }
+.form-grid .form-group:nth-child(2) { animation-delay: 0.2s; }
+.form-grid .form-group:nth-child(3) { animation-delay: 0.3s; }
+.form-grid .form-group:nth-child(4) { animation-delay: 0.4s; }
+.form-grid .form-group:nth-child(5) { animation-delay: 0.5s; }
+.form-grid .form-group:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .particle {
+    display: none; /* Hide particles on mobile for performance */
+  }
+  
+  .form-section:hover,
+  .stat-card:hover {
+    transform: translateY(-5px); /* Reduce 3D effects on mobile */
+  }
+  
+  .fab {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .tab-indicator {
+    display: none; /* Hide on mobile for better usability */
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .particle,
+  .ripple {
+    animation: none !important;
+    display: none !important;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.15s !important;
+  }
+  
+  .form-section:hover,
+  .stat-card:hover {
+    transform: none !important;
+  }
+}
+
+/* Performance Optimizations */
+.form-section,
+.stat-card,
+.btn,
+.tab {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+}
+
+/* ===== Gray Inputs ===== */
+/* Input Field Gray Background Styling */
+
+/* Make all input fields gray instead of white - matching image reference */
+input, select, textarea {
+  background: #e8e8ed !important; /* Medium gray background to match image */
+  border: 2px solid #d1d1d6 !important;
+  color: var(--text-primary) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:focus, select:focus, textarea:focus {
+  background: #e0e0e5 !important; /* Slightly darker gray on focus */
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+  color: var(--text-primary) !important;
+}
+
+input:hover, select:hover, textarea:hover {
+  background: #e0e0e5 !important;
+  border-color: var(--primary-light) !important;
+}
+
+/* File input styling */
+input[type="file"] {
+  background: #e8e8ed !important;
+  border: 2px dashed #d1d1d6 !important;
+  color: var(--text-primary) !important;
+}
+
+input[type="file"]:hover {
+  background: #e0e0e5 !important;
+  border-color: var(--primary) !important;
+}
+
+/* Select dropdown options */
+select option {
+  background: #e8e8ed !important;
+  color: var(--text-primary) !important;
+}
+
+/* Placeholder text styling */
+input::placeholder,
+textarea::placeholder {
+  color: #8e8e93 !important;
+  opacity: 0.8;
+}
+
+/* Date input specific styling */
+input[type="date"] {
+  background: #e8e8ed !important;
+  color: var(--text-primary) !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  input, select, textarea {
+    background: #2c2c2e !important;
+    border: 2px solid #48484a !important;
+    color: #ffffff !important;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    background: #38383a !important;
+    border-color: var(--primary) !important;
+    color: #ffffff !important;
+  }
+  
+  input:hover, select:hover, textarea:hover {
+    background: #38383a !important;
+    border-color: var(--primary-light) !important;
+  }
+  
+  input[type="file"] {
+    background: #2c2c2e !important;
+    border: 2px dashed #48484a !important;
+    color: #ffffff !important;
+  }
+  
+  input[type="file"]:hover {
+    background: #38383a !important;
+    border-color: var(--primary) !important;
+  }
+  
+  select option {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+  }
+  
+  input::placeholder,
+  textarea::placeholder {
+    color: #8e8e93 !important;
+  }
+  
+  input[type="date"] {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+  }
+}
+
+/* ===== Resume Visibility Fix ===== */
+/* Resume Section Consistency Fix - Match Other Sections */
+
+/* Make resume section match the gray theme of other sections */
+#resumesList {
+  background: transparent !important;
+}
+
+/* Resume cards should match the gray theme like other form sections */
+#resumesList > div,
+#resumesList div[style*="background"],
+div[style*="border: 1px solid #ddd"],
+.resume-card {
+  background: #f5f5f7 !important; /* Same gray as input fields */
+  color: #333 !important;
+  border: 1px solid #e5e5e7 !important; /* Same border as inputs */
+  border-radius: 8px !important;
+  padding: 16px !important;
+  margin: 10px 0 !important;
+}
+
+/* Resume text should be clearly visible */
+#resumesList h4,
+#resumesList p,
+#resumesList strong,
+#resumesList span,
+#resumesList div {
+  color: #333 !important;
+  background: transparent !important;
+}
+
+.resume-card h4 {
+  color: #333 !important;
+  margin: 0 0 8px 0 !important;
+  font-weight: 600;
+}
+
+.resume-card p {
+  color: #666 !important;
+  margin: 4px 0 !important;
+}
+
+.resume-card strong {
+  color: #333 !important;
+}
+
+/* Resume buttons - keep them properly styled */
+.resume-card button,
+#resumesList button {
+  background: #007bff !important;
+  color: white !important;
+  border: none !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  margin-right: 8px !important;
+}
+
+.resume-card .btn-danger,
+#resumesList .btn-danger {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+/* CV Preview should also match the theme */
+.cv-preview {
+  background: #f5f5f7 !important; /* Same gray as other sections */
+  color: #333 !important;
+  border: 1px solid #e5e5e7 !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+}
+
+.cv-preview * {
+  color: #333 !important;
+}
+
+.cv-container {
+  background: #f5f5f7 !important;
+  color: #333 !important;
+  border: 1px solid #e5e5e7 !important;
+}
+
+/* Template preview consistency */
+.template-preview {
+  background: #f5f5f7 !important;
+  color: #333 !important;
+  border: 1px solid #e5e5e7 !important;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.template-preview * {
+  color: #333 !important;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  #resumesList > div,
+  #resumesList div[style*="background"],
+  div[style*="border: 1px solid #ddd"],
+  .resume-card {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+    border: 1px solid #48484a !important;
+  }
+  
+  .resume-card h4,
+  #resumesList h4 {
+    color: #ffffff !important;
+  }
+  
+  .resume-card p,
+  #resumesList p {
+    color: #a1a1a6 !important;
+  }
+  
+  .resume-card strong,
+  #resumesList strong {
+    color: #ffffff !important;
+  }
+  
+  .cv-preview {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+    border: 1px solid #48484a !important;
+  }
+  
+  .cv-preview * {
+    color: #ffffff !important;
+  }
+  
+  .cv-container {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+    border: 1px solid #48484a !important;
+  }
+  
+  .template-preview {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+    border: 1px solid #48484a !important;
+  }
+  
+  .template-preview * {
+    color: #ffffff !important;
+  }
+}
+
+/* ===== My Resumes Fix ===== */
+/* TARGETED FIX: My Resumes Section Background */
+
+/* Force the My Resumes section to have gray background like other sections */
+#resumesList,
+#resumesList > div,
+#resumesList .resume-card {
+  background: #f5f5f7 !important;
+  border: 1px solid #e5e5e7 !important;
+  color: #333 !important;
+}
+
+/* Specifically target the resume cards in the list */
+div[style*="border: 1px solid #ddd"],
+div[style*="background: #f9f9f9"] {
+  background: #f5f5f7 !important;
+  border: 1px solid #e5e5e7 !important;
+}
+
+/* Override any inline styles that might be setting white background */
+#resumesList div[style] {
+  background: #f5f5f7 !important;
+  border: 1px solid #e5e5e7 !important;
+  color: #333 !important;
+}
+
+/* Make sure text is visible */
+#resumesList h4,
+#resumesList p,
+#resumesList strong,
+#resumesList span {
+  color: #333 !important;
+  background: transparent !important;
+}
+
+/* Ensure buttons remain properly styled */
+#resumesList button {
+  background: #007bff !important;
+  color: white !important;
+  border: none !important;
+}
+
+#resumesList .btn-danger {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  #resumesList,
+  #resumesList > div,
+  #resumesList .resume-card,
+  div[style*="border: 1px solid #ddd"],
+  div[style*="background: #f9f9f9"] {
+    background: #2c2c2e !important;
+    border: 1px solid #48484a !important;
+    color: #ffffff !important;
+  }
+  
+  #resumesList h4,
+  #resumesList strong {
+    color: #ffffff !important;
+  }
+  
+  #resumesList p {
+    color: #a1a1a6 !important;
+  }
+}
+
+/* ===== Resume Final Fix ===== */
+/* DEFINITIVE FIX: Keep My Resumes Gray After Upload */
+
+/* Target the My Resumes container and all its content */
+#resumesList {
+  background: transparent !important;
+}
+
+/* Force ALL divs inside resumesList to be gray */
+#resumesList div,
+#resumesList > div,
+.resume-card,
+div[style*="background: #f9f9f9"],
+div[style*="border: 1px solid #ddd"] {
+  background: #f5f5f7 !important;
+  border: 1px solid #e5e5e7 !important;
+  border-radius: 8px !important;
+  color: #333 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Override any JavaScript-generated inline styles */
+#resumesList div[style] {
+  background: #f5f5f7 !important;
+  border: 1px solid #e5e5e7 !important;
+  color: #333 !important;
+}
+
+/* Ensure text remains visible */
+#resumesList h4,
+#resumesList p,
+#resumesList strong,
+#resumesList span,
+#resumesList div:not(.resume-actions) {
+  background: transparent !important;
+  color: #333 !important;
+}
+
+/* Keep buttons properly styled */
+#resumesList button {
+  background: #007bff !important;
+  color: white !important;
+  border: none !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  margin-right: 8px !important;
+}
+
+#resumesList .btn-danger,
+#resumesList button[onclick*="deleteResume"] {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+/* Aggressive override for any potential white backgrounds */
+#resumesList * {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Make sure the empty state message also follows the theme */
+#resumesList p:only-child {
+  background: transparent !important;
+  color: #999 !important;
+  padding: 20px !important;
+  text-align: center !important;
+  font-style: italic !important;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  #resumesList div,
+  #resumesList > div,
+  .resume-card,
+  div[style*="background: #f9f9f9"],
+  div[style*="border: 1px solid #ddd"] {
+    background: #2c2c2e !important;
+    border: 1px solid #48484a !important;
+    color: #ffffff !important;
+  }
+  
+  #resumesList h4,
+  #resumesList strong {
+    color: #ffffff !important;
+  }
+  
+  #resumesList p {
+    color: #a1a1a6 !important;
+  }
+  
+  #resumesList p:only-child {
+    color: #8e8e93 !important;
+  }
+}
+
+/* ===== USER TYPING FIX ===== */
+/* Disable animations when user is typing - ENHANCED */
+
+.user-typing .form-section,
+.user-typing .stat-card,
+.user-typing .chart-container,
+.user-typing .contact-card,
+.user-typing .resume-card {
+  transform: translateY(0) rotateX(0) rotateY(0) scale(1) !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+.user-typing .form-section:hover,
+.user-typing .stat-card:hover,
+.user-typing .chart-container:hover,
+.user-typing .contact-card:hover,
+.user-typing .resume-card:hover {
+  transform: translateY(0) rotateX(0) rotateY(0) scale(1) !important;
+  transition: none !important;
+  animation: none !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.user-typing .btn,
+.user-typing .btn:hover,
+.user-typing .btn:active {
+  transform: translateY(0) scale(1) !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+.user-typing input,
+.user-typing select,
+.user-typing textarea,
+.user-typing input:focus,
+.user-typing select:focus,
+.user-typing textarea:focus {
+  transform: translateY(0) scale(1) !important;
+  transition: border-color 0.15s ease !important;
+}
+
+/* Pause ALL animations when typing */
+.user-typing * {
+  animation-play-state: paused !important;
+}
+
+.user-typing .particle {
+  animation-play-state: paused !important;
+  opacity: 0.3 !important;
+}
+
+.user-typing .stat-card {
+  animation-play-state: paused !important;
+}
+
+.user-typing body::before,
+.user-typing body::after {
+  animation-play-state: paused !important;
+}
+
+/* Disable all hover effects during typing */
+.user-typing *:hover {
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Keep only essential focus styles */
+.user-typing input:focus,
+.user-typing select:focus,
+.user-typing textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1) !important;
+}

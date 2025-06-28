@@ -2,7 +2,8 @@
 
 class JobTrackerPopup {
   constructor() {
-    this.apiUrl = 'https://job-tracker-chi-eight.vercel.app'; // Production Vercel URL
+    this.frontendUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app'; // Vercel frontend URL
+    this.apiUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app'; // Vercel backend API URL
     this.init();
   }
 
@@ -222,7 +223,7 @@ class JobTrackerPopup {
     if (openBtn) {
       openBtn.addEventListener('click', () => {
         chrome.tabs.create({ 
-          url: this.apiUrl 
+          url: this.frontendUrl 
         });
         window.close();
       });
@@ -233,7 +234,7 @@ class JobTrackerPopup {
     if (viewBtn) {
       viewBtn.addEventListener('click', () => {
         chrome.tabs.create({ 
-          url: `${this.apiUrl}/#applications` 
+          url: `${this.frontendUrl}/#applications` 
         });
         window.close();
       });
@@ -245,7 +246,7 @@ class JobTrackerPopup {
       settingsLink.addEventListener('click', (e) => {
         e.preventDefault();
         chrome.tabs.create({ 
-          url: `${this.apiUrl}/#export` 
+          url: `${this.frontendUrl}/#export` 
         });
         window.close();
       });
@@ -257,7 +258,7 @@ class JobTrackerPopup {
       helpLink.addEventListener('click', (e) => {
         e.preventDefault();
         chrome.tabs.create({ 
-          url: `${this.apiUrl}/#help` 
+          url: `${this.frontendUrl}/#help` 
         });
         window.close();
       });
