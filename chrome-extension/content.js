@@ -58,8 +58,16 @@ class JobTrackerExtension {
       </div>
     `;
     
-    button.addEventListener('click', () => this.showJobTracker());
+    button.addEventListener('click', () => {
+      console.log('Floating button clicked');
+      this.showJobTracker();
+    });
+    
+    // Add a small test indicator
+    button.title = 'Job Tracker Extension - Click to track this job';
+    
     document.body.appendChild(button);
+    console.log('Floating button added to page');
   }
 
   detectJobData() {
@@ -491,7 +499,9 @@ class JobTrackerExtension {
 
   // FIXED: Enhanced save functionality with immediate website notification
   async saveApplication(openTracker = false) {
+    console.log('saveApplication called with openTracker:', openTracker);
     const formData = this.collectFormData();
+    console.log('Form data collected:', formData);
     
     if (!formData.jobTitle || !formData.company) {
       this.showStatus('Please fill in required fields (Job Title and Company)', 'error');
@@ -502,16 +512,20 @@ class JobTrackerExtension {
 
     try {
       // Always save to local storage first for immediate response
+      console.log('Saving to local storage...');
       await this.saveToLocalStorage(formData);
+      console.log('Local storage save completed');
       
       // IMPORTANT: Notify website immediately about new application
-      this.notifyWebsiteOfNewApplication(formData);
+      console.log('Notifying website about new application...');
+      await this.notifyWebsiteOfNewApplication(formData);
       
       // Try to save to API (local first, then fallback)
       let apiSaveSuccess = false;
       let workingApiUrl = null;
       
       try {
+        console.log('Attempting API save to:', this.primaryApiUrl);
         // Try local API first
         await this.saveToAPI(this.primaryApiUrl, formData);
         apiSaveSuccess = true;
@@ -530,6 +544,7 @@ class JobTrackerExtension {
         }
         
         if (openTracker) {
+          console.log('Opening tracker at:', this.frontendUrl);
           // Open the tracker in the frontend
           window.open(this.frontendUrl, '_blank');
         }
@@ -561,13 +576,26 @@ class JobTrackerExtension {
     };
   }
 
-  // Enhanced Chrome extension storage
+  // Enhanced Chrome extension storage with better error handling
   async saveToLocalStorage(applicationData) {
+    console.log('Attempting to save application data:', applicationData.jobTitle);
+    
     return new Promise((resolve, reject) => {
       try {
+        // Check if Chrome extension APIs are available
+        if (typeof chrome === 'undefined' || !chrome.storage) {
+          console.log('Chrome storage not available, using localStorage fallback');
+          this.saveToLocalStorageFallback(applicationData);
+          resolve();
+          return;
+        }
+        
         chrome.storage.local.get(['jobApplications'], (result) => {
           if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
+            console.warn('Chrome storage error:', chrome.runtime.lastError.message);
+            // Fallback to localStorage
+            this.saveToLocalStorageFallback(applicationData);
+            resolve();
             return;
           }
           
@@ -579,7 +607,9 @@ class JobTrackerExtension {
             lastSync: new Date().toISOString()
           }, () => {
             if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
+              console.warn('Chrome storage set error:', chrome.runtime.lastError.message);
+              this.saveToLocalStorageFallback(applicationData);
+              resolve();
               return;
             }
             console.log('✅ Application saved to Chrome storage:', applicationData.jobTitle);
@@ -587,39 +617,43 @@ class JobTrackerExtension {
           });
         });
       } catch (error) {
-        // Fallback to localStorage if Chrome storage is not available
-        try {
-          const applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
-          applications.push(applicationData);
-          localStorage.setItem('jobApplications', JSON.stringify(applications));
-          localStorage.setItem('lastSync', new Date().toISOString());
-          console.log('✅ Application saved to localStorage:', applicationData.jobTitle);
-          resolve();
-        } catch (localStorageError) {
-          reject(localStorageError);
-        }
+        console.warn('Chrome storage exception, using fallback:', error);
+        this.saveToLocalStorageFallback(applicationData);
+        resolve();
       }
     });
   }
-
-  // NEW: Notify website immediately about new application
-  notifyWebsiteOfNewApplication(applicationData) {
+  
+  saveToLocalStorageFallback(applicationData) {
     try {
-      // Try to find and notify any open job tracker tabs
-      chrome.tabs.query({ url: `${this.frontendUrl}/*` }, (tabs) => {
-        tabs.forEach(tab => {
-          chrome.tabs.sendMessage(tab.id, {
-            action: 'applicationAdded',
-            application: applicationData
-          }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.log('Could not notify tab:', chrome.runtime.lastError.message);
-            } else {
-              console.log('✅ Notified website tab about new application');
-            }
-          });
+      const applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+      applications.push(applicationData);
+      localStorage.setItem('jobApplications', JSON.stringify(applications));
+      localStorage.setItem('lastSync', new Date().toISOString());
+      console.log('✅ Application saved to localStorage:', applicationData.jobTitle);
+    } catch (localStorageError) {
+      console.error('LocalStorage save failed:', localStorageError);
+      throw localStorageError;
+    }
+  }
+
+  // FIXED: Proper notification system for extension
+  async notifyWebsiteOfNewApplication(applicationData) {
+    try {
+      // Send message to background script to handle tab notification
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        chrome.runtime.sendMessage({
+          action: 'notifyApplicationAdded',
+          application: applicationData,
+          frontendUrl: this.frontendUrl
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.log('Background script communication failed:', chrome.runtime.lastError.message);
+          } else {
+            console.log('✅ Notified background script about new application');
+          }
         });
-      });
+      }
       
       // Also trigger storage event for immediate sync
       const event = new CustomEvent('applicationAdded', {

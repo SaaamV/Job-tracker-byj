@@ -528,23 +528,23 @@ textarea:focus {
   font-weight: 500;
 }
 
-/* Modern Data Table */
+/* Modern Data Table - COMPACT VIEW ONLY */
 .data-table {
   width: 100%;
   background: var(--surface);
   border-collapse: collapse;
-  table-layout: auto; /* Allow table to adjust column widths automatically */
+  table-layout: fixed; /* Force consistent column widths */
   margin: 0;
-  min-width: 900px; /* Ensure minimum width for proper display */
+  font-size: 0.9rem; /* Slightly smaller text for compactness */
 }
 
 .data-table th {
   background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: white;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md); /* Reduced padding for compactness */
   text-align: left;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem; /* Smaller header text */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -552,36 +552,36 @@ textarea:focus {
   text-overflow: ellipsis;
 }
 
-/* Define minimum column widths for better content visibility */
-.data-table th:nth-child(1) { min-width: 90px; } /* DATE */
-.data-table th:nth-child(2) { min-width: 180px; } /* JOB TITLE */
-.data-table th:nth-child(3) { min-width: 140px; } /* COMPANY */
-.data-table th:nth-child(4) { min-width: 100px; } /* PORTAL */
-.data-table th:nth-child(5) { min-width: 120px; } /* STATUS */
-.data-table th:nth-child(6) { min-width: 100px; } /* RESUME */
-.data-table th:nth-child(7) { min-width: 80px; }  /* PRIORITY */
-.data-table th:nth-child(8) { min-width: 100px; } /* FOLLOW-UP */
-.data-table th:nth-child(9) { min-width: 120px; } /* ACTIONS */
+/* FIXED column widths for compact view */
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) { width: 80px; }   /* DATE */
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) { width: 160px; }  /* JOB TITLE */
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) { width: 130px; }  /* COMPANY */
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) { width: 90px; }   /* PORTAL */
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) { width: 90px; }   /* STATUS */
+.data-table th:nth-child(6),
+.data-table td:nth-child(6) { width: 80px; }   /* RESUME */
+.data-table th:nth-child(7),
+.data-table td:nth-child(7) { width: 70px; }   /* PRIORITY */
+.data-table th:nth-child(8),
+.data-table td:nth-child(8) { width: 80px; }   /* FOLLOW-UP */
+.data-table th:nth-child(9),
+.data-table td:nth-child(9) { width: 100px; }  /* ACTIONS */
 
 .data-table td {
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md); /* Compact padding */
   border-bottom: 1px solid var(--border);
   transition: background-color 0.3s ease;
   word-wrap: break-word;
-  overflow-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* Prevent text wrapping for compact view */
   vertical-align: middle;
 }
-
-/* Apply same minimum width constraints to td */
-.data-table td:nth-child(1) { min-width: 90px; }
-.data-table td:nth-child(2) { min-width: 180px; }
-.data-table td:nth-child(3) { min-width: 140px; }
-.data-table td:nth-child(4) { min-width: 100px; }
-.data-table td:nth-child(5) { min-width: 120px; }
-.data-table td:nth-child(6) { min-width: 100px; }
-.data-table td:nth-child(7) { min-width: 80px; }
-.data-table td:nth-child(8) { min-width: 100px; }
-.data-table td:nth-child(9) { min-width: 120px; }
 
 .data-table tr:hover td {
   background: var(--surface-secondary);
@@ -591,9 +591,11 @@ textarea:focus {
   border-bottom: none;
 }
 
-/* Table Container for Horizontal Scroll */
+/* Table Container - ALWAYS SCROLLABLE */
 .table-container {
   overflow-x: auto;
+  overflow-y: auto; /* Add vertical scrolling */
+  max-height: 400px; /* Fixed height for compact view */
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-large);
   background: var(--surface);
@@ -601,7 +603,8 @@ textarea:focus {
 }
 
 .table-container::-webkit-scrollbar {
-  height: 8px;
+  width: 8px;
+  height: 8px; /* Horizontal scrollbar */
 }
 
 .table-container::-webkit-scrollbar-track {
@@ -616,6 +619,49 @@ textarea:focus {
 
 .table-container::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+}
+
+/* Ensure table fits exactly in container */
+.data-table {
+  min-width: 840px; /* Minimum width for all columns */
+}
+
+/* Action buttons - more compact */
+.action-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-buttons .btn {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  min-width: auto;
+}
+
+/* Status badges - smaller */
+.status-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* Priority badges - smaller */
+.priority-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 /* Chart Containers with Glass Effect */
@@ -2619,77 +2665,292 @@ div[style*="border: 1px solid #ddd"] {
   }
 }
 
-/* ===== USER TYPING FIX ===== */
-/* Disable animations when user is typing - ENHANCED */
+/* ===== STATIC UI - NO MOVEMENT ===== */
+/* Complete removal of all dynamic movement effects */
 
-.user-typing .form-section,
-.user-typing .stat-card,
-.user-typing .chart-container,
-.user-typing .contact-card,
-.user-typing .resume-card {
-  transform: translateY(0) rotateX(0) rotateY(0) scale(1) !important;
-  transition: none !important;
-  animation: none !important;
+/* DISABLE ALL PARTICLE EFFECTS */
+.particles-container,
+.particle {
+  display: none !important;
 }
 
-.user-typing .form-section:hover,
-.user-typing .stat-card:hover,
-.user-typing .chart-container:hover,
-.user-typing .contact-card:hover,
-.user-typing .resume-card:hover {
-  transform: translateY(0) rotateX(0) rotateY(0) scale(1) !important;
-  transition: none !important;
+/* DISABLE ALL 3D AND MOVEMENT EFFECTS */
+.form-section,
+.stat-card,
+.chart-container,
+.contact-card,
+.resume-card,
+.btn {
+  transform: none !important;
+  transition: opacity 0.3s ease, box-shadow 0.3s ease !important;
   animation: none !important;
+  will-change: auto !important;
+}
+
+/* STATIC HOVER EFFECTS - Only subtle visual feedback */
+.form-section:hover,
+.stat-card:hover,
+.chart-container:hover,
+.contact-card:hover,
+.resume-card:hover {
+  transform: none !important;
+  opacity: 0.95 !important;
+  box-shadow: var(--shadow-large) !important;
+}
+
+/* STATIC BUTTON EFFECTS */
+.btn {
+  transform: none !important;
+  transition: opacity 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.btn:hover {
+  transform: none !important;
+  opacity: 0.9 !important;
   box-shadow: var(--shadow) !important;
 }
 
-.user-typing .btn,
-.user-typing .btn:hover,
-.user-typing .btn:active {
-  transform: translateY(0) scale(1) !important;
-  transition: none !important;
+.btn:active {
+  transform: none !important;
+  opacity: 0.8 !important;
+}
+
+/* STATIC INPUT EFFECTS */
+input,
+select,
+textarea {
+  transform: none !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  transform: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1) !important;
+}
+
+/* DISABLE ALL FLOATING ANIMATIONS */
+body::before,
+body::after {
   animation: none !important;
 }
 
-.user-typing input,
-.user-typing select,
-.user-typing textarea,
-.user-typing input:focus,
-.user-typing select:focus,
-.user-typing textarea:focus {
-  transform: translateY(0) scale(1) !important;
-  transition: border-color 0.15s ease !important;
+.header h1 {
+  animation: none !important;
 }
 
-/* Pause ALL animations when typing */
-.user-typing * {
-  animation-play-state: paused !important;
+.header p {
+  animation: none !important;
 }
 
-.user-typing .particle {
-  animation-play-state: paused !important;
-  opacity: 0.3 !important;
-}
-
-.user-typing .stat-card {
-  animation-play-state: paused !important;
-}
-
-.user-typing body::before,
-.user-typing body::after {
-  animation-play-state: paused !important;
-}
-
-/* Disable all hover effects during typing */
-.user-typing *:hover {
+/* STATIC FLOATING ACTION BUTTON */
+.fab,
+.static-fab {
   transform: none !important;
+  transition: opacity 0.3s ease !important;
+}
+
+.fab:hover,
+.static-fab:hover {
+  transform: none !important;
+  opacity: 0.9 !important;
+}
+
+/* DISABLE TAB INDICATOR ANIMATION */
+.tab-indicator {
   transition: none !important;
 }
 
-/* Keep only essential focus styles */
-.user-typing input:focus,
-.user-typing select:focus,
-.user-typing textarea:focus {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1) !important;
+/* STATIC TAB EFFECTS */
+.tab {
+  transform: none !important;
+  transition: color 0.3s ease, background-color 0.3s ease !important;
+}
+
+.tab:hover {
+  transform: none !important;
+}
+
+.tab.active {
+  transform: none !important;
+}
+
+/* DISABLE STAT CARD FLOATING */
+.stat-card {
+  animation: none !important;
+}
+
+/* REMOVE ALL PARALLAX AND 3D EFFECTS */
+.form-section,
+.stat-card,
+.contact-card,
+.chart-container {
+  transform-style: flat !important;
+  perspective: none !important;
+  -webkit-perspective: none !important;
+  backface-visibility: visible !important;
+  -webkit-backface-visibility: visible !important;
+}
+
+/* DISABLE SCROLL REVEAL MOVEMENTS */
+.scroll-reveal {
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+.scroll-reveal.revealed {
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* DISABLE TABLE ROW ANIMATIONS */
+.data-table tr {
+  transform: none !important;
+  transition: background-color 0.3s ease !important;
+}
+
+.data-table tr:hover {
+  transform: none !important;
+}
+
+/* STATIC NOTIFICATION SYSTEM */
+.notification {
+  transform: none !important;
+  transition: opacity 0.5s ease !important;
+}
+
+/* DISABLE ALL STAGGERED ANIMATIONS */
+.form-grid .form-group {
+  animation: none !important;
+  animation-delay: 0s !important;
+}
+
+/* REMOVE ALL SHIMMER EFFECTS */
+.header::before {
+  display: none !important;
+}
+
+.stat-card::after {
+  display: none !important;
+}
+
+.btn::after {
+  display: none !important;
+}
+
+/* FORCE STATIC BEHAVIOR ON ALL ELEMENTS */
+* {
+  transform: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+/* EXCEPTIONS - Keep only essential transitions */
+input:focus,
+select:focus,
+textarea:focus {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.btn {
+  transition: opacity 0.3s ease, background-color 0.3s ease !important;
+}
+
+.tab {
+  transition: color 0.3s ease, background-color 0.3s ease !important;
+}
+
+.form-section,
+.stat-card,
+.contact-card,
+.chart-container {
+  transition: opacity 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+/* MAINTAIN ACCESSIBILITY */
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* USER TYPING - Maintain static state */
+.user-typing * {
+  transform: none !important;
+  animation: none !important;
+}
+
+/* COUNTER ANIMATION - Keep but remove movement */
+.stat-card h3 {
+  transform: none !important;
+}
+
+/* TAB CONTENT - Remove entrance animations */
+.tab-content {
+  animation: none !important;
+}
+
+.tab-content.active {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* ===== TAB HIGHLIGHTING FIX ===== */
+/* CRITICAL FIX: Prevent Applications tab from staying highlighted */
+
+/* Reset all tabs to default state */
+.tab {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Ensure pseudo-elements don't interfere */
+.tab::before,
+.tab::after {
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* Only the CURRENTLY ACTIVE tab should be highlighted */
+.tab.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light)) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3) !important;
+}
+
+/* Hover state for non-active tabs */
+.tab:not(.active):hover {
+  background: rgba(0, 122, 255, 0.1) !important;
+  color: var(--primary) !important;
+}
+
+/* Force removal of active class from non-active tabs */
+.tab:not(.active) {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+/* Ensure tab indicator only shows for active tab */
+.tab-indicator {
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* Remove any conflicting animations */
+.tab,
+.tab.active,
+.tab:hover {
+  animation: none !important;
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
+  transform: none !important;
 }

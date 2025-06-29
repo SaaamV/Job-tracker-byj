@@ -1,11 +1,11 @@
-// Apple-Inspired Dynamic Animations and Interactions
+// Apple-Inspired Static UI Enhancements (No Movement)
 (function() {
   'use strict';
   
-  console.log('🎨 Loading Apple-inspired animations...');
+  console.log('🎨 Loading static Apple-inspired enhancements...');
   
   // ===== USER INPUT TRACKING =====
-  // Track user input state to disable animations during typing
+  // Track user input state (kept for potential future use)
   let isUserTyping = false;
   let typingTimeout = null;
   
@@ -18,7 +18,7 @@
         if (!isUserTyping) {
           isUserTyping = true;
           document.body.classList.add('user-typing');
-          console.log('🔒 User started typing - animations paused');
+          console.log('🔒 User started typing - maintaining static state');
         }
         
         // Reset timeout on every keystroke
@@ -26,68 +26,33 @@
         typingTimeout = setTimeout(() => {
           isUserTyping = false;
           document.body.classList.remove('user-typing');
-          console.log('🔓 User stopped typing - animations resumed');
-        }, 2000); // 2 seconds after last keystroke
+          console.log('🔓 User stopped typing - maintaining static state');
+        }, 2000);
       });
       
-      // User focuses on input
       input.addEventListener('focus', function() {
         isUserTyping = true;
         document.body.classList.add('user-typing');
         clearTimeout(typingTimeout);
       });
       
-      // User leaves input
       input.addEventListener('blur', function() {
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
           isUserTyping = false;
           document.body.classList.remove('user-typing');
-        }, 500); // Short delay after blur
+        }, 500);
       });
     });
   }
   
-  // Particle System
+  // REMOVED: Particle System - No moving elements
   function createParticleSystem() {
-    const container = document.createElement('div');
-    container.className = 'particles-container';
-    document.body.appendChild(container);
-    
-    function createParticle() {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      
-      // Random positioning and timing
-      particle.style.left = Math.random() * 100 + '%';
-      particle.style.animationDelay = Math.random() * 15 + 's';
-      particle.style.animationDuration = (15 + Math.random() * 10) + 's';
-      
-      // Random size variation
-      const size = 2 + Math.random() * 3;
-      particle.style.width = size + 'px';
-      particle.style.height = size + 'px';
-      
-      container.appendChild(particle);
-      
-      // Remove particle after animation
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.parentNode.removeChild(particle);
-        }
-      }, 25000);
-    }
-    
-    // Create particles periodically
-    setInterval(createParticle, 2000);
-    
-    // Create initial batch
-    for (let i = 0; i < 10; i++) {
-      setTimeout(createParticle, i * 200);
-    }
+    // Disabled - no moving particles
+    console.log('🚫 Particle system disabled for static UI');
   }
   
-  // Enhanced Tab Switching with Dynamic Indicator
+  // Enhanced Tab Switching with Static Indicator
   function enhanceTabSwitching() {
     const tabs = document.querySelectorAll('.tab');
     const tabsContainer = document.querySelector('.tabs');
@@ -103,12 +68,10 @@
     }
     
     function updateIndicator(activeTab) {
-      const tabRect = activeTab.getBoundingClientRect();
-      const containerRect = tabsContainer.getBoundingClientRect();
-      
       const left = activeTab.offsetLeft;
       const width = activeTab.offsetWidth;
       
+      // Static positioning without animation
       indicator.style.transform = `translateX(${left}px)`;
       indicator.style.width = `${width}px`;
     }
@@ -135,34 +98,27 @@
     });
   }
   
-  // Magnetic Button Effects - WITH USER TYPING CHECK
-  function addMagneticEffects() {
+  // STATIC Button Effects - No Movement
+  function addStaticButtonEffects() {
     const buttons = document.querySelectorAll('.btn');
     
     buttons.forEach(button => {
-      button.addEventListener('mouseenter', function() {
-        // Don't animate if user is typing
-        if (isUserTyping) return;
-        this.style.transform = 'translateY(-3px) scale(1.02)';
-      });
-      
-      button.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0) scale(1)';
-      });
-      
+      // Only add click feedback, no hover movement
       button.addEventListener('mousedown', function() {
-        this.style.transform = 'translateY(-1px) scale(0.98)';
+        this.style.opacity = '0.9';
       });
       
       button.addEventListener('mouseup', function() {
-        // Don't animate if user is typing
-        if (isUserTyping) return;
-        this.style.transform = 'translateY(-3px) scale(1.02)';
+        this.style.opacity = '1';
+      });
+      
+      button.addEventListener('mouseleave', function() {
+        this.style.opacity = '1';
       });
     });
   }
   
-  // Ripple Effect for Buttons
+  // Ripple Effect for Buttons (Static - only visual feedback)
   function addRippleEffects() {
     document.addEventListener('click', function(e) {
       if (e.target.matches('.btn')) {
@@ -189,52 +145,23 @@
     });
   }
   
-  // Enhanced Hover Effects for Cards - WITH USER TYPING CHECK
-  function enhanceCardHoverEffects() {
+  // STATIC Card Effects - No Movement or Rotation
+  function enhanceStaticCardEffects() {
     const cards = document.querySelectorAll('.form-section, .stat-card, .chart-container');
     
     cards.forEach(card => {
-      card.addEventListener('mouseenter', function(e) {
-        // Don't animate if user is typing
-        if (isUserTyping) return;
-        
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        const rotateX = (y - centerY) / 10;
-        const rotateY = (centerX - x) / 10;
-        
-        this.style.transform = `translateY(-12px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      // Only add subtle visual feedback without movement
+      card.addEventListener('mouseenter', function() {
+        this.style.opacity = '0.95';
       });
       
       card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0) rotateX(0) rotateY(0)';
-      });
-      
-      card.addEventListener('mousemove', function(e) {
-        // Don't animate if user is typing
-        if (isUserTyping) return;
-        
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        const rotateX = (y - centerY) / 20;
-        const rotateY = (centerX - x) / 20;
-        
-        this.style.transform = `translateY(-12px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        this.style.opacity = '1';
       });
     });
   }
   
-  // Scroll Reveal Animation
+  // Scroll Reveal Animation (Keep but make subtle)
   function setupScrollReveal() {
     const elements = document.querySelectorAll('.form-section, .stat-card, .chart-container');
     
@@ -258,7 +185,7 @@
     });
   }
   
-  // Counter Animation for Stats
+  // Counter Animation for Stats (Keep this as it's not mouse-dependent)
   function animateCounters() {
     const counters = document.querySelectorAll('.stat-card h3');
     
@@ -303,54 +230,41 @@
     });
   }
   
-  // Enhanced Input Focus Effects - MODIFIED FOR STATIC BEHAVIOR DURING TYPING
-  function enhanceInputFocus() {
+  // STATIC Input Focus Effects - No Movement
+  function enhanceStaticInputFocus() {
     const inputs = document.querySelectorAll('input, select, textarea');
     
     inputs.forEach(input => {
       input.addEventListener('focus', function() {
         this.parentElement.classList.add('focused');
-        
-        // Only add transform animation if user is not typing
-        if (!isUserTyping) {
-          this.style.transform = 'translateY(-2px) scale(1.01)';
-        }
+        // No transform/movement, just visual state
       });
       
       input.addEventListener('blur', function() {
         this.parentElement.classList.remove('focused');
-        this.style.transform = 'translateY(0) scale(1)';
-      });
-      
-      // Remove transforms when user starts typing
-      input.addEventListener('input', function() {
-        this.style.transform = 'translateY(0) scale(1)';
       });
     });
   }
   
-  // Notification System
+  // Notification System (Keep but static)
   function createNotificationSystem() {
     window.showNotification = function(message, type = 'info', duration = 4000) {
       const notification = document.createElement('div');
       notification.className = `notification notification-${type}`;
       notification.textContent = message;
       
-      // Add entrance animation
-      notification.style.transform = 'translateX(400px)';
+      // Simple fade in instead of slide animation
       notification.style.opacity = '0';
       
       document.body.appendChild(notification);
       
-      // Trigger entrance animation
+      // Simple fade in
       setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
         notification.style.opacity = '1';
       }, 10);
       
       // Auto-remove notification
       setTimeout(() => {
-        notification.style.transform = 'translateX(400px)';
         notification.style.opacity = '0';
         
         setTimeout(() => {
@@ -362,22 +276,17 @@
     };
   }
   
-  // Performance Monitoring
+  // Performance Monitoring (Simplified for static UI)
   function setupPerformanceOptimizations() {
     // Detect if user prefers reduced motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
     if (prefersReducedMotion) {
       document.body.classList.add('reduced-motion');
-      return; // Skip heavy animations
     }
     
-    // Detect device capabilities
-    const isLowEndDevice = navigator.hardwareConcurrency < 4 || navigator.deviceMemory < 4;
-    
-    if (isLowEndDevice) {
-      document.body.classList.add('reduced-animations');
-    }
+    // Always add static class to disable movement
+    document.body.classList.add('static-ui');
     
     // Pause animations when tab is not visible
     document.addEventListener('visibilitychange', () => {
@@ -391,10 +300,10 @@
     });
   }
   
-  // Floating Action Button
-  function createFloatingActionButton() {
+  // STATIC Floating Action Button - No Movement
+  function createStaticFloatingActionButton() {
     const fab = document.createElement('button');
-    fab.className = 'fab';
+    fab.className = 'fab static-fab';
     fab.innerHTML = '+';
     fab.title = 'Quick Add Application';
     
@@ -403,7 +312,7 @@
       const jobTitleInput = document.getElementById('jobTitle');
       if (jobTitleInput) {
         // Switch to applications tab if not active
-        const applicationsTab = document.querySelector('[onclick*="applications"]');
+        const applicationsTab = document.querySelector('[onclick*=\"applications\"]');
         if (applicationsTab && !applicationsTab.classList.contains('active')) {
           applicationsTab.click();
         }
@@ -416,38 +325,44 @@
       }
     });
     
+    // Simple visual feedback without movement
+    fab.addEventListener('mousedown', () => {
+      fab.style.opacity = '0.8';
+    });
+    
+    fab.addEventListener('mouseup', () => {
+      fab.style.opacity = '1';
+    });
+    
+    fab.addEventListener('mouseleave', () => {
+      fab.style.opacity = '1';
+    });
+    
     document.body.appendChild(fab);
   }
   
-  // Initialize everything
+  // Initialize everything with static behavior
   function initialize() {
-    console.log('🚀 Initializing Apple-inspired enhancements...');
+    console.log('🚀 Initializing static Apple-inspired enhancements...');
     
     // Setup performance optimizations first
     setupPerformanceOptimizations();
     
-    // Setup typing detection - CRITICAL FOR FIXING MOVEMENT ISSUE
+    // Setup typing detection
     setupTypingDetection();
     
-    // Check if reduced motion is enabled
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (!prefersReducedMotion) {
-      createParticleSystem();
-      setupScrollReveal();
-      enhanceCardHoverEffects();
-    }
-    
-    // Core enhancements (always enabled)
+    // Core enhancements (all static versions)
     enhanceTabSwitching();
-    addMagneticEffects();
+    addStaticButtonEffects();
     addRippleEffects();
-    enhanceInputFocus();
-    animateCounters();
+    enhanceStaticCardEffects();
+    enhanceStaticInputFocus();
+    animateCounters(); // Keep this as it's not mouse-dependent
     createNotificationSystem();
-    createFloatingActionButton();
+    createStaticFloatingActionButton();
+    setupScrollReveal(); // Keep but make it subtle
     
-    console.log('✨ Apple-inspired enhancements loaded!');
+    console.log('✨ Static Apple-inspired enhancements loaded!');
   }
   
   // Initialize when DOM is ready
@@ -457,13 +372,13 @@
     initialize();
   }
   
-  // Re-enhance elements after dynamic content changes
+  // Re-enhance elements after dynamic content changes (static versions)
   window.enhanceNewElements = function() {
-    setupTypingDetection(); // Re-setup typing detection for new elements
-    addMagneticEffects();
-    enhanceInputFocus();
+    setupTypingDetection();
+    addStaticButtonEffects();
+    enhanceStaticInputFocus();
     animateCounters();
   };
   
-  console.log('🎨 Apple-inspired animations module loaded!');
+  console.log('🎨 Static Apple-inspired animations module loaded!');
 })();

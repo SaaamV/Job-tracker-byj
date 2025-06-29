@@ -74,6 +74,11 @@ class JobTrackerBackground {
   async handleMessage(message, sender, sendResponse) {
     try {
       switch (message.action) {
+        case 'notifyApplicationAdded':
+          await this.handleApplicationNotification(message.application, message.frontendUrl);
+          sendResponse({ success: true });
+          break;
+
         case 'saveApplication':
           const result = await this.saveApplication(message.data);
           sendResponse({ success: true, data: result });
@@ -197,6 +202,29 @@ class JobTrackerBackground {
       }
     } catch (error) {
       console.warn('Cloud sync failed, data saved locally:', error);
+    }
+  }
+
+  async handleApplicationNotification(applicationData, frontendUrl) {
+    try {
+      // Find open job tracker tabs and notify them
+      const tabs = await chrome.tabs.query({ url: `${frontendUrl}/*` });
+      
+      for (const tab of tabs) {
+        try {
+          await chrome.tabs.sendMessage(tab.id, {
+            action: 'applicationAdded',
+            application: applicationData
+          });
+          console.log('✅ Notified tab about new application:', tab.id);
+        } catch (tabError) {
+          console.log('Could not notify tab:', tab.id, tabError.message);
+        }
+      }
+      
+      console.log('✅ Application notification completed');
+    } catch (error) {
+      console.warn('Failed to handle application notification:', error);
     }
   }
 
