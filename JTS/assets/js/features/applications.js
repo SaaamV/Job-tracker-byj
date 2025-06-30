@@ -50,9 +50,9 @@
     }
   }
   
-  // Add new application - FIXED to prevent ObjectId issues
+  // Add or update application - FIXED to handle both new and edited applications
   async function addApplication() {
-    console.log('📝 Adding new application...');
+    console.log('📝 Adding/updating application...');
     
     const applicationData = getFormData();
     
@@ -63,35 +63,65 @@
     }
     
     try {
-      // Try to save to API if available
-      if (window.apiService) {
-        try {
-          // Make a clean copy without problematic fields for API
-          const apiData = { ...applicationData };
-          delete apiData.id; // Remove local ID to prevent ObjectId issues
+      // Check if we're editing an existing application
+      if (window.editingApplicationId) {
+        const editingId = window.editingApplicationId;
+        
+        // Find and update existing application
+        const index = applications.findIndex(app => app.id == editingId);
+        if (index !== -1) {
+          // Preserve the original ID and dateAdded
+          applicationData.id = applications[index].id;
+          applicationData.dateAdded = applications[index].dateAdded;
           
-          const savedApp = await window.apiService.saveApplication(apiData);
-          
-          // Add the API response (with proper MongoDB _id) to local state
-          applications.push(savedApp);
-          window.applications = applications;
-          
-          showMessage('Application saved successfully!', 'success');
-        } catch (error) {
-          console.log('📱 API failed, saving locally:', error);
-          
-          // Fallback to local storage with local ID
+          applications[index] = applicationData;
+          showMessage('Application updated successfully!', 'success');
+        } else {
+          console.warn('Application to edit not found, creating new one');
           applications.push(applicationData);
-          window.applications = applications;
-          
-          showMessage('Application saved locally. Will sync when connection is restored.', 'info');
+          showMessage('Application saved successfully!', 'success');
+        }
+        
+        // Clear editing state
+        delete window.editingApplicationId;
+        
+        // Reset button text
+        const addButton = document.querySelector('#applications .btn-success');
+        if (addButton) {
+          addButton.textContent = 'Add Application';
+          addButton.style.background = '';
         }
       } else {
-        // No API service, save locally
-        applications.push(applicationData);
-        window.applications = applications;
-        showMessage('Application saved successfully!', 'success');
+        // Try to save to API if available
+        if (window.apiService) {
+          try {
+            // Make a clean copy without problematic fields for API
+            const apiData = { ...applicationData };
+            delete apiData.id; // Remove local ID to prevent ObjectId issues
+            
+            const savedApp = await window.apiService.saveApplication(apiData);
+            
+            // Add the API response (with proper MongoDB _id) to local state
+            applications.push(savedApp);
+            
+            showMessage('Application saved successfully!', 'success');
+          } catch (error) {
+            console.log('📱 API failed, saving locally:', error);
+            
+            // Fallback to local storage with local ID
+            applications.push(applicationData);
+            
+            showMessage('Application saved locally. Will sync when connection is restored.', 'info');
+          }
+        } else {
+          // No API service, save locally
+          applications.push(applicationData);
+          showMessage('Application saved successfully!', 'success');
+        }
       }
+      
+      // Update global reference
+      window.applications = applications;
       
       // Always save to localStorage as backup
       localStorage.setItem('jobApplications', JSON.stringify(applications));
@@ -106,7 +136,7 @@
       clearForm();
       
     } catch (error) {
-      console.error('❌ Error adding application:', error);
+      console.error('❌ Error saving application:', error);
       showMessage('Failed to save application. Please try again.', 'error');
     }
   }
@@ -188,9 +218,9 @@
         <td>${getFollowUpStatus(app.followUpDate)}</td>
         <td>
           <div class="action-buttons">
-            <button class="btn btn-sm" onclick="Applications.edit(${app.id || index})" title="Edit">✏️</button>
-            <button class="btn btn-sm" onclick="Applications.duplicate(${app.id || index})" title="Duplicate">📋</button>
-            <button class="btn btn-sm btn-danger" onclick="Applications.delete(${app.id || index})" title="Delete">🗑️</button>
+            <button class="btn btn-sm" onclick="editApplication(${app.id || index})" title="Edit">✏️</button>
+            <button class="btn btn-sm" onclick="duplicateApplication(${app.id || index})" title="Duplicate">📋</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteApplication(${app.id || index})" title="Delete">🗑️</button>
             ${app.jobUrl ? `<a href="${app.jobUrl}" target="_blank" class="btn btn-sm" title="View Job">🔗</a>` : ''}
           </div>
         </td>
@@ -245,7 +275,7 @@
   
   // Edit application
   function editApplication(id) {
-    const app = applications.find(a => a.id === id);
+    const app = applications.find(a => a.id == id); // Use == to handle string/number conversion
     if (!app) {
       console.warn('⚠️ Application not found for editing:', id);
       return;
@@ -266,10 +296,17 @@
     getElementById('followUpDate').value = app.followUpDate || '';
     getElementById('notes').value = app.notes || '';
     
-    // Remove the original (will be re-added when form is submitted)
-    deleteApplicationById(id, false);
+    // Store the ID for updating instead of creating new
+    window.editingApplicationId = id;
     
-    showMessage('Application loaded for editing. Make changes and click "Add Application" to save.', 'info');
+    // Change button text to indicate editing
+    const addButton = document.querySelector('#applications .btn-success');
+    if (addButton) {
+      addButton.textContent = 'Update Application';
+      addButton.style.background = '#28a745';
+    }
+    
+    showMessage('Application loaded for editing. Make changes and click "Update Application" to save.', 'info');
     
     // Scroll to form
     document.getElementById('applications').scrollIntoView({ behavior: 'smooth' });
@@ -313,11 +350,21 @@
     await deleteApplicationById(id, true);
   }
   
-  // Delete application by ID
+  // Delete application by ID - FIXED to handle ID type conversion
   async function deleteApplicationById(id, showConfirmation = true) {
     try {
-      // Remove from local state
-      applications = applications.filter(app => app.id !== id);
+      console.log('🗑️ Deleting application with ID:', id, typeof id);
+      
+      // Remove from local state (use == to handle string/number conversion)
+      const originalLength = applications.length;
+      applications = applications.filter(app => app.id != id);
+      
+      if (applications.length === originalLength) {
+        console.warn('⚠️ No application found with ID:', id);
+        showMessage('Application not found', 'error');
+        return;
+      }
+      
       window.applications = applications;
       
       // Update localStorage
@@ -342,6 +389,8 @@
       if (showConfirmation) {
         showMessage('Application deleted successfully!', 'success');
       }
+      
+      console.log('✅ Application deleted. Remaining:', applications.length);
       
     } catch (error) {
       console.error('❌ Error deleting application:', error);
@@ -368,6 +417,18 @@
         input.value = '';
       }
     });
+    
+    // Clear editing state
+    if (window.editingApplicationId) {
+      delete window.editingApplicationId;
+      
+      // Reset button text
+      const addButton = document.querySelector('#applications .btn-success');
+      if (addButton) {
+        addButton.textContent = 'Add Application';
+        addButton.style.background = '';
+      }
+    }
   }
   
   // Set default values

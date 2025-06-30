@@ -2,8 +2,8 @@
 
 class JobTrackerPopup {
   constructor() {
-    this.frontendUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app'; // Vercel frontend URL
-    this.apiUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app'; // Vercel backend API URL
+    this.frontendUrl = 'https://job-tracker-chi-eight.vercel.app'; // Vercel frontend URL
+    this.apiUrl = 'https://job-tracker-chi-eight.vercel.app'; // Vercel backend API URL
     this.init();
   }
 
