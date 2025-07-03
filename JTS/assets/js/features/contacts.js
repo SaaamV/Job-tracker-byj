@@ -1,529 +1,438 @@
-// contacts.js - Enhanced contact management
+// Contacts Feature Module - Cloud-Only MongoDB Integration
+// Manages professional contacts with MongoDB cloud database
 
-function addContact() {
-  const contact = {
-    id: Date.now(),
-    name: document.getElementById('contactName').value.trim(),
-    company: document.getElementById('contactCompany').value.trim(),
-    position: document.getElementById('contactPosition').value.trim(),
-    linkedinUrl: document.getElementById('linkedinUrl').value.trim(),
-    email: document.getElementById('contactEmail').value.trim(),
-    phone: document.getElementById('contactPhone').value.trim(),
-    relationship: document.getElementById('relationship').value,
-    status: document.getElementById('contactStatus').value,
-    lastContactDate: document.getElementById('lastContactDate').value,
-    nextFollowUpDate: document.getElementById('nextFollowUpDate').value,
-    tags: document.getElementById('contactTags').value.trim(),
-    notes: document.getElementById('contactNotes').value.trim(),
-    dateAdded: new Date().toISOString()
-  };
-
-  if (!contact.name) {
-    showMessage('Please enter contact name', 'error');
-    return;
-  }
-
-  // Check for potential duplicates
-  const duplicate = contacts.find(c => 
-    c.name.toLowerCase() === contact.name.toLowerCase() &&
-    c.email === contact.email
-  );
-
-  if (duplicate && contact.email) {
-    if (!confirm('A contact with this name and email already exists. Do you want to add anyway?')) {
+(function() {
+  'use strict';
+  
+  console.log('👥 Loading Contacts Module (Cloud-Only)...');
+  
+  // Module state
+  let contacts = [];
+  let isInitialized = false;
+  
+  // Initialize the module
+  async function initialize() {
+    if (isInitialized) {
+      console.log('✅ Contacts module already initialized');
       return;
     }
-  }
-
-  contacts.push(contact);
-  localStorage.setItem('jobContacts', JSON.stringify(contacts));
-  
-  clearContactForm();
-  renderContacts();
-  populateEmailContacts();
-  
-  showMessage('Contact added successfully!', 'success');
-}
-
-function renderContacts() {
-  const contactsList = document.getElementById('contactsList');
-  contactsList.innerHTML = '';
-
-  let filteredContacts = getFilteredContacts();
-
-  if (filteredContacts.length === 0) {
-    contactsList.innerHTML = '<p>No contacts found matching your filters.</p>';
-    return;
-  }
-
-  filteredContacts.forEach(contact => {
-    const card = document.createElement('div');
-    card.className = 'contact-card';
-    card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div style="flex: 1;">
-          <h4>${contact.name} ${contact.position ? `- ${contact.position}` : ''}</h4>
-          <p><strong>Company:</strong> ${contact.company || 'Not specified'}</p>
-          <p><strong>Relationship:</strong> ${contact.relationship}</p>
-          <p><strong>Status:</strong> <span class="status-${contact.status.toLowerCase().replace(' ', '-')}">${contact.status}</span></p>
-          
-          <div style="margin: 10px 0;">
-            ${contact.linkedinUrl ? `<a href="${contact.linkedinUrl}" target="_blank" class="btn" style="margin: 2px; padding: 5px 10px; font-size: 12px;">LinkedIn</a>` : ''}
-            ${contact.email ? `<a href="mailto:${contact.email}" class="btn btn-success" style="margin: 2px; padding: 5px 10px; font-size: 12px;">Email</a>` : ''}
-            ${contact.phone ? `<a href="tel:${contact.phone}" class="btn" style="margin: 2px; padding: 5px 10px; font-size: 12px;">Call</a>` : ''}
-          </div>
-          
-          ${contact.lastContactDate ? `<p><strong>Last Contact:</strong> ${formatDate(contact.lastContactDate)}</p>` : ''}
-          ${contact.nextFollowUpDate ? `<p><strong>Next Follow-up:</strong> ${getFollowUpStatus(contact.nextFollowUpDate)}</p>` : ''}
-          
-          ${contact.tags ? `
-            <div class="contact-tags">
-              ${contact.tags.split(',').map(tag => `<span class="tag">${tag.trim()}</span>`).join('')}
-            </div>
-          ` : ''}
-          
-          ${contact.notes ? `<p><strong>Notes:</strong> ${contact.notes}</p>` : ''}
-          <p><small>Added: ${formatDate(contact.dateAdded)}</small></p>
-        </div>
-        
-        <div style="display: flex; flex-direction: column; gap: 5px;">
-          <button class="btn" onclick="editContact(${contact.id})" title="Edit Contact">✏️</button>
-          <button class="btn btn-success" onclick="composeEmailToContact(${contact.id})" title="Send Email">📧</button>
-          <button class="btn btn-warning" onclick="updateContactStatus(${contact.id})" title="Update Status">🔄</button>
-          <button class="btn btn-danger" onclick="deleteContact(${contact.id})" title="Delete Contact">🗑️</button>
-        </div>
-      </div>
-    `;
-    contactsList.appendChild(card);
-  });
-}
-
-function getFilteredContacts() {
-  let filtered = [...contacts];
-  
-  // Filter by company
-  const companyFilter = document.getElementById('contactCompanyFilter')?.value?.toLowerCase();
-  if (companyFilter) {
-    filtered = filtered.filter(contact => 
-      (contact.company || '').toLowerCase().includes(companyFilter)
-    );
-  }
-  
-  // Filter by status
-  const statusFilter = document.getElementById('contactStatusFilter')?.value;
-  if (statusFilter) {
-    filtered = filtered.filter(contact => contact.status === statusFilter);
-  }
-  
-  // Filter by relationship
-  const relationshipFilter = document.getElementById('relationshipFilter')?.value;
-  if (relationshipFilter) {
-    filtered = filtered.filter(contact => contact.relationship === relationshipFilter);
-  }
-  
-  // Sort by most recently added
-  filtered.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
-  
-  return filtered;
-}
-
-function filterContacts() {
-  renderContacts();
-}
-
-function deleteContact(id) {
-  if (confirm('Are you sure you want to delete this contact?')) {
-    contacts = contacts.filter(contact => contact.id !== id);
-    localStorage.setItem('jobContacts', JSON.stringify(contacts));
-    renderContacts();
-    populateEmailContacts();
-    showMessage('Contact deleted successfully!', 'success');
-  }
-}
-
-// Make all contact functions globally available
-window.addContact = addContact;
-window.renderContacts = renderContacts;
-window.filterContacts = filterContacts;
-window.deleteContact = deleteContact;
-window.editContact = editContact;
-window.updateContactStatus = updateContactStatus;
-window.composeEmailToContact = composeEmailToContact;
-window.clearContactForm = clearContactForm;
-window.importContacts = importContacts;
-window.exportContacts = exportContacts;
-window.selectAllContacts = selectAllContacts;
-window.bulkUpdateContactStatus = bulkUpdateContactStatus;
-window.getNetworkingSuggestions = getNetworkingSuggestions;
-window.getPopularTags = getPopularTags;
-window.addTagToContact = addTagToContact;
-
-console.log('Contacts module loaded and functions exposed globally');
-
-function editContact(id) {
-  const contact = contacts.find(c => c.id === id);
-  if (!contact) return;
-
-  // Populate form with contact data
-  document.getElementById('contactName').value = contact.name || '';
-  document.getElementById('contactCompany').value = contact.company || '';
-  document.getElementById('contactPosition').value = contact.position || '';
-  document.getElementById('linkedinUrl').value = contact.linkedinUrl || '';
-  document.getElementById('contactEmail').value = contact.email || '';
-  document.getElementById('contactPhone').value = contact.phone || '';
-  document.getElementById('relationship').value = contact.relationship || 'Network Contact';
-  document.getElementById('contactStatus').value = contact.status || 'Not Contacted';
-  document.getElementById('lastContactDate').value = contact.lastContactDate || '';
-  document.getElementById('nextFollowUpDate').value = contact.nextFollowUpDate || '';
-  document.getElementById('contactTags').value = contact.tags || '';
-  document.getElementById('contactNotes').value = contact.notes || '';
-
-  // Remove the contact temporarily
-  contacts = contacts.filter(c => c.id !== id);
-  localStorage.setItem('jobContacts', JSON.stringify(contacts));
-  renderContacts();
-  populateEmailContacts();
-  
-  // Scroll to form
-  document.getElementById('contacts').scrollIntoView({ behavior: 'smooth' });
-  showMessage('Contact loaded for editing. Make changes and click "Add Contact" to save.', 'info');
-}
-
-function updateContactStatus(id) {
-  const contact = contacts.find(c => c.id === id);
-  if (!contact) return;
-
-  const statusOptions = [
-    'Not Contacted',
-    'Reached Out',
-    'Responded',
-    'Meeting Scheduled',
-    'Referred',
-    'Cold Contact'
-  ];
-
-  const currentIndex = statusOptions.indexOf(contact.status);
-  const nextIndex = (currentIndex + 1) % statusOptions.length;
-  const newStatus = statusOptions[nextIndex];
-
-  contact.status = newStatus;
-  contact.lastContactDate = new Date().toISOString().split('T')[0];
-
-  localStorage.setItem('jobContacts', JSON.stringify(contacts));
-  renderContacts();
-  showMessage(`Contact status updated to: ${newStatus}`, 'success');
-}
-
-function composeEmailToContact(id) {
-  const contact = contacts.find(c => c.id === id);
-  if (!contact || !contact.email) {
-    showMessage('No email address found for this contact', 'error');
-    return;
-  }
-
-  // Switch to templates tab and pre-fill contact
-  switchTab('templates', document.querySelector('[onclick*="templates"]'));
-  
-  setTimeout(() => {
-    const contactSelect = document.getElementById('emailContact');
-    if (contactSelect) {
-      contactSelect.value = id;
-      replaceTemplatePlaceholders();
+    
+    try {
+      await loadContacts();
+      setupEventListeners();
+      
+      isInitialized = true;
+      console.log(`👥 Contacts module initialized with ${contacts.length} contacts`);
+    } catch (error) {
+      console.error('❌ Failed to initialize contacts module:', error);
+      showErrorMessage('Failed to load contacts. Please check your connection.');
     }
-  }, 100);
-}
-
-function clearContactForm() {
-  document.getElementById('contactName').value = '';
-  document.getElementById('contactCompany').value = '';
-  document.getElementById('contactPosition').value = '';
-  document.getElementById('linkedinUrl').value = '';
-  document.getElementById('contactEmail').value = '';
-  document.getElementById('contactPhone').value = '';
-  document.getElementById('relationship').value = 'Potential Referral';
-  document.getElementById('contactStatus').value = 'Not Contacted';
-  document.getElementById('lastContactDate').value = '';
-  document.getElementById('nextFollowUpDate').value = '';
-  document.getElementById('contactTags').value = '';
-  document.getElementById('contactNotes').value = '';
-}
-
-// Contact insights and recommendations
-function getContactInsights() {
-  const insights = [];
-  const today = new Date();
-  
-  // Check for contacts that need follow-up
-  const needFollowUp = contacts.filter(contact => {
-    if (!contact.nextFollowUpDate) return false;
-    return new Date(contact.nextFollowUpDate) <= today;
-  });
-  
-  if (needFollowUp.length > 0) {
-    insights.push(`${needFollowUp.length} contact(s) need follow-up today or are overdue.`);
   }
   
-  // Check for inactive contacts
-  const inactiveContacts = contacts.filter(contact => {
-    if (contact.status === 'Not Contacted') return true;
-    if (!contact.lastContactDate) return false;
-    
-    const daysSinceContact = Math.floor(
-      (today - new Date(contact.lastContactDate)) / (1000 * 60 * 60 * 24)
-    );
-    return daysSinceContact > 30;
-  });
-  
-  if (inactiveContacts.length > 5) {
-    insights.push(`You have ${inactiveContacts.length} contacts you haven't reached out to recently. Consider reconnecting.`);
-  }
-  
-  // Check for networking opportunities
-  const referralContacts = contacts.filter(contact => 
-    contact.relationship === 'Potential Referral' && 
-    contact.status === 'Not Contacted'
-  );
-  
-  if (referralContacts.length > 0) {
-    insights.push(`You have ${referralContacts.length} potential referral contacts you haven't reached out to yet.`);
-  }
-  
-  return insights;
-}
-
-// Import contacts from LinkedIn CSV or other sources
-function importContacts() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.csv,.json';
-  
-  input.onchange = function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        let importedContacts = [];
-        
-        if (file.name.endsWith('.json')) {
-          importedContacts = JSON.parse(e.target.result);
-        } else if (file.name.endsWith('.csv')) {
-          // Simple CSV parsing (you might want to use a library like Papa Parse)
-          const lines = e.target.result.split('\n');
-          const headers = lines[0].split(',').map(h => h.trim());
-          
-          for (let i = 1; i < lines.length; i++) {
-            if (lines[i].trim()) {
-              const values = lines[i].split(',').map(v => v.trim());
-              const contact = {
-                id: Date.now() + i,
-                dateAdded: new Date().toISOString(),
-                relationship: 'Network Contact',
-                status: 'Not Contacted'
-              };
-              
-              headers.forEach((header, index) => {
-                const normalizedHeader = header.toLowerCase();
-                if (normalizedHeader.includes('name')) contact.name = values[index] || '';
-                else if (normalizedHeader.includes('company')) contact.company = values[index] || '';
-                else if (normalizedHeader.includes('email')) contact.email = values[index] || '';
-                else if (normalizedHeader.includes('position') || normalizedHeader.includes('title')) contact.position = values[index] || '';
-              });
-              
-              if (contact.name) importedContacts.push(contact);
-            }
-          }
-        }
-        
-        if (importedContacts.length > 0) {
-          // Merge with existing contacts, avoiding duplicates
-          let added = 0;
-          importedContacts.forEach(importedContact => {
-            const exists = contacts.some(contact => 
-              contact.name.toLowerCase() === importedContact.name.toLowerCase() &&
-              contact.email === importedContact.email
-            );
-            
-            if (!exists) {
-              contacts.push(importedContact);
-              added++;
-            }
-          });
-          
-          localStorage.setItem('jobContacts', JSON.stringify(contacts));
-          renderContacts();
-          populateEmailContacts();
-          showMessage(`Imported ${added} new contact(s)!`, 'success');
-        } else {
-          showMessage('No valid contacts found in the file', 'error');
-        }
-        
-      } catch (error) {
-        console.error('Import failed:', error);
-        showMessage('Failed to import contacts. Please check the file format.', 'error');
+  // Load contacts from cloud API
+  async function loadContacts() {
+    try {
+      if (!window.apiService) {
+        throw new Error('API service not available');
       }
+      
+      contacts = await window.apiService.getContacts();
+      
+      // Update global reference for backward compatibility
+      window.contacts = contacts;
+      window.jobTracker.contacts = contacts;
+      
+      renderContacts();
+      
+    } catch (error) {
+      console.error('❌ Error loading contacts:', error);
+      contacts = [];
+      window.contacts = [];
+      window.jobTracker.contacts = [];
+      throw error;
+    }
+  }
+  
+  // Add new contact
+  async function addContact(contactData) {
+    try {
+      if (!window.apiService) {
+        throw new Error('API service not available');
+      }
+      
+      // Validate required fields
+      if (!contactData.name) {
+        throw new Error('Contact name is required');
+      }
+      
+      const savedContact = await window.apiService.saveContact(contactData);
+      
+      // Add to local state
+      contacts.push(savedContact);
+      window.contacts = contacts;
+      window.jobTracker.contacts = contacts;
+      
+      // Update UI
+      renderContacts();
+      
+      return savedContact;
+      
+    } catch (error) {
+      console.error('❌ Error adding contact:', error);
+      throw error;
+    }
+  }
+  
+  // Update existing contact
+  async function updateContact(id, contactData) {
+    try {
+      if (!window.apiService) {
+        throw new Error('API service not available');
+      }
+      
+      const updatedContact = await window.apiService.updateContact(id, contactData);
+      
+      // Update local state
+      const index = contacts.findIndex(contact => contact._id === id);
+      if (index !== -1) {
+        contacts[index] = { ...contacts[index], ...updatedContact };
+        window.contacts = contacts;
+        window.jobTracker.contacts = contacts;
+      }
+      
+      // Update UI
+      renderContacts();
+      
+      return updatedContact;
+      
+    } catch (error) {
+      console.error('❌ Error updating contact:', error);
+      throw error;
+    }
+  }
+  
+  // Delete contact
+  async function deleteContact(id) {
+    try {
+      if (!window.apiService) {
+        throw new Error('API service not available');
+      }
+      
+      await window.apiService.deleteContact(id);
+      
+      // Remove from local state
+      contacts = contacts.filter(contact => contact._id !== id);
+      window.contacts = contacts;
+      window.jobTracker.contacts = contacts;
+      
+      // Update UI
+      renderContacts();
+      
+    } catch (error) {
+      console.error('❌ Error deleting contact:', error);
+      throw error;
+    }
+  }
+  
+  // Filter contacts based on criteria
+  function filterContacts() {
+    const companyFilter = document.getElementById('contactCompanyFilter')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('contactStatusFilter')?.value || '';
+    const relationshipFilter = document.getElementById('relationshipFilter')?.value || '';
+    
+    let filteredContacts = [...contacts];
+    
+    // Apply company filter
+    if (companyFilter) {
+      filteredContacts = filteredContacts.filter(contact => 
+        contact.company && contact.company.toLowerCase().includes(companyFilter)
+      );
+    }
+    
+    // Apply status filter
+    if (statusFilter) {
+      filteredContacts = filteredContacts.filter(contact => contact.contactStatus === statusFilter);
+    }
+    
+    // Apply relationship filter
+    if (relationshipFilter) {
+      filteredContacts = filteredContacts.filter(contact => contact.relationship === relationshipFilter);
+    }
+    
+    renderContactsList(filteredContacts);
+  }
+  
+  // Render contacts list
+  function renderContacts() {
+    renderContactsList(contacts);
+  }
+  
+  // Render contacts list with given data
+  function renderContactsList(contactData) {
+    const contactsList = document.getElementById('contactsList');
+    if (!contactsList) return;
+    
+    contactsList.innerHTML = '';
+    
+    if (contactData.length === 0) {
+      contactsList.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+          <h3>No contacts match your filters</h3>
+          <p>Try adjusting your search criteria to find contacts.</p>
+        </div>
+      `;
+      return;
+    }
+    
+    contactData.forEach((contact, index) => {
+      const contactCard = document.createElement('div');
+      contactCard.className = 'contact-card';
+      
+      contactCard.innerHTML = `
+        <h4>${escapeHtml(contact.name)}</h4>
+        ${contact.company ? `<p><strong>Company:</strong> ${escapeHtml(contact.company)}</p>` : ''}
+        ${contact.position ? `<p><strong>Position:</strong> ${escapeHtml(contact.position)}</p>` : ''}
+        ${contact.email ? `<p><strong>Email:</strong> <a href="mailto:${contact.email}">${contact.email}</a></p>` : ''}
+        ${contact.phone ? `<p><strong>Phone:</strong> <a href="tel:${contact.phone}">${contact.phone}</a></p>` : ''}
+        ${contact.linkedinUrl ? `<p><strong>LinkedIn:</strong> <a href="${contact.linkedinUrl}" target="_blank">View Profile</a></p>` : ''}
+        <p><strong>Relationship:</strong> ${contact.relationship}</p>
+        <p><strong>Status:</strong> <span class="status-badge">${contact.contactStatus}</span></p>
+        ${contact.tags ? `<p><strong>Tags:</strong> ${escapeHtml(contact.tags)}</p>` : ''}
+        ${contact.notes ? `<p><strong>Notes:</strong> ${escapeHtml(contact.notes)}</p>` : ''}
+        
+        <div class="contact-actions">
+          <button class="btn btn-sm" onclick="window.ContactsModule.editContact('${contact._id}')">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="window.ContactsModule.confirmDeleteContact('${contact._id}')">Delete</button>
+          ${contact.email ? `<button class="btn btn-sm btn-primary" onclick="window.ContactsModule.composeEmail('${contact.email}', '${contact.name}')">Email</button>` : ''}
+        </div>
+      `;
+      
+      contactsList.appendChild(contactCard);
+    });
+  }
+  
+  // Edit contact
+  function editContact(id) {
+    const contact = contacts.find(c => c._id === id);
+    if (!contact) {
+      console.error('Contact not found:', id);
+      return;
+    }
+    
+    // Populate form with contact data
+    document.getElementById('contactName').value = contact.name || '';
+    document.getElementById('contactCompany').value = contact.company || '';
+    document.getElementById('contactPosition').value = contact.position || '';
+    document.getElementById('contactEmail').value = contact.email || '';
+    document.getElementById('contactPhone').value = contact.phone || '';
+    document.getElementById('contactLinkedin').value = contact.linkedinUrl || '';
+    document.getElementById('contactRelationship').value = contact.relationship || '';
+    document.getElementById('contactStatus').value = contact.contactStatus || '';
+    document.getElementById('contactTags').value = contact.tags || '';
+    document.getElementById('contactNotes').value = contact.notes || '';
+    
+    // Store the ID for updating
+    document.getElementById('editingContactId').value = id;
+    
+    // Change the add button to update button
+    const addButton = document.querySelector('#contacts .btn-primary');
+    if (addButton) {
+      addButton.textContent = 'Update Contact';
+      addButton.onclick = () => window.ContactsModule.updateContactFromForm();
+    }
+  }
+  
+  // Update contact from form
+  async function updateContactFromForm() {
+    const id = document.getElementById('editingContactId').value;
+    if (!id) {
+      console.error('No contact ID found for updating');
+      return;
+    }
+    
+    const contactData = {
+      name: document.getElementById('contactName').value.trim(),
+      company: document.getElementById('contactCompany').value.trim(),
+      position: document.getElementById('contactPosition').value.trim(),
+      email: document.getElementById('contactEmail').value.trim(),
+      phone: document.getElementById('contactPhone').value.trim(),
+      linkedinUrl: document.getElementById('contactLinkedin').value.trim(),
+      relationship: document.getElementById('contactRelationship').value,
+      contactStatus: document.getElementById('contactStatus').value,
+      tags: document.getElementById('contactTags').value.trim(),
+      notes: document.getElementById('contactNotes').value.trim()
     };
     
-    reader.readAsText(file);
-  };
-  
-  input.click();
-}
-
-// Export contacts
-function exportContacts() {
-  if (contacts.length === 0) {
-    showMessage('No contacts to export', 'error');
-    return;
-  }
-  
-  const csvContent = convertContactsToCSV();
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `contacts-${new Date().toISOString().split('T')[0]}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  URL.revokeObjectURL(url);
-  showMessage('Contacts exported successfully!', 'success');
-}
-
-function convertContactsToCSV() {
-  const headers = [
-    'Name', 'Company', 'Position', 'Email', 'Phone', 'LinkedIn URL',
-    'Relationship', 'Status', 'Last Contact Date', 'Next Follow-up Date',
-    'Tags', 'Notes', 'Date Added'
-  ];
-  
-  const rows = contacts.map(contact => [
-    contact.name || '',
-    contact.company || '',
-    contact.position || '',
-    contact.email || '',
-    contact.phone || '',
-    contact.linkedinUrl || '',
-    contact.relationship || '',
-    contact.status || '',
-    contact.lastContactDate || '',
-    contact.nextFollowUpDate || '',
-    contact.tags || '',
-    contact.notes || '',
-    formatDate(contact.dateAdded)
-  ]);
-  
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(field => `"${field.replace(/"/g, '""')}"`).join(','))
-    .join('\n');
-  
-  return csvContent;
-}
-
-// Bulk operations for contacts
-function selectAllContacts() {
-  const checkboxes = document.querySelectorAll('.contact-checkbox');
-  checkboxes.forEach(cb => cb.checked = true);
-}
-
-function bulkUpdateContactStatus() {
-  const selectedIds = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
-    .map(cb => parseInt(cb.value));
-  
-  if (selectedIds.length === 0) {
-    showMessage('Please select contacts to update', 'error');
-    return;
-  }
-  
-  const newStatus = prompt('Enter new status for selected contacts:');
-  if (!newStatus) return;
-  
-  let updated = 0;
-  contacts.forEach(contact => {
-    if (selectedIds.includes(contact.id)) {
-      contact.status = newStatus;
-      contact.lastContactDate = new Date().toISOString().split('T')[0];
-      updated++;
+    try {
+      await updateContact(id, contactData);
+      showSuccessMessage('Contact updated successfully!');
+      clearContactForm();
+    } catch (error) {
+      showErrorMessage('Failed to update contact: ' + error.message);
     }
-  });
+  }
   
-  localStorage.setItem('jobContacts', JSON.stringify(contacts));
-  renderContacts();
-  showMessage(`Updated ${updated} contact(s)`, 'success');
-}
-
-// Contact networking suggestions
-function getNetworkingSuggestions() {
-  const suggestions = [];
+  // Confirm delete contact
+  function confirmDeleteContact(id) {
+    const contact = contacts.find(c => c._id === id);
+    if (!contact) {
+      console.error('Contact not found:', id);
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to delete ${contact.name}?`)) {
+      deleteContactById(id);
+    }
+  }
   
-  // Suggest reaching out to contacts at companies where you've applied
-  const appliedCompanies = [...new Set(applications.map(app => app.company.toLowerCase()))];
+  // Delete contact by ID
+  async function deleteContactById(id) {
+    try {
+      await deleteContact(id);
+      showSuccessMessage('Contact deleted successfully!');
+    } catch (error) {
+      showErrorMessage('Failed to delete contact: ' + error.message);
+    }
+  }
   
-  contacts.forEach(contact => {
-    if (contact.company && appliedCompanies.includes(contact.company.toLowerCase())) {
-      if (contact.status === 'Not Contacted' || contact.status === 'Cold Contact') {
-        suggestions.push({
-          type: 'referral_opportunity',
-          contact: contact,
-          reason: `You've applied to ${contact.company}. Consider reaching out for insights or referral.`
-        });
+  // Clear contact form
+  function clearContactForm() {
+    const editingIdField = document.getElementById('editingContactId');
+    if (editingIdField) {
+      editingIdField.value = '';
+    }
+    
+    // Reset form fields safely
+    const inputs = document.querySelectorAll('#contacts input, #contacts select, #contacts textarea');
+    inputs.forEach(input => {
+      if (input && input.id) {
+        if (input.id === 'contactRelationship') {
+          input.value = 'Potential Referral';
+        } else if (input.id === 'contactStatus') {
+          input.value = 'Not Contacted';
+        } else {
+          input.value = '';
+        }
+      }
+    });
+    
+    // Reset button to add mode
+    const addButton = document.querySelector('#contacts .btn-success');
+    if (addButton) {
+      addButton.textContent = 'Add Contact';
+      addButton.onclick = () => window.addContact();
+    }
+  }
+  
+  // Compose email to contact
+  function composeEmail(email, name) {
+    const subject = encodeURIComponent(`Following up - ${name}`);
+    const body = encodeURIComponent(`Hi ${name},\\n\\nI hope this email finds you well.\\n\\nBest regards`);
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+  }
+  
+  // Setup event listeners
+  function setupEventListeners() {
+    // Add hidden field for editing contact ID
+    if (!document.getElementById('editingContactId')) {
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.id = 'editingContactId';
+      hiddenInput.value = '';
+      
+      // Find the contacts form section and append to it
+      const contactsSection = document.getElementById('contacts');
+      if (contactsSection) {
+        const formSection = contactsSection.querySelector('.form-section');
+        if (formSection) {
+          formSection.appendChild(hiddenInput);
+        }
       }
     }
-  });
-  
-  // Suggest following up with contacts who responded
-  const needFollowUp = contacts.filter(contact => {
-    if (contact.status !== 'Responded') return false;
-    if (!contact.lastContactDate) return true;
-    
-    const daysSince = Math.floor(
-      (new Date() - new Date(contact.lastContactDate)) / (1000 * 60 * 60 * 24)
-    );
-    return daysSince >= 7;
-  });
-  
-  needFollowUp.forEach(contact => {
-    suggestions.push({
-      type: 'follow_up',
-      contact: contact,
-      reason: 'Has responded to your outreach. Consider following up.'
-    });
-  });
-  
-  return suggestions;
-}
-
-// Tag management
-function getPopularTags() {
-  const tagCount = {};
-  
-  contacts.forEach(contact => {
-    if (contact.tags) {
-      contact.tags.split(',').forEach(tag => {
-        const trimmedTag = tag.trim().toLowerCase();
-        tagCount[trimmedTag] = (tagCount[trimmedTag] || 0) + 1;
-      });
-    }
-  });
-  
-  return Object.entries(tagCount)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 10)
-    .map(([tag]) => tag);
-}
-
-function addTagToContact(contactId, tag) {
-  const contact = contacts.find(c => c.id === contactId);
-  if (!contact) return;
-  
-  const currentTags = contact.tags ? contact.tags.split(',').map(t => t.trim()) : [];
-  if (!currentTags.includes(tag)) {
-    currentTags.push(tag);
-    contact.tags = currentTags.join(', ');
-    localStorage.setItem('jobContacts', JSON.stringify(contacts));
-    renderContacts();
   }
-}
+  
+  // Utility functions
+  function escapeHtml(text) {
+    if (typeof text !== 'string') return text;
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
+  function showSuccessMessage(message) {
+    if (window.showSuccessMessage) {
+      window.showSuccessMessage(message);
+    } else {
+      console.log('✅', message);
+    }
+  }
+  
+  function showErrorMessage(message) {
+    if (window.showErrorMessage) {
+      window.showErrorMessage(message);
+    } else {
+      console.error('❌', message);
+    }
+  }
+  
+  // Public API
+  window.ContactsModule = {
+    initialize,
+    loadContacts,
+    addContact,
+    updateContact,
+    deleteContact,
+    editContact,
+    confirmDeleteContact,
+    updateContactFromForm,
+    clearContactForm,
+    composeEmail,
+    renderContacts,
+    filterContacts
+  };
+  
+  // Global wrapper function for form submission
+  async function addContactFromForm() {
+    const contactData = {
+      name: document.getElementById('contactName').value.trim(),
+      company: document.getElementById('contactCompany').value.trim(),
+      position: document.getElementById('contactPosition').value.trim(),
+      email: document.getElementById('contactEmail').value.trim(),
+      phone: document.getElementById('contactPhone').value.trim(),
+      linkedinUrl: document.getElementById('contactLinkedin').value.trim(),
+      relationship: document.getElementById('contactRelationship').value,
+      contactStatus: document.getElementById('contactStatus').value,
+      lastContactDate: document.getElementById('lastContactDate').value,
+      nextFollowUpDate: document.getElementById('nextFollowUpDate').value,
+      tags: document.getElementById('contactTags').value.trim(),
+      notes: document.getElementById('contactNotes').value.trim()
+    };
+    
+    try {
+      await addContact(contactData);
+      showSuccessMessage('Contact added successfully!');
+      clearContactForm();
+    } catch (error) {
+      showErrorMessage('Failed to add contact: ' + error.message);
+    }
+  }
+  
+  // Export global functions for backward compatibility
+  window.addContact = addContactFromForm;
+  window.editContact = editContact;
+  window.deleteContact = (id) => confirmDeleteContact(id);
+  window.renderContacts = renderContacts;
+  window.clearContactForm = clearContactForm;
+  window.filterContacts = filterContacts;
+  
+  // Auto-initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
+  
+  console.log('👥 Contacts module loaded successfully (Cloud-Only)');
+  
+})();

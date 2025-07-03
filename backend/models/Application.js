@@ -53,8 +53,8 @@ const applicationSchema = new mongoose.Schema({
   },
   jobType: {
     type: String,
-    enum: ['Full-time', 'Part-time', 'Contract', 'Internship', 'Remote', 'Hybrid', 'On-site'],
-    default: 'Full-time'
+    enum: ['', 'Full-time', 'Part-time', 'Contract', 'Internship', 'Remote', 'Hybrid', 'On-site'],
+    default: ''
   },
   priority: {
     type: String,

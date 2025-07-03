@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(./start.sh:*)",
+      "Bash(grep:*)",
+      "Bash(npm start)",
+      "Bash(open:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(node:*)"
+    ],
+    "deny": []
+  }
+}

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Starting Job Tracker Development Environment..."
+echo "Starting Job Tracker Cloud-Only Development Environment..."
 
 # Kill any existing processes on ports 3001 and 8080
 echo "🧹 Cleaning up existing processes..."
@@ -12,7 +12,7 @@ sleep 2
 
 # Check if we're in development
 if [ "$NODE_ENV" != "production" ]; then
-    echo "🔧 Development mode - starting local servers..."
+    echo "🔧 Development mode - starting cloud-only servers..."
     
     # Start backend server first
     echo "📡 Starting backend server on port 3001..."
@@ -26,40 +26,36 @@ if [ "$NODE_ENV" != "production" ]; then
     
     # Check if .env file exists and has MongoDB URI
     if [ ! -f ".env" ]; then
-        echo "⚠️  Warning: .env file not found. Creating template..."
-        cat > .env << 'EOF'
-# IMPORTANT: Replace with your actual MongoDB connection string
-MONGODB_URI=mongodb+srv://sharmaabhishek263:Abhishek1@jobtrack.bc5ykhu.mongodb.net/?retryWrites=true&w=majority&appName=JobTrack
-
-# Application Configuration
-NODE_ENV=development
-PORT=3001
-
-# JWT Secret - CHANGE THIS TO A SECURE RANDOM STRING
-JWT_SECRET=your_secure_jwt_secret_key_change_this
-
-# API Configuration
-API_BASE_URL=http://localhost:3001
-EOF
-        echo "✅ .env file created with your MongoDB credentials"
+        echo "❌ .env file not found!"
+        echo "Please create a .env file with your MongoDB Cloud connection string:"
+        echo "MONGODB_URI=mongodb+srv://your-username:your-password@your-cluster.mongodb.net/your-database"
+        echo "NODE_ENV=development"
+        echo "PORT=3001"
+        exit 1
+    fi
+    
+    # Verify MongoDB URI exists
+    if ! grep -q "MONGODB_URI" .env; then
+        echo "❌ MONGODB_URI not found in .env file!"
+        echo "Please add your MongoDB Cloud connection string to the .env file."
+        exit 1
     fi
     
     # Start backend in background
-    echo "🚀 Starting backend API server..."
+    echo "🚀 Starting cloud-only backend API server..."
     npm start &
     BACKEND_PID=$!
     
     # Wait for backend to start
     echo "⏳ Waiting for backend to initialize..."
-    sleep 8  # Increased wait time
+    sleep 5
     
     # Test backend health with retry logic
     echo "🏥 Testing backend health..."
     BACKEND_READY=false
-    for i in {1..15}; do  # Increased retry attempts
-        # First check if the port is even open
+    for i in {1..10}; do
+        # Check if the port is open and health endpoint responds
         if nc -z localhost 3001 2>/dev/null; then
-            # Then check if the health endpoint returns valid JSON
             HEALTH_RESPONSE=$(curl -s http://localhost:3001/api/health 2>/dev/null)
             if [ $? -eq 0 ] && echo "$HEALTH_RESPONSE" | grep -q "status"; then
                 echo "✅ Backend is healthy and ready!"
@@ -68,7 +64,7 @@ EOF
                 break
             fi
         fi
-        echo "⏳ Backend not ready yet (attempt $i/15)..."
+        echo "⏳ Backend not ready yet (attempt $i/10)..."
         sleep 2
     done
     
@@ -76,9 +72,11 @@ EOF
         echo "❌ Backend failed to start properly."
         echo "⚠️  This could be due to:"
         echo "   - MongoDB connection issues (check your .env file)"
+        echo "   - Invalid MongoDB URI format"
+        echo "   - Network connectivity issues"
         echo "   - Port 3001 already in use"
-        echo "   - Missing dependencies (try: cd backend && npm install)"
-        echo "💡 Don't worry - the frontend will work with localStorage!"
+        echo "❌ Application cannot run without cloud database connection!"
+        exit 1
     fi
     
     # Return to root directory
@@ -114,26 +112,22 @@ EOF
     cd ..
     
     echo ""
-    echo "🎉 Job Tracker is running!"
+    echo "🎉 Job Tracker Cloud-Only is running!"
     echo "==============================================="
     echo "📱 Frontend:     http://localhost:8080"
     echo "🔧 Backend API:  http://localhost:3001"
     echo "🏥 Health Check: http://localhost:3001/api/health"
     echo "📊 Applications: http://localhost:3001/api/applications"
+    echo "👥 Contacts:     http://localhost:3001/api/contacts"
     echo "==============================================="
     echo ""
-    
-    if [ "$BACKEND_READY" = true ]; then
-        echo "✅ Full-stack mode: Data will be saved to MongoDB"
-    else
-        echo "⚠️  Frontend-only mode: Data will be saved to localStorage"
-        echo "🔧 To fix backend: Check MongoDB connection in backend/.env"
-    fi
+    echo "☁️ Cloud-only mode: All data is saved to MongoDB"
     
     echo ""
     echo "💡 Tips:"
     echo "   - Open http://localhost:8080 in your browser"
     echo "   - Install Chrome extension from /chrome-extension"
+    echo "   - All data is stored in MongoDB cloud - no local storage used"
     echo "   - Check backend logs if API calls fail"
     echo ""
     echo "Press Ctrl+C to stop all servers"
@@ -177,6 +171,6 @@ EOF
     
 else
     echo "🚀 Production mode detected"
-    echo "💡 Use Vercel deployment instead"
-    echo "Run: ./deploy.sh"
+    echo "💡 Deploy to Vercel or your preferred cloud platform"
+    echo "Make sure to set MONGODB_URI environment variable in production"
 fi

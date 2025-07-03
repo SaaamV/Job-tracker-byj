@@ -5,9 +5,7 @@ window.jobTracker = {
   applications: [],
   contacts: [],
   resumes: [],
-  currentTab: 'applications',
-  isOnline: navigator.onLine,
-  syncStatus: 'idle'
+  currentTab: 'applications'
 };
 
 // Initialize the application
@@ -42,39 +40,37 @@ async function initializeApp() {
   updateAnalytics();
 }
 
-// Load all data from API or localStorage
+// Load all data from cloud API
 async function loadAllData() {
   try {
-    console.log('Loading data...');
+    console.log('Loading data from cloud...');
     
-    // Check if apiService is available and working
-    if (window.apiService) {
-      try {
-        // Test connection to backend on correct port
-        const health = await window.apiService.checkHealth();
-        if (health.status === 'OK') {
-          console.log('✅ API connection successful');
-          window.jobTracker.applications = await window.apiService.getApplicationsHybrid();
-        } else {
-          throw new Error('API health check failed');
-        }
-      } catch (apiError) {
-        console.log('⚠️ API unavailable, using localStorage:', apiError.message);
-        window.jobTracker.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
-      }
-    } else {
-      window.jobTracker.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+    if (!window.apiService) {
+      throw new Error('API service not available');
     }
     
-    console.log(`Loaded ${window.jobTracker.applications.length} applications`);
+    // Load applications from cloud
+    try {
+      window.jobTracker.applications = await window.apiService.getApplications();
+      console.log(`✅ Loaded ${window.jobTracker.applications.length} applications from cloud`);
+    } catch (error) {
+      console.error('Failed to load applications:', error.message);
+      window.jobTracker.applications = [];
+      showErrorMessage('Failed to load applications. Please check your connection.');
+    }
     
-    // Load contacts
-    window.jobTracker.contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
-    console.log(`Loaded ${window.jobTracker.contacts.length} contacts`);
+    // Load contacts from cloud
+    try {
+      window.jobTracker.contacts = await window.apiService.getContacts();
+      console.log(`✅ Loaded ${window.jobTracker.contacts.length} contacts from cloud`);
+    } catch (error) {
+      console.error('Failed to load contacts:', error.message);
+      window.jobTracker.contacts = [];
+      showErrorMessage('Failed to load contacts. Please check your connection.');
+    }
     
-    // Load resumes from localStorage (file data)
-    window.jobTracker.resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
-    console.log(`Loaded ${window.jobTracker.resumes.length} resumes`);
+    // Initialize empty resumes array (file-based, not stored in cloud)
+    window.jobTracker.resumes = [];
     
     // Update global references for backward compatibility
     window.applications = window.jobTracker.applications;
@@ -83,21 +79,30 @@ async function loadAllData() {
     
   } catch (error) {
     console.error('Error loading data:', error);
+    showErrorMessage('Failed to connect to cloud database. Please check your internet connection.');
     
-    // Fallback to localStorage
-    window.jobTracker.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
-    window.jobTracker.contacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
-    window.jobTracker.resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
+    // Initialize empty arrays if cloud connection fails
+    window.jobTracker.applications = [];
+    window.jobTracker.contacts = [];
+    window.jobTracker.resumes = [];
   }
 }
 
 // Initialize UI components
 function initializeUI() {
-  // Render initial data
-  renderApplications();
-  renderContacts();
-  renderResumes();
-  updateResumeDropdown();
+  // Render initial data using module methods
+  if (window.ApplicationsModule && window.ApplicationsModule.renderApplications) {
+    window.ApplicationsModule.renderApplications();
+  }
+  if (window.ContactsModule && window.ContactsModule.renderContacts) {
+    window.ContactsModule.renderContacts();
+  }
+  if (window.ResumesModule && window.ResumesModule.renderResumes) {
+    window.ResumesModule.renderResumes();
+  }
+  if (window.ResumesModule && window.ResumesModule.updateResumeDropdown) {
+    window.ResumesModule.updateResumeDropdown();
+  }
 }
 
 // Enhanced tab switching with animations
@@ -144,108 +149,22 @@ function setupEventListeners() {
   window.addEventListener('offline', handleOfflineStatus);
 }
 
-// Enhanced application rendering with animations
+// Legacy function - now handled by ApplicationsModule
 function renderApplications() {
-  const tbody = document.getElementById('applicationsBody');
-  if (!tbody) return;
-  
-  tbody.innerHTML = '';
-  
-  if (window.jobTracker.applications.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-          <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">📋</div>
-          No applications yet. Add your first application above!
-        </td>
-      </tr>
-    `;
-    return;
+  if (window.ApplicationsModule && window.ApplicationsModule.renderApplications) {
+    return window.ApplicationsModule.renderApplications();
+  } else if (window.renderApplications) {
+    return window.renderApplications();
   }
-  
-  window.jobTracker.applications.forEach((app, index) => {
-    const row = document.createElement('tr');
-    
-    // Apply priority styling
-    if (app.priority === 'High') {
-      row.classList.add('priority-high');
-    } else if (app.priority === 'Medium') {
-      row.classList.add('priority-medium');
-    } else if (app.priority === 'Low') {
-      row.classList.add('priority-low');
-    }
-    
-    row.innerHTML = `
-      <td>${formatDate(app.applicationDate)}</td>
-      <td><strong>${escapeHtml(app.jobTitle)}</strong></td>
-      <td>${escapeHtml(app.company)}</td>
-      <td>${app.jobPortal || 'N/A'}</td>
-      <td><span class="status-badge status-${app.status.toLowerCase().replace(/\\s+/g, '-')}">${app.status}</span></td>
-      <td>${app.resumeVersion || 'N/A'}</td>
-      <td>
-        <span class="priority-badge priority-${app.priority.toLowerCase()}">${app.priority}</span>
-      </td>
-      <td>${app.followUpDate ? formatDate(app.followUpDate) : 'N/A'}</td>
-      <td>
-        <div class="action-buttons">
-          <button class="btn btn-sm" onclick="editApplication(${app.id || index})" title="Edit">
-            ✏️
-          </button>
-          <button class="btn btn-sm btn-danger" onclick="deleteApplication(${app.id || index})" title="Delete">
-            🗑️
-          </button>
-          ${app.jobUrl ? `<a href="${app.jobUrl}" target="_blank" class="btn btn-sm" title="View Job">🔗</a>` : ''}
-        </div>
-      </td>
-    `;
-    
-    tbody.appendChild(row);
-  });
 }
 
-// Enhanced contact rendering
+// Legacy function - now handled by ContactsModule
 function renderContacts() {
-  const contactsList = document.getElementById('contactsList');
-  if (!contactsList) return;
-  
-  contactsList.innerHTML = '';
-  
-  if (window.jobTracker.contacts.length === 0) {
-    contactsList.innerHTML = `
-      <div class="empty-state" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
-        <h3>No contacts yet</h3>
-        <p>Start building your professional network by adding contacts above.</p>
-      </div>
-    `;
-    return;
+  if (window.ContactsModule && window.ContactsModule.renderContacts) {
+    return window.ContactsModule.renderContacts();
+  } else if (window.renderContacts) {
+    return window.renderContacts();
   }
-  
-  window.jobTracker.contacts.forEach((contact, index) => {
-    const contactCard = document.createElement('div');
-    contactCard.className = 'contact-card';
-    
-    contactCard.innerHTML = `
-      <h4>${escapeHtml(contact.name)}</h4>
-      ${contact.company ? `<p><strong>Company:</strong> ${escapeHtml(contact.company)}</p>` : ''}
-      ${contact.position ? `<p><strong>Position:</strong> ${escapeHtml(contact.position)}</p>` : ''}
-      ${contact.email ? `<p><strong>Email:</strong> <a href="mailto:${contact.email}">${contact.email}</a></p>` : ''}
-      ${contact.phone ? `<p><strong>Phone:</strong> <a href="tel:${contact.phone}">${contact.phone}</a></p>` : ''}
-      ${contact.linkedinUrl ? `<p><strong>LinkedIn:</strong> <a href="${contact.linkedinUrl}" target="_blank">View Profile</a></p>` : ''}
-      <p><strong>Relationship:</strong> ${contact.relationship}</p>
-      <p><strong>Status:</strong> <span class="status-badge">${contact.contactStatus}</span></p>
-      ${contact.tags ? `<p><strong>Tags:</strong> ${escapeHtml(contact.tags)}</p>` : ''}
-      ${contact.notes ? `<p><strong>Notes:</strong> ${escapeHtml(contact.notes)}</p>` : ''}
-      
-      <div class="contact-actions">
-        <button class="btn btn-sm" onclick="editContact(${contact.id || index})">Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteContact(${contact.id || index})">Delete</button>
-        ${contact.email ? `<button class="btn btn-sm btn-primary" onclick="composeEmail('${contact.email}', '${contact.name}')">Email</button>` : ''}
-      </div>
-    `;
-    
-    contactsList.appendChild(contactCard);
-  });
 }
 
 // Set default values for forms
@@ -269,67 +188,35 @@ function setDefaultValues() {
   }
 }
 
-// Enhanced application adding with validation and API sync
-async function addApplication() {
-  console.log('Adding new application...');
-  
-  // Get form data
-  const applicationData = {
-    id: Date.now() + Math.random(),
-    jobTitle: document.getElementById('jobTitle').value.trim(),
-    company: document.getElementById('company').value.trim(),
-    jobPortal: document.getElementById('jobPortal').value,
-    jobUrl: document.getElementById('jobUrl').value.trim(),
-    applicationDate: document.getElementById('applicationDate').value || new Date().toISOString().split('T')[0],
-    status: document.getElementById('status').value,
-    resumeVersion: document.getElementById('resumeVersion').value,
-    location: document.getElementById('location').value.trim(),
-    salaryRange: document.getElementById('salaryRange').value.trim(),
-    jobType: document.getElementById('jobType').value,
-    priority: document.getElementById('priority').value,
-    followUpDate: document.getElementById('followUpDate').value,
-    notes: document.getElementById('notes').value.trim(),
-    dateAdded: new Date().toISOString()
-  };
-  
-  // Validate required fields
-  if (!applicationData.jobTitle || !applicationData.company) {
-    showErrorMessage('Please fill in Job Title and Company');
-    return;
-  }
-  
-  try {
-    // Add to local state immediately for responsive UI
-    window.jobTracker.applications.push(applicationData);
-    
-    // Update localStorage as backup
-    localStorage.setItem('jobApplications', JSON.stringify(window.jobTracker.applications));
-    
-    // Try to save to API if available
-    if (window.apiService) {
-      try {
-        await window.apiService.saveApplication(applicationData);
-        showSuccessMessage('Application saved successfully!');
-      } catch (error) {
-        console.log('Saved locally, will sync when online');
-        showInfoMessage('Application saved locally. Will sync when connection is restored.');
-      }
-    } else {
-      showSuccessMessage('Application saved successfully!');
+// Legacy function - now handled by ApplicationsModule
+// Kept for backward compatibility but delegates to module
+async function addApplicationLegacy() {
+  if (window.ApplicationsModule) {
+    // Try different methods on the module
+    if (typeof window.ApplicationsModule.addApplicationFromForm === 'function') {
+      return await window.ApplicationsModule.addApplicationFromForm();
+    } else if (typeof window.ApplicationsModule.addApplication === 'function') {
+      // Get form data
+      const applicationData = {
+        jobTitle: document.getElementById('jobTitle').value.trim(),
+        company: document.getElementById('company').value.trim(),
+        jobPortal: document.getElementById('jobPortal').value,
+        jobUrl: document.getElementById('jobUrl').value.trim(),
+        applicationDate: document.getElementById('applicationDate').value || new Date().toISOString().split('T')[0],
+        status: document.getElementById('status').value,
+        resumeVersion: document.getElementById('resumeVersion').value,
+        location: document.getElementById('location').value.trim(),
+        salaryRange: document.getElementById('salaryRange').value.trim(),
+        jobType: document.getElementById('jobType').value,
+        priority: document.getElementById('priority').value,
+        followUpDate: document.getElementById('followUpDate').value,
+        notes: document.getElementById('notes').value.trim(),
+        dateAdded: new Date().toISOString()
+      };
+      return await window.ApplicationsModule.addApplication(applicationData);
     }
-    
-    // Update UI
-    renderApplications();
-    updateAnalytics();
-    clearForm();
-    
-  } catch (error) {
-    console.error('Error adding application:', error);
-    showErrorMessage('Failed to save application. Please try again.');
-    
-    // Remove from local state if it was added
-    window.jobTracker.applications.pop();
   }
+  showErrorMessage('Applications module not available');
 }
 
 // Enhanced analytics with modern charts
@@ -540,26 +427,17 @@ function handleOfflineStatus() {
   showInfoMessage('Working offline. Data will sync when connection is restored.');
 }
 
-// Clear application form
+// Legacy function - now handled by ApplicationsModule
 function clearForm() {
-  const inputs = document.querySelectorAll('#applications input, #applications select, #applications textarea');
-  inputs.forEach(input => {
-    if (input.id === 'applicationDate') {
-      input.value = new Date().toISOString().split('T')[0];
-    } else if (input.id === 'status') {
-      input.value = 'Applied';
-    } else if (input.id === 'priority') {
-      input.value = 'Medium';
-    } else {
-      input.value = '';
-    }
-  });
+  if (window.ApplicationsModule && window.ApplicationsModule.clearForm) {
+    return window.ApplicationsModule.clearForm();
+  } else if (window.clearForm) {
+    return window.clearForm();
+  }
 }
 
 // Make functions globally available
 window.switchTab = switchTab;
-window.addApplication = addApplication;
-window.clearForm = clearForm;
 window.updateAnalytics = updateAnalytics;
 
 console.log('Enhanced Job Tracker app.js loaded successfully');

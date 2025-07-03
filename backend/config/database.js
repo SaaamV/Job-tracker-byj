@@ -15,18 +15,16 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
-    console.log('Attempting to connect to MongoDB...');
+    console.log('Connecting to MongoDB Cloud...');
 
     const conn = await mongoose.connect(mongoUri, {
-      // Modern MongoDB connection options
+      // Modern MongoDB connection options for Mongoose 6+
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 60000,
       bufferCommands: false,
-      // Removed deprecated options:
-      // - useNewUrlParser (default in Mongoose 6+)
-      // - useUnifiedTopology (default in Mongoose 6+) 
-      // - bufferMaxEntries (deprecated)
+      // Connection timeout
+      connectTimeoutMS: 30000,
     });
 
     isConnected = true;
@@ -52,13 +50,6 @@ const connectDB = async () => {
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
     isConnected = false;
-    
-    // In development, don't exit - allow app to continue without DB
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Continuing in offline mode...');
-      return null;
-    }
-    
     throw error;
   }
 };

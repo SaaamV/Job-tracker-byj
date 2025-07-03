@@ -1,10 +1,10 @@
-// Applications Feature Module - Clean and Consolidated
-// Manages job application CRUD operations with local storage and API sync
+// Applications Feature Module - Cloud-Only MongoDB Integration
+// Manages job application CRUD operations with MongoDB cloud database
 
 (function() {
   'use strict';
   
-  console.log('📋 Loading Applications Module...');
+  console.log('📋 Loading Applications Module (Cloud-Only)...');
   
   // Module state
   let applications = [];
@@ -17,25 +17,31 @@
       return;
     }
     
-    await loadApplications();
-    setupEventListeners();
-    setDefaultValues();
-    
-    isInitialized = true;
-    console.log(`📋 Applications module initialized with ${applications.length} applications`);
+    try {
+      await loadApplications();
+      setupEventListeners();
+      setDefaultValues();
+      
+      isInitialized = true;
+      console.log(`📋 Applications module initialized with ${applications.length} applications`);
+    } catch (error) {
+      console.error('❌ Failed to initialize applications module:', error);
+      showErrorMessage('Failed to load applications. Please check your connection.');
+    }
   }
   
-  // Load applications from API or localStorage
+  // Load applications from cloud API
   async function loadApplications() {
     try {
-      if (window.apiService) {
-        applications = await window.apiService.getApplications();
-      } else {
-        applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+      if (!window.apiService) {
+        throw new Error('API service not available');
       }
+      
+      applications = await window.apiService.getApplications();
       
       // Update global reference for backward compatibility
       window.applications = applications;
+      window.jobTracker.applications = applications;
       
       renderApplications();
       
@@ -47,153 +53,176 @@
       console.error('❌ Error loading applications:', error);
       applications = [];
       window.applications = [];
+      window.jobTracker.applications = [];
+      throw error;
     }
   }
   
-  // Add or update application - FIXED to handle both new and edited applications
-  async function addApplication() {
-    console.log('📝 Adding/updating application...');
-    
-    const applicationData = getFormData();
-    
-    // Validate required fields
-    if (!applicationData.jobTitle || !applicationData.company) {
-      showMessage('Please fill in Job Title and Company', 'error');
-      return;
-    }
-    
+  // Add new application
+  async function addApplication(applicationData) {
     try {
-      // Check if we're editing an existing application
-      if (window.editingApplicationId) {
-        const editingId = window.editingApplicationId;
-        
-        // Find and update existing application
-        const index = applications.findIndex(app => app.id == editingId);
-        if (index !== -1) {
-          // Preserve the original ID and dateAdded
-          applicationData.id = applications[index].id;
-          applicationData.dateAdded = applications[index].dateAdded;
-          
-          applications[index] = applicationData;
-          showMessage('Application updated successfully!', 'success');
-        } else {
-          console.warn('Application to edit not found, creating new one');
-          applications.push(applicationData);
-          showMessage('Application saved successfully!', 'success');
-        }
-        
-        // Clear editing state
-        delete window.editingApplicationId;
-        
-        // Reset button text
-        const addButton = document.querySelector('#applications .btn-success');
-        if (addButton) {
-          addButton.textContent = 'Add Application';
-          addButton.style.background = '';
-        }
-      } else {
-        // Try to save to API if available
-        if (window.apiService) {
-          try {
-            // Make a clean copy without problematic fields for API
-            const apiData = { ...applicationData };
-            delete apiData.id; // Remove local ID to prevent ObjectId issues
-            
-            const savedApp = await window.apiService.saveApplication(apiData);
-            
-            // Add the API response (with proper MongoDB _id) to local state
-            applications.push(savedApp);
-            
-            showMessage('Application saved successfully!', 'success');
-          } catch (error) {
-            console.log('📱 API failed, saving locally:', error);
-            
-            // Fallback to local storage with local ID
-            applications.push(applicationData);
-            
-            showMessage('Application saved locally. Will sync when connection is restored.', 'info');
-          }
-        } else {
-          // No API service, save locally
-          applications.push(applicationData);
-          showMessage('Application saved successfully!', 'success');
-        }
+      if (!window.apiService) {
+        throw new Error('API service not available');
       }
       
-      // Update global reference
-      window.applications = applications;
+      // Validate required fields
+      if (!applicationData.jobTitle || !applicationData.company) {
+        throw new Error('Job Title and Company are required');
+      }
       
-      // Always save to localStorage as backup
-      localStorage.setItem('jobApplications', JSON.stringify(applications));
+      const savedApplication = await window.apiService.saveApplication(applicationData);
+      
+      // Add to local state
+      applications.push(savedApplication);
+      window.applications = applications;
+      window.jobTracker.applications = applications;
       
       // Update UI
       renderApplications();
-      
       if (typeof window.updateAnalytics === 'function') {
         window.updateAnalytics();
       }
       
-      clearForm();
+      return savedApplication;
       
     } catch (error) {
-      console.error('❌ Error saving application:', error);
-      showMessage('Failed to save application. Please try again.', 'error');
+      console.error('❌ Error adding application:', error);
+      throw error;
     }
   }
   
-  // Get form data - FIXED to prevent ObjectId issues and enum validation
-  function getFormData() {
-    const data = {
-      // Don't send ID - let MongoDB generate it
-      jobTitle: getElementById('jobTitle').value.trim(),
-      company: getElementById('company').value.trim(),
-      jobPortal: getElementById('jobPortal').value || 'Other',
-      jobUrl: getElementById('jobUrl').value.trim(),
-      applicationDate: getElementById('applicationDate').value || new Date().toISOString().split('T')[0],
-      status: getElementById('status').value || 'Applied',
-      resumeVersion: getElementById('resumeVersion').value,
-      location: getElementById('location').value.trim(),
-      salaryRange: getElementById('salaryRange').value.trim(),
-      jobType: getElementById('jobType').value || 'Full-time',
-      priority: getElementById('priority').value || 'Medium',
-      followUpDate: getElementById('followUpDate').value,
-      notes: getElementById('notes').value.trim(),
-      dateAdded: new Date().toISOString()
-    };
+  // Update existing application
+  async function updateApplication(id, applicationData) {
+    try {
+      if (!window.apiService) {
+        throw new Error('API service not available');
+      }
+      
+      const updatedApplication = await window.apiService.updateApplication(id, applicationData);
+      
+      // Update local state
+      const index = applications.findIndex(app => app._id === id);
+      if (index !== -1) {
+        applications[index] = { ...applications[index], ...updatedApplication };
+        window.applications = applications;
+        window.jobTracker.applications = applications;
+      }
+      
+      // Update UI
+      renderApplications();
+      if (typeof window.updateAnalytics === 'function') {
+        window.updateAnalytics();
+      }
+      
+      return updatedApplication;
+      
+    } catch (error) {
+      console.error('❌ Error updating application:', error);
+      throw error;
+    }
+  }
+  
+  // Delete application
+  async function deleteApplication(id) {
+    try {
+      if (!window.apiService) {
+        throw new Error('API service not available');
+      }
+      
+      await window.apiService.deleteApplication(id);
+      
+      // Remove from local state
+      applications = applications.filter(app => app._id !== id);
+      window.applications = applications;
+      window.jobTracker.applications = applications;
+      
+      // Update UI
+      renderApplications();
+      if (typeof window.updateAnalytics === 'function') {
+        window.updateAnalytics();
+      }
+      
+    } catch (error) {
+      console.error('❌ Error deleting application:', error);
+      throw error;
+    }
+  }
+  
+  // Filter applications based on criteria
+  function filterApplications() {
+    const statusFilter = document.getElementById('statusFilter')?.value || '';
+    const companyFilter = document.getElementById('companyFilter')?.value.toLowerCase() || '';
+    const sortBy = document.getElementById('sortBy')?.value || 'date-desc';
     
-    // Only add ID for local storage (not for API)
-    if (!window.apiService) {
-      data.id = Date.now() + Math.random();
+    let filteredApplications = [...applications];
+    
+    // Apply status filter
+    if (statusFilter) {
+      filteredApplications = filteredApplications.filter(app => app.status === statusFilter);
     }
     
-    return data;
+    // Apply company filter
+    if (companyFilter) {
+      filteredApplications = filteredApplications.filter(app => 
+        app.company.toLowerCase().includes(companyFilter)
+      );
+    }
+    
+    // Apply sorting
+    filteredApplications.sort((a, b) => {
+      switch (sortBy) {
+        case 'date-asc':
+          return new Date(a.applicationDate) - new Date(b.applicationDate);
+        case 'date-desc':
+          return new Date(b.applicationDate) - new Date(a.applicationDate);
+        case 'company':
+          return a.company.localeCompare(b.company);
+        case 'status':
+          return a.status.localeCompare(b.status);
+        case 'priority':
+          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+          return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+        default:
+          return 0;
+      }
+    });
+    
+    renderApplicationsTable(filteredApplications);
   }
   
   // Render applications table
   function renderApplications() {
+    console.log(`📋 Rendering ${applications.length} applications`);
+    
+    // Clear any existing filters to show all applications
+    const statusFilter = document.getElementById('statusFilter');
+    const companyFilter = document.getElementById('companyFilter');
+    if (statusFilter) statusFilter.value = '';
+    if (companyFilter) companyFilter.value = '';
+    
+    renderApplicationsTable(applications);
+  }
+  
+  // Render applications table with given data
+  function renderApplicationsTable(appData) {
     const tbody = document.getElementById('applicationsBody');
-    if (!tbody) {
-      console.warn('⚠️ Applications table body not found');
-      return;
-    }
+    if (!tbody) return;
     
     tbody.innerHTML = '';
     
-    const filteredApps = getFilteredApplications();
-    
-    if (filteredApps.length === 0) {
+    if (appData.length === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
             <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">📋</div>
-            No applications yet. Add your first application above!
+            No applications match your filters. Try adjusting your search criteria.
           </td>
         </tr>
       `;
       return;
     }
     
-    filteredApps.forEach((app, index) => {
+    appData.forEach((app, index) => {
       const row = document.createElement('tr');
       
       // Apply priority styling
@@ -215,12 +244,15 @@
         <td>
           <span class="priority-badge priority-${app.priority.toLowerCase()}">${app.priority}</span>
         </td>
-        <td>${getFollowUpStatus(app.followUpDate)}</td>
+        <td>${app.followUpDate ? formatDate(app.followUpDate) : 'N/A'}</td>
         <td>
           <div class="action-buttons">
-            <button class="btn btn-sm" onclick="editApplication(${app.id || index})" title="Edit">✏️</button>
-            <button class="btn btn-sm" onclick="duplicateApplication(${app.id || index})" title="Duplicate">📋</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteApplication(${app.id || index})" title="Delete">🗑️</button>
+            <button class="btn btn-sm" onclick="window.ApplicationsModule.editApplication('${app._id}')" title="Edit">
+              ✏️
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="window.ApplicationsModule.confirmDeleteApplication('${app._id}')" title="Delete">
+              🗑️
+            </button>
             ${app.jobUrl ? `<a href="${app.jobUrl}" target="_blank" class="btn btn-sm" title="View Job">🔗</a>` : ''}
           </div>
         </td>
@@ -228,183 +260,137 @@
       
       tbody.appendChild(row);
     });
-    
-    console.log(`📋 Rendered ${filteredApps.length} applications`);
-  }
-  
-  // Get filtered and sorted applications
-  function getFilteredApplications() {
-    let filtered = [...applications];
-    
-    // Status filter
-    const statusFilter = getElementById('statusFilter')?.value;
-    if (statusFilter) {
-      filtered = filtered.filter(app => app.status === statusFilter);
-    }
-    
-    // Company filter
-    const companyFilter = getElementById('companyFilter')?.value?.toLowerCase();
-    if (companyFilter) {
-      filtered = filtered.filter(app => 
-        app.company.toLowerCase().includes(companyFilter)
-      );
-    }
-    
-    // Sort
-    const sortBy = getElementById('sortBy')?.value || 'date-desc';
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'date-asc':
-          return new Date(a.applicationDate) - new Date(b.applicationDate);
-        case 'date-desc':
-          return new Date(b.applicationDate) - new Date(a.applicationDate);
-        case 'company':
-          return a.company.localeCompare(b.company);
-        case 'status':
-          return a.status.localeCompare(b.status);
-        case 'priority':
-          const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
-          return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
-        default:
-          return new Date(b.dateAdded || b.applicationDate) - new Date(a.dateAdded || a.applicationDate);
-      }
-    });
-    
-    return filtered;
   }
   
   // Edit application
   function editApplication(id) {
-    const app = applications.find(a => a.id == id); // Use == to handle string/number conversion
+    const app = applications.find(a => a._id === id);
     if (!app) {
-      console.warn('⚠️ Application not found for editing:', id);
+      console.error('Application not found:', id);
       return;
     }
     
-    // Populate form with existing data
-    getElementById('jobTitle').value = app.jobTitle || '';
-    getElementById('company').value = app.company || '';
-    getElementById('jobPortal').value = app.jobPortal || '';
-    getElementById('jobUrl').value = app.jobUrl || '';
-    getElementById('applicationDate').value = app.applicationDate || '';
-    getElementById('status').value = app.status || 'Applied';
-    getElementById('resumeVersion').value = app.resumeVersion || '';
-    getElementById('location').value = app.location || '';
-    getElementById('salaryRange').value = app.salaryRange || '';
-    getElementById('jobType').value = app.jobType || '';
-    getElementById('priority').value = app.priority || 'Medium';
-    getElementById('followUpDate').value = app.followUpDate || '';
-    getElementById('notes').value = app.notes || '';
+    // Populate form with application data
+    document.getElementById('jobTitle').value = app.jobTitle || '';
+    document.getElementById('company').value = app.company || '';
+    document.getElementById('jobPortal').value = app.jobPortal || '';
+    document.getElementById('jobUrl').value = app.jobUrl || '';
+    document.getElementById('applicationDate').value = app.applicationDate ? app.applicationDate.split('T')[0] : '';
+    document.getElementById('status').value = app.status || '';
+    document.getElementById('resumeVersion').value = app.resumeVersion || '';
+    document.getElementById('location').value = app.location || '';
+    document.getElementById('salaryRange').value = app.salaryRange || '';
+    document.getElementById('jobType').value = app.jobType || '';
+    document.getElementById('priority').value = app.priority || '';
+    document.getElementById('followUpDate').value = app.followUpDate ? app.followUpDate.split('T')[0] : '';
+    document.getElementById('notes').value = app.notes || '';
     
-    // Store the ID for updating instead of creating new
-    window.editingApplicationId = id;
+    // Store the ID for updating
+    document.getElementById('editingApplicationId').value = id;
     
-    // Change button text to indicate editing
-    const addButton = document.querySelector('#applications .btn-success');
+    // Change the add button to update button
+    const addButton = document.querySelector('#applications .btn-primary');
     if (addButton) {
       addButton.textContent = 'Update Application';
-      addButton.style.background = '#28a745';
+      addButton.onclick = () => window.ApplicationsModule.updateApplicationFromForm();
+    }
+  }
+  
+  // Update application from form
+  async function updateApplicationFromForm() {
+    const id = document.getElementById('editingApplicationId').value;
+    if (!id) {
+      console.error('No application ID found for updating');
+      return;
     }
     
-    showMessage('Application loaded for editing. Make changes and click "Update Application" to save.', 'info');
+    const applicationData = {
+      jobTitle: document.getElementById('jobTitle').value.trim(),
+      company: document.getElementById('company').value.trim(),
+      jobPortal: document.getElementById('jobPortal').value,
+      jobUrl: document.getElementById('jobUrl').value.trim(),
+      applicationDate: document.getElementById('applicationDate').value,
+      status: document.getElementById('status').value,
+      resumeVersion: document.getElementById('resumeVersion').value,
+      location: document.getElementById('location').value.trim(),
+      salaryRange: document.getElementById('salaryRange').value.trim(),
+      jobType: document.getElementById('jobType').value,
+      priority: document.getElementById('priority').value,
+      followUpDate: document.getElementById('followUpDate').value,
+      notes: document.getElementById('notes').value.trim()
+    };
     
-    // Scroll to form
-    document.getElementById('applications').scrollIntoView({ behavior: 'smooth' });
+    try {
+      await updateApplication(id, applicationData);
+      showSuccessMessage('Application updated successfully!');
+      clearForm();
+    } catch (error) {
+      showErrorMessage('Failed to update application: ' + error.message);
+    }
+  }
+  
+  // Confirm delete application
+  function confirmDeleteApplication(id) {
+    const app = applications.find(a => a._id === id);
+    if (!app) {
+      console.error('Application not found:', id);
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to delete the application for ${app.jobTitle} at ${app.company}?`)) {
+      deleteApplicationById(id);
+    }
+  }
+  
+  // Delete application by ID
+  async function deleteApplicationById(id) {
+    try {
+      await deleteApplication(id);
+      showSuccessMessage('Application deleted successfully!');
+    } catch (error) {
+      showErrorMessage('Failed to delete application: ' + error.message);
+    }
   }
   
   // Duplicate application
-  function duplicateApplication(id) {
-    const app = applications.find(a => a.id === id);
+  async function duplicateApplication(id) {
+    const app = applications.find(a => a._id === id);
     if (!app) {
-      console.warn('⚠️ Application not found for duplication:', id);
+      showErrorMessage('Application not found');
       return;
     }
     
-    // Populate form with existing data but clear some fields
-    getElementById('jobTitle').value = app.jobTitle || '';
-    getElementById('company').value = ''; // Clear company for new application
-    getElementById('jobPortal').value = app.jobPortal || '';
-    getElementById('jobUrl').value = ''; // Clear URL
-    getElementById('applicationDate').value = new Date().toISOString().split('T')[0];
-    getElementById('status').value = 'Applied';
-    getElementById('resumeVersion').value = app.resumeVersion || '';
-    getElementById('location').value = app.location || '';
-    getElementById('salaryRange').value = app.salaryRange || '';
-    getElementById('jobType').value = app.jobType || '';
-    getElementById('priority').value = app.priority || 'Medium';
-    getElementById('followUpDate').value = '';
-    getElementById('notes').value = '';
+    // Create a copy without the ID
+    const duplicatedApp = {
+      jobTitle: app.jobTitle + ' (Copy)',
+      company: app.company,
+      jobPortal: app.jobPortal,
+      jobUrl: app.jobUrl,
+      applicationDate: new Date().toISOString().split('T')[0],
+      status: 'Applied',
+      resumeVersion: app.resumeVersion,
+      location: app.location,
+      salaryRange: app.salaryRange,
+      jobType: app.jobType,
+      priority: app.priority,
+      followUpDate: app.followUpDate,
+      notes: app.notes,
+      dateAdded: new Date().toISOString()
+    };
     
-    showMessage('Application template loaded. Fill in the details and click "Add Application" to save.', 'info');
-    
-    // Scroll to form
-    document.getElementById('applications').scrollIntoView({ behavior: 'smooth' });
-  }
-  
-  // Delete application
-  async function deleteApplication(id) {
-    if (!confirm('Are you sure you want to delete this application?')) {
-      return;
-    }
-    
-    await deleteApplicationById(id, true);
-  }
-  
-  // Delete application by ID - FIXED to handle ID type conversion
-  async function deleteApplicationById(id, showConfirmation = true) {
     try {
-      console.log('🗑️ Deleting application with ID:', id, typeof id);
-      
-      // Remove from local state (use == to handle string/number conversion)
-      const originalLength = applications.length;
-      applications = applications.filter(app => app.id != id);
-      
-      if (applications.length === originalLength) {
-        console.warn('⚠️ No application found with ID:', id);
-        showMessage('Application not found', 'error');
-        return;
-      }
-      
-      window.applications = applications;
-      
-      // Update localStorage
-      localStorage.setItem('jobApplications', JSON.stringify(applications));
-      
-      // Try to delete from API
-      if (window.apiService) {
-        try {
-          await window.apiService.deleteApplication(id);
-        } catch (error) {
-          console.log('📱 Deleted locally, will sync when online');
-        }
-      }
-      
-      // Update UI
-      renderApplications();
-      
-      if (typeof window.updateAnalytics === 'function') {
-        window.updateAnalytics();
-      }
-      
-      if (showConfirmation) {
-        showMessage('Application deleted successfully!', 'success');
-      }
-      
-      console.log('✅ Application deleted. Remaining:', applications.length);
-      
+      await addApplication(duplicatedApp);
+      showSuccessMessage('Application duplicated successfully!');
     } catch (error) {
-      console.error('❌ Error deleting application:', error);
-      showMessage('Failed to delete application. Please try again.', 'error');
+      showErrorMessage('Failed to duplicate application: ' + error.message);
     }
   }
   
-  // Filter applications
-  function filterApplications() {
-    renderApplications();
-  }
-  
-  // Clear form
+  // Clear form and reset to add mode
   function clearForm() {
+    document.getElementById('editingApplicationId').value = '';
+    
+    // Reset form fields
     const inputs = document.querySelectorAll('#applications input, #applications select, #applications textarea');
     inputs.forEach(input => {
       if (input.id === 'applicationDate') {
@@ -418,53 +404,60 @@
       }
     });
     
-    // Clear editing state
-    if (window.editingApplicationId) {
-      delete window.editingApplicationId;
-      
-      // Reset button text
-      const addButton = document.querySelector('#applications .btn-success');
-      if (addButton) {
-        addButton.textContent = 'Add Application';
-        addButton.style.background = '';
-      }
-    }
-  }
-  
-  // Set default values
-  function setDefaultValues() {
-    const applicationDateInput = getElementById('applicationDate');
-    if (applicationDateInput && !applicationDateInput.value) {
-      applicationDateInput.value = new Date().toISOString().split('T')[0];
+    // Reset button to add mode
+    const addButton = document.querySelector('#applications .btn-primary');
+    if (addButton) {
+      addButton.textContent = 'Add Application';
+      addButton.onclick = () => window.addApplication();
     }
   }
   
   // Setup event listeners
   function setupEventListeners() {
-    // Listen for API sync events
-    window.addEventListener('apiSyncComplete', () => {
-      console.log('🔄 API sync completed, refreshing applications');
-      loadApplications();
-    });
+    // Add hidden field for editing application ID
+    if (!document.getElementById('editingApplicationId')) {
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.id = 'editingApplicationId';
+      hiddenInput.value = '';
+      
+      // Find the applications form section
+      const applicationsSection = document.getElementById('applications');
+      if (applicationsSection) {
+        const formSection = applicationsSection.querySelector('.form-section');
+        if (formSection) {
+          formSection.appendChild(hiddenInput);
+        }
+      }
+    }
+  }
+  
+  // Set default form values
+  function setDefaultValues() {
+    // Set default application date to today
+    const applicationDateInput = document.getElementById('applicationDate');
+    if (applicationDateInput && !applicationDateInput.value) {
+      applicationDateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Set default status
+    const statusSelect = document.getElementById('status');
+    if (statusSelect && !statusSelect.value) {
+      statusSelect.value = 'Applied';
+    }
+    
+    // Set default priority
+    const prioritySelect = document.getElementById('priority');
+    if (prioritySelect && !prioritySelect.value) {
+      prioritySelect.value = 'Medium';
+    }
   }
   
   // Utility functions
-  function getElementById(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-      console.warn(`⚠️ Element not found: ${id}`);
-      return { value: '' }; // Return mock element to prevent errors
-    }
-    return element;
-  }
-  
   function formatDate(dateString) {
     if (!dateString) return 'N/A';
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch (e) {
-      return dateString;
-    }
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
   }
   
   function escapeHtml(text) {
@@ -474,85 +467,89 @@
     return div.innerHTML;
   }
   
-  function getFollowUpStatus(followUpDate) {
-    if (!followUpDate) return 'N/A';
-    
-    const today = new Date().toISOString().split('T')[0];
-    const followUp = followUpDate;
-    
-    if (followUp < today) {
-      return `<span class="follow-up-overdue">Overdue</span>`;
-    } else if (followUp === today) {
-      return `<span class="follow-up-today">Today</span>`;
+  function showSuccessMessage(message) {
+    if (window.showSuccessMessage) {
+      window.showSuccessMessage(message);
     } else {
-      return `<span class="follow-up-upcoming">${formatDate(followUp)}</span>`;
+      console.log('✅', message);
     }
   }
   
-  function showMessage(message, type = 'info') {
-    if (typeof window.showMessage === 'function') {
-      window.showMessage(message, type);
-      return;
+  function showErrorMessage(message) {
+    if (window.showErrorMessage) {
+      window.showErrorMessage(message);
+    } else {
+      console.error('❌', message);
     }
-    
-    // Fallback message display
-    console.log(`${type.toUpperCase()}: ${message}`);
-    
-    const messageEl = document.createElement('div');
-    messageEl.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 24px;
-      border-radius: 8px;
-      color: white;
-      font-weight: 600;
-      z-index: 1000;
-      max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    
-    const colors = {
-      success: '#34C759',
-      error: '#FF3B30',
-      warning: '#FF9500',
-      info: '#007AFF'
-    };
-    
-    messageEl.style.backgroundColor = colors[type] || colors.info;
-    messageEl.textContent = message;
-    
-    document.body.appendChild(messageEl);
-    
-    setTimeout(() => {
-      if (messageEl.parentNode) {
-        messageEl.parentNode.removeChild(messageEl);
-      }
-    }, 4000);
   }
   
   // Public API
-  window.Applications = {
+  window.ApplicationsModule = {
     initialize,
-    add: addApplication,
-    edit: editApplication,
-    duplicate: duplicateApplication,
-    delete: deleteApplication,
-    filter: filterApplications,
-    render: renderApplications,
-    load: loadApplications,
-    clear: clearForm
+    loadApplications,
+    addApplication,
+    updateApplication,
+    deleteApplication,
+    editApplication,
+    confirmDeleteApplication,
+    updateApplicationFromForm,
+    duplicateApplication,
+    clearForm,
+    renderApplications,
+    filterApplications
   };
   
-  // Legacy global functions for backward compatibility
-  window.addApplication = addApplication;
-  window.renderApplications = renderApplications;
-  window.filterApplications = filterApplications;
-  window.deleteApplication = deleteApplication;
+  // Global wrapper function for form submission
+  async function addApplicationFromForm() {
+    const applicationData = {
+      jobTitle: document.getElementById('jobTitle').value.trim(),
+      company: document.getElementById('company').value.trim(),
+      jobPortal: document.getElementById('jobPortal').value || '',
+      jobUrl: document.getElementById('jobUrl').value.trim(),
+      applicationDate: document.getElementById('applicationDate').value || new Date().toISOString().split('T')[0],
+      status: document.getElementById('status').value || 'Applied',
+      resumeVersion: document.getElementById('resumeVersion').value || '',
+      location: document.getElementById('location').value.trim(),
+      salaryRange: document.getElementById('salaryRange').value.trim(),
+      jobType: document.getElementById('jobType').value || '',
+      priority: document.getElementById('priority').value || 'Medium',
+      followUpDate: document.getElementById('followUpDate').value || null,
+      notes: document.getElementById('notes').value.trim(),
+      dateAdded: new Date().toISOString()
+    };
+    
+    // Clean up empty dates
+    if (!applicationData.followUpDate) {
+      delete applicationData.followUpDate;
+    }
+    
+    try {
+      const savedApp = await addApplication(applicationData);
+      showSuccessMessage('Application added successfully!');
+      
+      // Ensure UI is updated
+      renderApplications();
+      
+      // Update analytics if available
+      if (typeof window.updateAnalytics === 'function') {
+        window.updateAnalytics();
+      }
+      
+      clearForm();
+    } catch (error) {
+      console.error('Error in addApplicationFromForm:', error);
+      showErrorMessage('Failed to add application: ' + error.message);
+    }
+  }
+  
+  // Export global functions for backward compatibility
+  window.addApplication = addApplicationFromForm;
   window.editApplication = editApplication;
+  window.deleteApplication = (id) => confirmDeleteApplication(id);
   window.duplicateApplication = duplicateApplication;
+  window.renderApplications = renderApplications;
   window.clearForm = clearForm;
-  window.loadApplications = loadApplications;
+  window.filterApplications = filterApplications;
   
   // Auto-initialize when DOM is ready
   if (document.readyState === 'loading') {
@@ -561,5 +558,6 @@
     initialize();
   }
   
-  console.log('📋 Applications module loaded successfully');
+  console.log('📋 Applications module loaded successfully (Cloud-Only)');
+  
 })();

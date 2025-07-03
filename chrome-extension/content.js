@@ -7,10 +7,10 @@ class JobTrackerExtension {
     this.currentSite = this.detectJobSite();
     this.isTracking = false;
     
-    // Use Vercel production URLs
-    this.primaryApiUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app'; // Vercel API URL
-    this.fallbackApiUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app'; // Vercel fallback
-    this.frontendUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app'; // Vercel frontend URL
+    // Use localhost for development
+    this.primaryApiUrl = 'http://localhost:3001'; // Local backend API
+    this.fallbackApiUrl = 'http://localhost:3001'; // Local fallback
+    this.frontendUrl = 'http://localhost:8080'; // Local frontend server
     
     this.init();
   }
@@ -526,14 +526,26 @@ class JobTrackerExtension {
       
       try {
         console.log('Attempting API save to:', this.primaryApiUrl);
-        // Try local API first
-        await this.saveToAPI(this.primaryApiUrl, formData);
-        apiSaveSuccess = true;
-        workingApiUrl = this.primaryApiUrl;
-        this.showStatus('✅ Application saved and synced to cloud!', 'success');
+        // Save to backend using background script
+        const result = await this.saveViaBackgroundScript(formData);
+        if (result.success) {
+          apiSaveSuccess = true;
+          workingApiUrl = this.primaryApiUrl;
+          this.showStatus('✅ Application saved and synced to cloud!', 'success');
+        } else {
+          throw new Error(result.error || 'Background script save failed');
+        }
       } catch (localError) {
         console.warn('API save failed:', localError);
-        this.showStatus('✅ Application saved locally - will sync when online', 'success');
+        // Try direct API call as fallback
+        try {
+          await this.saveToAPI(this.primaryApiUrl, formData);
+          apiSaveSuccess = true;
+          this.showStatus('✅ Application saved and synced to cloud!', 'success');
+        } catch (directError) {
+          console.warn('Direct API save also failed:', directError);
+          this.showStatus('✅ Application saved locally - will sync when online', 'success');
+        }
       }
 
       // Close modal after delay
@@ -545,8 +557,8 @@ class JobTrackerExtension {
         
         if (openTracker) {
           console.log('Opening tracker at:', this.frontendUrl);
-          // Open the tracker in the frontend
-          window.open(this.frontendUrl, '_blank');
+          // Open the tracker in the frontend and notify it about the new application
+          this.openTrackerWithNewApplication(formData);
         }
       }, 2000);
 
@@ -667,6 +679,27 @@ class JobTrackerExtension {
     }
   }
 
+  // Save via background script (recommended approach for extensions)
+  async saveViaBackgroundScript(applicationData) {
+    return new Promise((resolve, reject) => {
+      if (typeof chrome === 'undefined' || !chrome.runtime) {
+        reject(new Error('Chrome runtime not available'));
+        return;
+      }
+
+      chrome.runtime.sendMessage({
+        action: 'saveApplication',
+        data: applicationData
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response);
+      });
+    });
+  }
+
   // Enhanced API save with better error handling
   async saveToAPI(apiUrl, applicationData) {
     const controller = new AbortController();
@@ -697,6 +730,44 @@ class JobTrackerExtension {
         throw new Error('Request timeout - server may be offline');
       }
       throw error;
+    }
+  }
+
+  // Open tracker and highlight the new application
+  async openTrackerWithNewApplication(applicationData) {
+    try {
+      // Open the tracker window
+      const trackerWindow = window.open(this.frontendUrl, '_blank');
+      
+      // Wait a moment for the window to load, then send the application data
+      setTimeout(() => {
+        if (trackerWindow && !trackerWindow.closed) {
+          // Try to communicate with the opened window
+          try {
+            trackerWindow.postMessage({
+              type: 'NEW_APPLICATION_FROM_EXTENSION',
+              application: applicationData
+            }, '*');
+            console.log('✅ Sent application data to tracker window');
+          } catch (error) {
+            console.warn('Could not send data to tracker window:', error);
+          }
+        }
+      }, 3000); // Wait 3 seconds for the page to load
+      
+      // Also notify background script to refresh any open tracker tabs
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        chrome.runtime.sendMessage({
+          action: 'notifyApplicationAdded',
+          application: applicationData,
+          frontendUrl: this.frontendUrl
+        });
+      }
+      
+    } catch (error) {
+      console.error('Failed to open tracker:', error);
+      // Fallback: just open the URL
+      window.open(this.frontendUrl, '_blank');
     }
   }
 

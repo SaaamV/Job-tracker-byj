@@ -2,15 +2,30 @@
 
 class JobTrackerBackground {
   constructor() {
-    this.apiUrl = 'https://job-tracker-git-main-mario263s-projects.vercel.app/api';
-   
+    // Determine API URL based on environment
+    this.apiUrl = this.determineApiUrl();
+    
     this.init();
+  }
+  
+  determineApiUrl() {
+    // For development, use localhost
+    // For production, use your deployed API URL
+    const isDevelopment = chrome.runtime.getManifest().version_name?.includes('dev');
+    
+    if (isDevelopment) {
+      return 'http://localhost:3001/api';
+    } else {
+      // Update this with your actual production API URL
+      return 'https://your-production-api.vercel.app/api';
+    }
   }
 
   init() {
     this.setupEventListeners();
-    this.setupPeriodicSync();
-    console.log('Job Tracker Extension Background Service Worker initialized');
+    this.setupPeriodicHealthCheck();
+    this.setupContextMenus();
+    console.log('Job Tracker Extension Background Service Worker initialized with cloud-only API');
   }
 
   setupEventListeners() {
@@ -36,10 +51,10 @@ class JobTrackerBackground {
       }
     });
 
-    // Handle storage changes for sync
+    // Handle storage changes
     chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === 'local' && changes.jobApplications) {
-        this.syncDataToCloud();
+      if (namespace === 'local' && changes.settings) {
+        console.log('Extension settings updated');
       }
     });
   }
@@ -50,18 +65,19 @@ class JobTrackerBackground {
     // Set default settings
     await chrome.storage.local.set({
       settings: {
-        autoSync: true,
         notifications: true,
         autoDetectApply: true,
-        quickSaveEnabled: true
-      },
-      jobApplications: [],
-      lastSync: null
+        quickSaveEnabled: true,
+        apiUrl: this.apiUrl
+      }
     });
 
-    // Open welcome page
+    // Test connection to cloud API
+    await this.testCloudConnection();
+
+    // Open welcome page - update with your actual frontend URL
     chrome.tabs.create({
-      url: 'https://job-tracker-chi-eight.vercel.app/'
+      url: 'http://localhost:8080' // Local frontend server
     });
   }
 
@@ -90,9 +106,9 @@ class JobTrackerBackground {
           sendResponse({ success: true, data: apps });
           break;
 
-        case 'syncData':
-          await this.syncDataToCloud();
-          sendResponse({ success: true });
+        case 'testConnection':
+          const isConnected = await this.testCloudConnection();
+          sendResponse({ success: true, connected: isConnected });
           break;
 
         case 'showJobTracker':
@@ -147,80 +163,115 @@ class JobTrackerBackground {
 
   async saveApplication(applicationData) {
     try {
-      // Save to local storage first
-      const result = await chrome.storage.local.get(['jobApplications']);
-      const applications = result.jobApplications || [];
-      
-      applications.push({
-        ...applicationData,
-        id: Date.now() + Math.random(),
-        dateAdded: new Date().toISOString()
+      // Save directly to cloud API
+      const response = await fetch(`${this.apiUrl}/applications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...applicationData,
+          dateAdded: new Date().toISOString()
+        })
       });
 
-      await chrome.storage.local.set({ jobApplications: applications });
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
 
-      // Try to sync to cloud
-      await this.syncDataToCloud();
-
-      return applicationData;
+      const savedApplication = await response.json();
+      console.log('✅ Application saved to cloud:', savedApplication);
+      
+      return savedApplication;
     } catch (error) {
-      console.error('Failed to save application:', error);
+      console.error('Failed to save application to cloud:', error);
       throw error;
     }
   }
 
   async getApplications() {
     try {
-      const result = await chrome.storage.local.get(['jobApplications']);
-      return result.jobApplications || [];
+      const response = await fetch(`${this.apiUrl}/applications`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data || data || [];
     } catch (error) {
-      console.error('Failed to get applications:', error);
+      console.error('Failed to get applications from cloud:', error);
       return [];
     }
   }
 
-  async syncDataToCloud() {
+  async testCloudConnection() {
     try {
-      const settings = await this.getSettings();
-      if (!settings.autoSync) return;
-
-      const applications = await this.getApplications();
-      
-      // Send to API
-      const response = await fetch(`${this.apiUrl}/sync`, {
-        method: 'POST',
+      const response = await fetch(`${this.apiUrl}/health`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ applications })
+        }
       });
 
       if (response.ok) {
-        await chrome.storage.local.set({ 
-          lastSync: new Date().toISOString() 
-        });
-        console.log('Data synced to cloud successfully');
+        const health = await response.json();
+        console.log('✅ Cloud API connection verified:', health);
+        return true;
+      } else {
+        throw new Error(`Health check failed: ${response.status}`);
       }
     } catch (error) {
-      console.warn('Cloud sync failed, data saved locally:', error);
+      console.error('❌ Cloud API connection failed:', error);
+      return false;
     }
   }
 
   async handleApplicationNotification(applicationData, frontendUrl) {
     try {
-      // Find open job tracker tabs and notify them
-      const tabs = await chrome.tabs.query({ url: `${frontendUrl}/*` });
+      console.log('🔔 Handling application notification for:', applicationData.jobTitle);
       
-      for (const tab of tabs) {
+      // Find open job tracker tabs - specifically look for localhost:8080
+      const queries = [
+        chrome.tabs.query({ url: 'http://localhost:8080/*' }),
+        chrome.tabs.query({ url: 'http://localhost:8080' }),
+        chrome.tabs.query({ url: 'file://*index.html*' })
+      ];
+      
+      const tabResults = await Promise.all(queries);
+      const allTabs = tabResults.flat();
+      
+      // Filter tabs that contain the job tracker
+      const trackerTabs = allTabs.filter(tab => 
+        tab.url && (
+          tab.url.includes('localhost:8080') || 
+          tab.url.includes('index.html') || 
+          tab.url.includes('job-tracker')
+        )
+      );
+      
+      console.log(`Found ${trackerTabs.length} potential job tracker tabs`);
+      
+      for (const tab of trackerTabs) {
         try {
           await chrome.tabs.sendMessage(tab.id, {
             action: 'applicationAdded',
             application: applicationData
           });
-          console.log('✅ Notified tab about new application:', tab.id);
+          console.log('✅ Notified tab about new application:', tab.id, tab.url);
         } catch (tabError) {
           console.log('Could not notify tab:', tab.id, tabError.message);
         }
+      }
+      
+      // Also try to refresh all tabs that might be the job tracker
+      if (trackerTabs.length === 0) {
+        console.log('No tracker tabs found, application will sync when tracker is opened');
       }
       
       console.log('✅ Application notification completed');
@@ -233,10 +284,10 @@ class JobTrackerBackground {
     try {
       const result = await chrome.storage.local.get(['settings']);
       return result.settings || {
-        autoSync: true,
         notifications: true,
         autoDetectApply: true,
-        quickSaveEnabled: true
+        quickSaveEnabled: true,
+        apiUrl: this.apiUrl
       };
     } catch (error) {
       console.error('Failed to get settings:', error);
@@ -244,10 +295,10 @@ class JobTrackerBackground {
     }
   }
 
-  setupPeriodicSync() {
-    // Sync data every 30 minutes
+  setupPeriodicHealthCheck() {
+    // Check API health every 30 minutes
     setInterval(() => {
-      this.syncDataToCloud();
+      this.testCloudConnection();
     }, 30 * 60 * 1000);
   }
 

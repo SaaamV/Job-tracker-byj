@@ -7,10 +7,9 @@ const connectDB = require('./config/database');
 
 const app = express();
 
-// Track MongoDB connection status
-let isMongoConnected = false;
-let applicationsRouter = null;
-let contactsRouter = null;
+// Import routes
+const applicationsRouter = require('./routes/applications');
+const contactsRouter = require('./routes/contacts');
 
 // CORS configuration
 app.use(cors({
@@ -30,8 +29,8 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    mongodb: isMongoConnected ? 'Connected' : 'Offline',
-    mode: isMongoConnected ? 'Full-stack' : 'Frontend-only',
+    mongodb: 'Connected',
+    mode: 'Cloud-only',
     version: '1.0.0'
   });
 });
@@ -49,74 +48,26 @@ app.get('/', (req, res) => {
   });
 });
 
-// Dynamic applications routes
-app.use('/api/applications', (req, res, next) => {
-  if (isMongoConnected && applicationsRouter) {
-    applicationsRouter(req, res, next);
-  } else {
-    handleOfflineApplicationsRoute(req, res);
-  }
-});
+// API routes
+app.use('/api/applications', applicationsRouter);
+app.use('/api/contacts', contactsRouter);
 
-// Dynamic contacts routes
-app.use('/api/contacts', (req, res, next) => {
-  if (isMongoConnected && contactsRouter) {
-    contactsRouter(req, res, next);
-  } else {
-    handleOfflineContactsRoute(req, res);
-  }
-});
-
-// Offline route handlers
-function handleOfflineApplicationsRoute(req, res) {
-  if (req.method === 'GET') {
-    res.json({ success: true, data: [], message: 'Offline mode', offline: true });
-  } else if (req.method === 'POST') {
-    res.status(202).json({ success: true, message: 'Saved locally', offline: true, data: { ...req.body, id: Date.now() } });
-  } else {
-    res.status(405).json({ error: 'Method not allowed' });
-  }
-}
-
-function handleOfflineContactsRoute(req, res) {
-  if (req.method === 'GET') {
-    res.json({ success: true, data: [], message: 'Offline mode', offline: true });
-  } else if (req.method === 'POST') {
-    res.status(202).json({ success: true, message: 'Saved locally', offline: true, data: { ...req.body, id: Date.now() } });
-  } else {
-    res.status(405).json({ error: 'Method not allowed' });
-  }
-}
 
 // Initialize database connection
 async function initializeDatabase() {
   try {
-    console.log('🔍 Checking MongoDB configuration...');
-    console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
-    console.log('MONGODB_URI preview:', process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'undefined');
-    
-    if (process.env.MONGODB_URI) {
-      console.log('🚀 Attempting to connect to MongoDB...');
-      const connection = await connectDB();
-      if (connection) {
-        isMongoConnected = true;
-        try {
-          applicationsRouter = require('./routes/applications');
-          contactsRouter = require('./routes/contacts');
-          console.log('✅ Database connected and routes loaded');
-        } catch (routeError) {
-          console.log('⚠️ Routes failed to load:', routeError.message);
-          isMongoConnected = false;
-        }
-      } else {
-        console.log('⚠️ Database connection returned null - running in offline mode');
-      }
-    } else {
-      console.log('⚠️ MONGODB_URI not found in environment variables');
-      console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('MONGO')));
+    if (!process.env.MONGODB_URI) {
+      console.error('❌ MONGODB_URI not found in environment variables');
+      console.error('Available env vars:', Object.keys(process.env).filter(key => key.includes('MONGO')));
+      process.exit(1);
     }
+    
+    console.log('🚀 Connecting to MongoDB...');
+    await connectDB();
+    console.log('✅ Database connected successfully');
   } catch (error) {
-    console.log('⚠️ Running in offline mode:', error.message);
+    console.error('❌ Database connection failed:', error.message);
+    process.exit(1);
   }
 }
 

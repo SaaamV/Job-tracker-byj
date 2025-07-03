@@ -1,5 +1,5 @@
-// Resumes Feature Module - Clean and Consolidated
-// Manages resume uploads, CV generation, and file handling
+// Resumes Feature Module - Simple File Management
+// Handles resume file uploads and management (client-side only)
 
 (function() {
   'use strict';
@@ -17,582 +17,338 @@
       return;
     }
     
-    loadResumes();
     setupEventListeners();
+    renderResumes();
+    updateResumeDropdown();
     
     isInitialized = true;
-    console.log(`📄 Resumes module initialized with ${resumes.length} resumes`);
+    console.log('📄 Resumes module initialized');
   }
   
-  // Load resumes from localStorage
-  function loadResumes() {
-    try {
-      resumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
-      window.resumes = resumes; // Backward compatibility
-      
-      renderResumes();
-      updateResumeDropdown();
-      
-      console.log(`📄 Loaded ${resumes.length} resumes from storage`);
-      
-    } catch (error) {
-      console.error('❌ Error loading resumes:', error);
-      resumes = [];
-      window.resumes = [];
+  // Setup event listeners
+  function setupEventListeners() {
+    // File upload handler
+    const fileInput = document.getElementById('resumeFile');
+    if (fileInput) {
+      fileInput.addEventListener('change', handleFileUpload);
+    }
+    
+    // Resume name input handler
+    const nameInput = document.getElementById('resumeName');
+    if (nameInput) {
+      nameInput.addEventListener('input', validateResumeForm);
     }
   }
   
-  // Upload new resume
-  function uploadResume() {
-    console.log('📤 Uploading resume...');
+  // Handle file upload
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
     
-    const formData = getResumeFormData();
+    // Validate file type
+    const allowedTypes = ['.pdf', '.doc', '.docx'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
     
-    // Validate form data
-    const validation = validateResumeForm(formData);
-    if (!validation.isValid) {
-      showMessage(validation.message, 'error');
+    if (!allowedTypes.includes(fileExtension)) {
+      showErrorMessage('Please upload a PDF, DOC, or DOCX file');
+      event.target.value = '';
       return;
     }
     
-    showMessage('📤 Uploading resume...', 'info');
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      showErrorMessage('File size must be less than 5MB');
+      event.target.value = '';
+      return;
+    }
     
-    const resume = {
-      id: Date.now() + Math.random(),
-      name: formData.name,
-      type: formData.type,
-      description: formData.description,
-      fileName: formData.file.name,
-      fileSize: formData.file.size,
-      uploadDate: new Date().toISOString(),
-      fileData: null
-    };
+    // Auto-fill resume name if empty
+    const nameInput = document.getElementById('resumeName');
+    if (nameInput && !nameInput.value.trim()) {
+      nameInput.value = file.name.replace(/\\.[^/.]+$/, ''); // Remove extension
+    }
     
-    // Read file as base64
+    validateResumeForm();
+  }
+  
+  // Add resume
+  function addResume() {
+    const nameInput = document.getElementById('resumeName');
+    const fileInput = document.getElementById('resumeFile');
+    const versionInput = document.getElementById('resumeVersionInput');
+    
+    if (!nameInput || !fileInput || !versionInput) {
+      showErrorMessage('Resume form elements not found');
+      return;
+    }
+    
+    const name = nameInput.value.trim();
+    const file = fileInput.files[0];
+    const version = versionInput.value.trim();
+    
+    if (!name) {
+      showErrorMessage('Please enter a resume name');
+      return;
+    }
+    
+    if (!file) {
+      showErrorMessage('Please select a file to upload');
+      return;
+    }
+    
+    if (!version) {
+      showErrorMessage('Please enter a version');
+      return;
+    }
+    
+    // Check for duplicate names
+    if (resumes.some(resume => resume.name.toLowerCase() === name.toLowerCase())) {
+      showErrorMessage('A resume with this name already exists');
+      return;
+    }
+    
+    // Create file reader to store file data
     const reader = new FileReader();
-    
     reader.onload = function(e) {
-      try {
-        resume.fileData = e.target.result;
-        
-        // Add to resumes array
-        resumes.push(resume);
-        window.resumes = resumes;
-        
-        // Save to localStorage
-        localStorage.setItem('jobResumes', JSON.stringify(resumes));
-        
-        // Update UI
-        renderResumes();
-        updateResumeDropdown();
-        clearResumeForm();
-        
-        showMessage('✅ Resume uploaded successfully!', 'success');
-        console.log(`📄 Resume uploaded: ${resume.name}`);
-        
-      } catch (error) {
-        console.error('❌ Error saving resume:', error);
-        showMessage('Failed to save resume. Please try again.', 'error');
-      }
+      const resumeData = {
+        id: Date.now() + Math.random(),
+        name: name,
+        version: version,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        fileData: e.target.result, // Base64 encoded file data
+        uploadDate: new Date().toISOString(),
+        isDefault: resumes.length === 0
+      };
+      
+      resumes.push(resumeData);
+      
+      // Update global references
+      window.resumes = resumes;
+      window.jobTracker.resumes = resumes;
+      
+      // Update UI
+      renderResumes();
+      updateResumeDropdown();
+      clearResumeForm();
+      
+      showSuccessMessage(`Resume "${name}" uploaded successfully!`);
     };
     
     reader.onerror = function() {
-      console.error('❌ Error reading file');
-      showMessage('Error reading file. Please try again.', 'error');
+      showErrorMessage('Failed to read file');
     };
     
-    reader.readAsDataURL(formData.file);
-  }
-  
-  // Get form data
-  function getResumeFormData() {
-    return {
-      name: getElementById('resumeName').value.trim(),
-      type: getElementById('resumeType').value,
-      description: getElementById('resumeDescription').value.trim(),
-      file: getElementById('resumeFile').files[0]
-    };
-  }
-  
-  // Validate resume form
-  function validateResumeForm(data) {
-    if (!data.name) {
-      return { isValid: false, message: 'Please enter a resume name' };
-    }
-    
-    if (!data.file) {
-      return { isValid: false, message: 'Please select a resume file' };
-    }
-    
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    
-    if (!allowedTypes.includes(data.file.type)) {
-      return { isValid: false, message: 'Please upload a PDF or Word document (.pdf, .doc, .docx)' };
-    }
-    
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (data.file.size > maxSize) {
-      return { isValid: false, message: 'File size must be less than 10MB' };
-    }
-    
-    return { isValid: true };
+    reader.readAsDataURL(file);
   }
   
   // Render resumes list
   function renderResumes() {
     const resumesList = document.getElementById('resumesList');
-    if (!resumesList) {
-      console.warn('⚠️ resumesList element not found');
-      return;
-    }
+    if (!resumesList) return;
     
     resumesList.innerHTML = '';
     
     if (resumes.length === 0) {
       resumesList.innerHTML = `
-        <div style="text-align: center; padding: 2rem; color: var(--text-secondary); background: transparent;">
+        <div class="empty-state" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
           <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
-          <h3>No resumes uploaded yet</h3>
-          <p>Upload your first resume above to get started.</p>
+          <h3>No resumes uploaded</h3>
+          <p>Upload your first resume to get started.</p>
         </div>
       `;
       return;
     }
     
-    resumes.forEach(resume => {
-      const card = createResumeCard(resume);
-      resumesList.appendChild(card);
+    resumes.forEach((resume, index) => {
+      const resumeCard = document.createElement('div');
+      resumeCard.className = 'resume-card';
+      if (resume.isDefault) {
+        resumeCard.classList.add('default-resume');
+      }
+      
+      resumeCard.innerHTML = `
+        <div class="resume-header">
+          <h4>${escapeHtml(resume.name)}</h4>
+          ${resume.isDefault ? '<span class="default-badge">Default</span>' : ''}
+        </div>
+        <p><strong>Version:</strong> ${escapeHtml(resume.version)}</p>
+        <p><strong>File:</strong> ${escapeHtml(resume.fileName)}</p>
+        <p><strong>Size:</strong> ${formatFileSize(resume.fileSize)}</p>
+        <p><strong>Uploaded:</strong> ${formatDate(resume.uploadDate)}</p>
+        
+        <div class="resume-actions">
+          <button class="btn btn-sm btn-primary" onclick="window.ResumesModule.downloadResume('${resume.id}')">Download</button>
+          <button class="btn btn-sm" onclick="window.ResumesModule.setDefaultResume('${resume.id}')">Set Default</button>
+          <button class="btn btn-sm btn-danger" onclick="window.ResumesModule.confirmDeleteResume('${resume.id}')">Delete</button>
+        </div>
+      `;
+      
+      resumesList.appendChild(resumeCard);
     });
-    
-    console.log(`📄 Rendered ${resumes.length} resume cards`);
-  }
-  
-  // Create resume card element
-  function createResumeCard(resume) {
-    const card = document.createElement('div');
-    card.className = 'resume-card';
-    card.style.cssText = `
-      background: #f5f5f7 !important;
-      border: 1px solid #e5e5e7 !important;
-      border-radius: 8px !important;
-      padding: 16px !important;
-      margin: 10px 0 !important;
-      color: #333 !important;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    `;
-    
-    card.innerHTML = `
-      <div class="resume-info" style="flex: 1; background: transparent !important;">
-        <h4 style="margin: 0 0 8px 0; color: #333 !important; font-weight: 600;">${escapeHtml(resume.name)}</h4>
-        <p style="margin: 4px 0; color: #666 !important;">
-          <strong style="color: #333 !important;">Type:</strong> ${escapeHtml(resume.type)}
-        </p>
-        <p style="margin: 4px 0; color: #666 !important;">
-          <strong style="color: #333 !important;">File:</strong> ${escapeHtml(resume.fileName)} (${formatFileSize(resume.fileSize)})
-        </p>
-        <p style="margin: 4px 0; color: #666 !important;">
-          <strong style="color: #333 !important;">Uploaded:</strong> ${formatDate(resume.uploadDate)}
-        </p>
-        ${resume.description ? `
-          <p style="margin: 4px 0; color: #666 !important;">
-            <strong style="color: #333 !important;">Description:</strong> ${escapeHtml(resume.description)}
-          </p>
-        ` : ''}
-      </div>
-      <div class="resume-actions" style="display: flex; gap: 8px; flex-direction: column;">
-        <button class="btn btn-primary" onclick="Resumes.download(${resume.id})" title="Download">
-          📥 Download
-        </button>
-        <button class="btn btn-danger" onclick="Resumes.delete(${resume.id})" title="Delete">
-          🗑️ Delete
-        </button>
-      </div>
-    `;
-    
-    // Add hover effects
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-2px)';
-      card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-    });
-    
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'translateY(0)';
-      card.style.boxShadow = 'none';
-    });
-    
-    return card;
   }
   
   // Update resume dropdown in applications form
   function updateResumeDropdown() {
     const dropdown = document.getElementById('resumeVersion');
-    if (!dropdown) {
-      console.warn('⚠️ resumeVersion dropdown not found');
-      return;
-    }
+    if (!dropdown) return;
     
-    dropdown.innerHTML = '<option value="">Select Resume</option>';
+    // Save current selection
+    const currentValue = dropdown.value;
     
+    // Clear existing options
+    dropdown.innerHTML = '<option value="">Select a resume version</option>';
+    
+    // Add resume options
     resumes.forEach(resume => {
       const option = document.createElement('option');
-      option.value = resume.name;
-      option.textContent = resume.name;
+      option.value = `${resume.name} (${resume.version})`;
+      option.textContent = `${resume.name} (${resume.version})`;
+      if (resume.isDefault) {
+        option.textContent += ' - Default';
+      }
       dropdown.appendChild(option);
     });
     
-    console.log(`📄 Updated resume dropdown with ${resumes.length} options`);
+    // Restore selection if it still exists
+    if (currentValue && Array.from(dropdown.options).some(opt => opt.value === currentValue)) {
+      dropdown.value = currentValue;
+    } else if (resumes.length > 0) {
+      // Select default resume if available
+      const defaultResume = resumes.find(r => r.isDefault);
+      if (defaultResume) {
+        dropdown.value = `${defaultResume.name} (${defaultResume.version})`;
+      }
+    }
   }
   
   // Download resume
   function downloadResume(id) {
-    const resume = resumes.find(r => r.id === id);
+    // Convert id to number if it's a string
+    const numId = typeof id === 'string' ? parseFloat(id) : id;
+    const resume = resumes.find(r => r.id === numId);
     if (!resume) {
-      showMessage('Resume not found', 'error');
+      showErrorMessage('Resume not found');
       return;
     }
     
-    try {
-      const link = document.createElement('a');
-      link.href = resume.fileData;
-      link.download = resume.fileName;
-      link.style.display = 'none';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      showMessage('📥 Resume downloaded successfully!', 'success');
-      console.log(`📥 Downloaded resume: ${resume.name}`);
-      
-    } catch (error) {
-      console.error('❌ Error downloading resume:', error);
-      showMessage('Error downloading resume. Please try again.', 'error');
+    // Create download link
+    const link = document.createElement('a');
+    link.href = resume.fileData;
+    link.download = resume.fileName;
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showSuccessMessage(`Downloading ${resume.name}`);
+  }
+  
+  // Set default resume
+  function setDefaultResume(id) {
+    // Convert id to number if it's a string
+    const numId = typeof id === 'string' ? parseFloat(id) : id;
+    
+    // Remove default from all resumes
+    resumes.forEach(resume => {
+      resume.isDefault = false;
+    });
+    
+    // Set new default
+    const resume = resumes.find(r => r.id === numId);
+    if (resume) {
+      resume.isDefault = true;
+      renderResumes();
+      updateResumeDropdown();
+      showSuccessMessage(`${resume.name} set as default resume`);
+    }
+  }
+  
+  // Confirm delete resume
+  function confirmDeleteResume(id) {
+    // Convert id to number if it's a string
+    const numId = typeof id === 'string' ? parseFloat(id) : id;
+    const resume = resumes.find(r => r.id === numId);
+    if (!resume) {
+      showErrorMessage('Resume not found');
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to delete "${resume.name}"?`)) {
+      deleteResume(numId);
     }
   }
   
   // Delete resume
   function deleteResume(id) {
-    const resume = resumes.find(r => r.id === id);
-    if (!resume) {
-      showMessage('Resume not found', 'error');
+    // Convert id to number if it's a string
+    const numId = typeof id === 'string' ? parseFloat(id) : id;
+    const index = resumes.findIndex(r => r.id === numId);
+    if (index === -1) {
+      showErrorMessage('Resume not found');
       return;
     }
     
-    if (!confirm(`Are you sure you want to delete "${resume.name}"?`)) {
-      return;
+    const deletedResume = resumes[index];
+    resumes.splice(index, 1);
+    
+    // If deleted resume was default and there are other resumes, set first one as default
+    if (deletedResume.isDefault && resumes.length > 0) {
+      resumes[0].isDefault = true;
     }
     
-    try {
-      resumes = resumes.filter(r => r.id !== id);
-      window.resumes = resumes;
-      
-      localStorage.setItem('jobResumes', JSON.stringify(resumes));
-      
-      renderResumes();
-      updateResumeDropdown();
-      
-      showMessage('🗑️ Resume deleted successfully!', 'success');
-      console.log(`🗑️ Deleted resume: ${resume.name}`);
-      
-    } catch (error) {
-      console.error('❌ Error deleting resume:', error);
-      showMessage('Error deleting resume. Please try again.', 'error');
-    }
+    // Update global references
+    window.resumes = resumes;
+    window.jobTracker.resumes = resumes;
+    
+    // Update UI
+    renderResumes();
+    updateResumeDropdown();
+    
+    showSuccessMessage(`Resume "${deletedResume.name}" deleted successfully`);
   }
   
   // Clear resume form
   function clearResumeForm() {
-    getElementById('resumeName').value = '';
-    getElementById('resumeType').value = 'General';
-    getElementById('resumeDescription').value = '';
-    getElementById('resumeFile').value = '';
-  }
-  
-  // CV Template Generator
-  function generateCVTemplate() {
-    console.log('📋 Generating CV template...');
-    
-    const cvData = getCVFormData();
-    
-    if (!cvData.name || !cvData.email) {
-      showMessage('Please fill in at least name and email', 'error');
-      return;
-    }
-    
-    try {
-      const cvHtml = generateCVHTML(cvData);
-      const cvPreview = document.getElementById('cvPreview');
-      
-      if (!cvPreview) {
-        console.error('❌ cvPreview element not found');
-        showMessage('CV preview area not found', 'error');
-        return;
-      }
-      
-      cvPreview.innerHTML = cvHtml;
-      cvPreview.style.display = 'block';
-      
-      showMessage('✅ CV template generated successfully!', 'success');
-      console.log('📋 CV template generated successfully');
-      
-    } catch (error) {
-      console.error('❌ Error generating CV template:', error);
-      showMessage('Error generating CV template. Please try again.', 'error');
-    }
-  }
-  
-  // Get CV form data
-  function getCVFormData() {
-    return {
-      name: getElementById('cvName').value.trim(),
-      email: getElementById('cvEmail').value.trim(),
-      phone: getElementById('cvPhone').value.trim(),
-      location: getElementById('cvLocation').value.trim(),
-      linkedin: getElementById('cvLinkedin').value.trim(),
-      website: getElementById('cvWebsite').value.trim(),
-      summary: getElementById('cvSummary').value.trim()
-    };
-  }
-  
-  // Generate CV HTML
-  function generateCVHTML(data) {
-    return `
-      <div class="cv-container" style="
-        max-width: 800px; 
-        margin: 20px auto; 
-        padding: 40px; 
-        background: #f5f5f7 !important; 
-        border: 1px solid #e5e5e7 !important; 
-        border-radius: 8px; 
-        font-family: 'Times New Roman', serif; 
-        line-height: 1.6;
-        color: #333 !important;
-      ">
-        <div class="cv-header" style="
-          text-align: center; 
-          border-bottom: 2px solid #333; 
-          padding-bottom: 20px; 
-          margin-bottom: 25px;
-        ">
-          <div class="cv-name" style="
-            font-size: 2.5em; 
-            font-weight: bold; 
-            margin-bottom: 10px; 
-            color: #333 !important;
-          ">${escapeHtml(data.name)}</div>
-          <div class="cv-contact" style="margin: 5px 0; color: #666 !important;">${escapeHtml(data.email)}</div>
-          ${data.phone ? `<div class="cv-contact" style="margin: 5px 0; color: #666 !important;">${escapeHtml(data.phone)}</div>` : ''}
-          ${data.location ? `<div class="cv-contact" style="margin: 5px 0; color: #666 !important;">${escapeHtml(data.location)}</div>` : ''}
-          ${data.linkedin ? `<div class="cv-contact" style="margin: 5px 0; color: #666 !important;"><a href="${escapeHtml(data.linkedin)}" target="_blank" style="color: #007bff;">${escapeHtml(data.linkedin)}</a></div>` : ''}
-          ${data.website ? `<div class="cv-contact" style="margin: 5px 0; color: #666 !important;"><a href="${escapeHtml(data.website)}" target="_blank" style="color: #007bff;">${escapeHtml(data.website)}</a></div>` : ''}
-        </div>
-        
-        ${data.summary ? `
-          <div class="cv-section" style="margin: 25px 0;">
-            <div class="cv-section-title" style="
-              font-size: 1.4em; 
-              font-weight: bold; 
-              border-bottom: 1px solid #ddd; 
-              padding-bottom: 5px; 
-              margin-bottom: 15px; 
-              color: #333 !important;
-            ">PROFESSIONAL SUMMARY</div>
-            <p style="margin: 0; color: #555 !important;">${escapeHtml(data.summary)}</p>
-          </div>
-        ` : ''}
-        
-        <div class="cv-section" style="margin: 25px 0;">
-          <div class="cv-section-title" style="
-            font-size: 1.4em; 
-            font-weight: bold; 
-            border-bottom: 1px solid #ddd; 
-            padding-bottom: 5px; 
-            margin-bottom: 15px; 
-            color: #333 !important;
-          ">EXPERIENCE</div>
-          <p style="margin: 0; color: #777 !important; font-style: italic;">Add your work experience here...</p>
-        </div>
-        
-        <div class="cv-section" style="margin: 25px 0;">
-          <div class="cv-section-title" style="
-            font-size: 1.4em; 
-            font-weight: bold; 
-            border-bottom: 1px solid #ddd; 
-            padding-bottom: 5px; 
-            margin-bottom: 15px; 
-            color: #333 !important;
-          ">EDUCATION</div>
-          <p style="margin: 0; color: #777 !important; font-style: italic;">Add your education details here...</p>
-        </div>
-        
-        <div class="cv-section" style="margin: 25px 0;">
-          <div class="cv-section-title" style="
-            font-size: 1.4em; 
-            font-weight: bold; 
-            border-bottom: 1px solid #ddd; 
-            padding-bottom: 5px; 
-            margin-bottom: 15px; 
-            color: #333 !important;
-          ">SKILLS</div>
-          <p style="margin: 0; color: #777 !important; font-style: italic;">List your key skills here...</p>
-        </div>
-        
-        <div style="
-          margin-top: 40px; 
-          text-align: center; 
-          padding-top: 20px; 
-          border-top: 1px solid #eee;
-        ">
-          <button onclick="Resumes.printCV()" class="btn btn-primary" style="margin-right: 10px;">
-            🖨️ Print CV
-          </button>
-          <button onclick="Resumes.copyCV()" class="btn btn-success">
-            📋 Copy CV
-          </button>
-        </div>
-      </div>
-    `;
-  }
-  
-  // Clear CV form
-  function clearCVForm() {
-    getElementById('cvName').value = '';
-    getElementById('cvEmail').value = '';
-    getElementById('cvPhone').value = '';
-    getElementById('cvLocation').value = '';
-    getElementById('cvLinkedin').value = '';
-    getElementById('cvWebsite').value = '';
-    getElementById('cvSummary').value = '';
-    
-    const cvPreview = document.getElementById('cvPreview');
-    if (cvPreview) {
-      cvPreview.innerHTML = '';
-      cvPreview.style.display = 'none';
-    }
-  }
-  
-  // Print CV
-  function printCV() {
-    const cvContent = document.getElementById('cvPreview');
-    if (!cvContent || !cvContent.innerHTML.trim()) {
-      showMessage('Please generate a CV template first', 'error');
-      return;
-    }
-    
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>CV - Print</title>
-          <style>
-            body { 
-              font-family: 'Times New Roman', serif; 
-              margin: 40px; 
-              line-height: 1.6; 
-              color: #333;
-            }
-            .cv-header { 
-              text-align: center; 
-              border-bottom: 2px solid #333; 
-              padding-bottom: 20px; 
-              margin-bottom: 25px; 
-            }
-            .cv-name { 
-              font-size: 2.5em; 
-              font-weight: bold; 
-              margin-bottom: 10px; 
-            }
-            .cv-contact { margin: 5px 0; }
-            .cv-section { margin: 25px 0; }
-            .cv-section-title { 
-              font-size: 1.4em; 
-              font-weight: bold; 
-              border-bottom: 1px solid #ddd; 
-              padding-bottom: 5px; 
-              margin-bottom: 15px; 
-            }
-            button { display: none; }
-            a { color: #007bff; text-decoration: none; }
-          </style>
-        </head>
-        <body>${cvContent.innerHTML}</body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-    printWindow.close();
-  }
-  
-  // Copy CV content
-  function copyCV() {
-    const cvContent = document.getElementById('cvPreview');
-    if (!cvContent || !cvContent.innerHTML.trim()) {
-      showMessage('Please generate a CV template first', 'error');
-      return;
-    }
-    
-    try {
-      const tempElement = document.createElement('textarea');
-      tempElement.value = cvContent.innerText;
-      document.body.appendChild(tempElement);
-      tempElement.select();
-      document.execCommand('copy');
-      document.body.removeChild(tempElement);
-      
-      showMessage('📋 CV content copied to clipboard!', 'success');
-    } catch (error) {
-      console.error('❌ Error copying CV:', error);
-      showMessage('Error copying CV. Please try again.', 'error');
-    }
-  }
-  
-  // Setup event listeners
-  function setupEventListeners() {
+    const nameInput = document.getElementById('resumeName');
     const fileInput = document.getElementById('resumeFile');
-    if (fileInput) {
-      fileInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-          const fileName = this.files[0].name;
-          const fileSize = formatFileSize(this.files[0].size);
-          console.log(`📄 File selected: ${fileName} (${fileSize})`);
-          showMessage(`File selected: ${fileName} (${fileSize})`, 'info');
-        }
-      });
-    }
+    const versionInput = document.getElementById('resumeVersionInput');
+    
+    if (nameInput) nameInput.value = '';
+    if (fileInput) fileInput.value = '';
+    if (versionInput) versionInput.value = '';
+    
+    validateResumeForm();
+  }
+  
+  // Validate resume form
+  function validateResumeForm() {
+    const nameInput = document.getElementById('resumeName');
+    const fileInput = document.getElementById('resumeFile');
+    const versionInput = document.getElementById('resumeVersionInput');
+    const addButton = document.querySelector('#resumes .btn-primary');
+    
+    if (!nameInput || !fileInput || !versionInput || !addButton) return;
+    
+    const isValid = nameInput.value.trim() && fileInput.files[0] && versionInput.value.trim();
+    addButton.disabled = !isValid;
   }
   
   // Utility functions
-  function getElementById(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-      console.warn(`⚠️ Element not found: ${id}`);
-      return { value: '', files: [] }; // Return mock element to prevent errors
-    }
-    return element;
-  }
-  
-  function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch (e) {
-      return dateString;
-    }
-  }
-  
   function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+  
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
   }
   
   function escapeHtml(text) {
@@ -602,76 +358,41 @@
     return div.innerHTML;
   }
   
-  function showMessage(message, type = 'info') {
-    if (typeof window.showMessage === 'function') {
-      window.showMessage(message, type);
-      return;
+  function showSuccessMessage(message) {
+    if (window.showSuccessMessage) {
+      window.showSuccessMessage(message);
+    } else {
+      console.log('✅', message);
     }
-    
-    // Fallback message display
-    console.log(`${type.toUpperCase()}: ${message}`);
-    
-    const messageEl = document.createElement('div');
-    messageEl.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 24px;
-      border-radius: 8px;
-      color: white;
-      font-weight: 600;
-      z-index: 1000;
-      max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    
-    const colors = {
-      success: '#34C759',
-      error: '#FF3B30',
-      warning: '#FF9500',
-      info: '#007AFF'
-    };
-    
-    messageEl.style.backgroundColor = colors[type] || colors.info;
-    messageEl.textContent = message;
-    
-    document.body.appendChild(messageEl);
-    
-    setTimeout(() => {
-      if (messageEl.parentNode) {
-        messageEl.parentNode.removeChild(messageEl);
-      }
-    }, 4000);
+  }
+  
+  function showErrorMessage(message) {
+    if (window.showErrorMessage) {
+      window.showErrorMessage(message);
+    } else {
+      console.error('❌', message);
+    }
   }
   
   // Public API
-  window.Resumes = {
+  window.ResumesModule = {
     initialize,
-    upload: uploadResume,
-    download: downloadResume,
-    delete: deleteResume,
-    render: renderResumes,
-    load: loadResumes,
-    clear: clearResumeForm,
-    generateCV: generateCVTemplate,
-    clearCV: clearCVForm,
-    printCV: printCV,
-    copyCV: copyCV,
-    updateDropdown: updateResumeDropdown
+    addResume,
+    downloadResume,
+    setDefaultResume,
+    confirmDeleteResume,
+    deleteResume,
+    clearResumeForm,
+    updateResumeDropdown,
+    renderResumes
   };
   
-  // Legacy global functions for backward compatibility
-  window.uploadResume = uploadResume;
+  // Export global functions for backward compatibility
+  window.addResume = addResume;
+  window.downloadResume = downloadResume;
+  window.deleteResume = (id) => confirmDeleteResume(id);
   window.renderResumes = renderResumes;
   window.updateResumeDropdown = updateResumeDropdown;
-  window.downloadResume = downloadResume;
-  window.deleteResume = deleteResume;
-  window.clearResumeForm = clearResumeForm;
-  window.generateCVTemplate = generateCVTemplate;
-  window.clearCVForm = clearCVForm;
-  window.printCV = printCV;
-  window.copyCV = copyCV;
-  window.loadResumes = loadResumes;
   
   // Auto-initialize when DOM is ready
   if (document.readyState === 'loading') {
@@ -681,4 +402,5 @@
   }
   
   console.log('📄 Resumes module loaded successfully');
+  
 })();

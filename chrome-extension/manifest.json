@@ -7,7 +7,9 @@
     "activeTab",
     "storage",
     "tabs",
-    "scripting"
+    "scripting",
+    "notifications",
+    "contextMenus"
   ],
   "host_permissions": [
     "https://linkedin.com/*",
@@ -23,6 +25,8 @@
     "https://*.workday.com/*",
     "https://*.lever.co/*",
     "https://*.greenhouse.io/*",
+    "http://localhost:*/*",
+    "https://*.vercel.app/*",
     "https://*/*"
   ],
   "action": {

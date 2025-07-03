@@ -157,9 +157,10 @@
         }
     }
     
-    // Listen for extension sync requests
+    // Listen for extension sync requests and window messages
     function setupExtensionListener() {
         try {
+            // Chrome extension runtime messages
             if (typeof chrome !== 'undefined' && chrome.runtime) {
                 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     console.log('Received message from extension:', request);
@@ -174,6 +175,11 @@
                         return true; // Keep message channel open for async response
                     }
                     
+                    if (request.action === 'applicationAdded') {
+                        handleNewApplicationFromExtension(request.application);
+                        sendResponse({ success: true });
+                    }
+                    
                     if (request.action === 'requestSync') {
                         autoSync();
                         sendResponse({ success: true });
@@ -181,8 +187,46 @@
                 });
                 console.log('📱 Extension message listener setup complete');
             }
+
+            // Window postMessage listener for cross-window communication
+            window.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'NEW_APPLICATION_FROM_EXTENSION') {
+                    console.log('Received new application from extension via postMessage:', event.data.application);
+                    handleNewApplicationFromExtension(event.data.application);
+                }
+            });
+            
         } catch (error) {
             console.error('Failed to setup extension listener:', error);
+        }
+    }
+
+    // Handle new application from extension
+    async function handleNewApplicationFromExtension(applicationData) {
+        try {
+            console.log('📋 Processing new application from extension:', applicationData.jobTitle);
+            
+            // Reload applications from the backend to get the latest data
+            if (window.ApplicationsModule && window.ApplicationsModule.loadApplications) {
+                await window.ApplicationsModule.loadApplications();
+                showNotification(`✅ New application "${applicationData.jobTitle}" synced from extension!`, 'success');
+            } else if (window.loadAllData) {
+                await window.loadAllData();
+                showNotification(`✅ Application data refreshed from extension!`, 'success');
+            } else {
+                // Fallback: refresh the page
+                showNotification(`✅ New application added! Refreshing...`, 'success');
+                setTimeout(() => window.location.reload(), 2000);
+            }
+            
+            // Switch to applications tab if not already there
+            if (window.switchTab && window.jobTracker && window.jobTracker.currentTab !== 'applications') {
+                window.switchTab('applications', document.querySelector('.tab[onclick*="applications"]'));
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to handle extension application:', error);
+            showNotification('⚠️ Application added but sync failed. Please refresh manually.', 'error');
         }
     }
     
