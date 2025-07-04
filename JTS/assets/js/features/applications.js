@@ -289,10 +289,9 @@
     document.getElementById('editingApplicationId').value = id;
     
     // Change the add button to update button
-    const addButton = document.querySelector('#applications .btn-primary');
+    const addButton = document.getElementById('applicationSubmitBtn');
     if (addButton) {
       addButton.textContent = 'Update Application';
-      addButton.onclick = () => window.ApplicationsModule.updateApplicationFromForm();
     }
   }
   
@@ -407,10 +406,9 @@
     });
     
     // Reset button to add mode
-    const addButton = document.querySelector('#applications .btn-primary');
+    const addButton = document.getElementById('applicationSubmitBtn');
     if (addButton) {
       addButton.textContent = 'Add Application';
-      addButton.onclick = () => window.addApplication();
     }
   }
   
@@ -544,6 +542,16 @@
     }
   }
   
+  // Unified submit function that handles both add and update
+  window.submitApplication = function() {
+    const editingId = document.getElementById('editingApplicationId').value;
+    if (editingId) {
+      updateApplicationFromForm();
+    } else {
+      addApplicationFromForm();
+    }
+  };
+
   // Export global functions for backward compatibility
   window.addApplication = addApplicationFromForm;
   window.editApplication = editApplication;

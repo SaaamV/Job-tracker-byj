@@ -1,15 +1,19 @@
 // content.js - FIXED Job data extraction and auto-fill functionality
 
-// Job Tracker Auto-Fill Extension
-class JobTrackerExtension {
+// Prevent multiple class declarations
+if (typeof window.JobTrackerExtension === 'undefined') {
+  // Job Tracker Auto-Fill Extension
+  class JobTrackerExtension {
   constructor() {
     this.jobData = {};
     this.currentSite = this.detectJobSite();
     this.isTracking = false;
     
-    // Use localhost for development
+    // Use localhost for development  
     this.primaryApiUrl = 'http://localhost:3001'; // Local backend API
     this.fallbackApiUrl = 'http://localhost:3001'; // Local fallback
+    
+    console.log('🔗 Content script API URL configured as:', this.primaryApiUrl);
     this.frontendUrl = 'http://localhost:8080'; // Local frontend server
     
     this.init();
@@ -888,6 +892,10 @@ class JobTrackerExtension {
       notification.remove();
     });
   }
+}
+
+// Make class globally accessible
+window.JobTrackerExtension = JobTrackerExtension;
 }
 
 // Message listener for popup communication

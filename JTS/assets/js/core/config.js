@@ -6,6 +6,22 @@
   
   console.log('⚙️ Loading Configuration Module...');
   
+  // Helper function to determine API base URL
+  function determineAPIBaseURL() {
+    // Check if we're in development or production
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname === '';
+    
+    if (isLocalhost) {
+      // Development environment - use local backend
+      return 'http://localhost:3001/api';
+    } else {
+      // Production environment - use deployed backend
+      return 'https://your-production-api.vercel.app/api';
+    }
+  }
+  
   // Application Configuration
   const CONFIG = {
     // Application Info
@@ -144,19 +160,7 @@
     }
   };
   
-  // Determine API Base URL based on environment
-  function determineAPIBaseURL() {
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-    
-    if (hostname === 'localhost') {
-      // Development environment
-      return port === '8080' ? 'http://localhost:3001' : 'http://localhost:3001';
-    } else {
-      // Production environment (Vercel)
-      return window.location.origin;
-    }
-  }
+  // Function already defined above - removed duplicate
   
   // Environment Detection
   const ENVIRONMENT = {

@@ -9,23 +9,23 @@ class JobTrackerBackground {
   }
   
   determineApiUrl() {
-    // For development, use localhost
-    // For production, use your deployed API URL
-    const isDevelopment = chrome.runtime.getManifest().version_name?.includes('dev');
-    
-    if (isDevelopment) {
-      return 'http://localhost:3001/api';
-    } else {
-      // Update this with your actual production API URL
-      return 'https://your-production-api.vercel.app/api';
-    }
+    // For development, always use localhost for now
+    // To use production, manually change this URL
+    return 'http://localhost:3001';
   }
 
   init() {
+    console.log('🚀 Initializing Job Tracker Background Service Worker...');
+    console.log('🔗 API URL configured as:', this.apiUrl);
+    
     this.setupEventListeners();
     this.setupPeriodicHealthCheck();
     this.setupContextMenus();
-    console.log('Job Tracker Extension Background Service Worker initialized with cloud-only API');
+    
+    // Test connection immediately
+    this.testCloudConnection();
+    
+    console.log('✅ Job Tracker Extension Background Service Worker initialized');
   }
 
   setupEventListeners() {
@@ -163,8 +163,11 @@ class JobTrackerBackground {
 
   async saveApplication(applicationData) {
     try {
+      console.log('🔄 Attempting to save application to:', `${this.apiUrl}/api/applications`);
+      console.log('📤 Application data:', applicationData);
+      
       // Save directly to cloud API
-      const response = await fetch(`${this.apiUrl}/applications`, {
+      const response = await fetch(`${this.apiUrl}/api/applications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,9 +177,14 @@ class JobTrackerBackground {
           dateAdded: new Date().toISOString()
         })
       });
+      
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response ok:', response.ok);
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ API Error Response:', errorText);
+        throw new Error(`API request failed: ${response.status} - ${errorText}`);
       }
 
       const savedApplication = await response.json();
@@ -184,14 +192,15 @@ class JobTrackerBackground {
       
       return savedApplication;
     } catch (error) {
-      console.error('Failed to save application to cloud:', error);
+      console.error('❌ Failed to save application to cloud:', error);
+      console.error('❌ Error details:', error.message);
       throw error;
     }
   }
 
   async getApplications() {
     try {
-      const response = await fetch(`${this.apiUrl}/applications`, {
+      const response = await fetch(`${this.apiUrl}/api/applications`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -212,6 +221,8 @@ class JobTrackerBackground {
 
   async testCloudConnection() {
     try {
+      console.log('🔄 Testing connection to:', `${this.apiUrl}/api/health`);
+      
       // Add /api prefix to the health endpoint
       const response = await fetch(`${this.apiUrl}/api/health`, {
         method: 'GET',
@@ -221,6 +232,9 @@ class JobTrackerBackground {
         // Add timeout to prevent hanging
         signal: AbortSignal.timeout(5000)
       });
+      
+      console.log('📥 Health check response status:', response.status);
+      console.log('📥 Health check response ok:', response.ok);
 
       if (response.ok) {
         const health = await response.json();

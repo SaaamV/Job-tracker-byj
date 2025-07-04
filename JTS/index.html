@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Job Tracking System - Enhanced</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
   
   <!-- Consolidated CSS -->
   <link rel="stylesheet" href="assets/css/main.css"/>
@@ -131,7 +132,7 @@
                         <textarea id="notes" rows="3" placeholder="Additional notes, interview feedback, etc."></textarea>
                     </div>
                 </div>
-                <button class="btn btn-success" onclick="addApplication()">Add Application</button>
+                <button class="btn btn-success" id="applicationSubmitBtn" onclick="submitApplication()">Add Application</button>
                 <button class="btn" onclick="clearForm()">Clear Form</button>
             </div>
             
@@ -221,24 +222,26 @@
                 </div>
             </div>
             
-            <div class="chart-container">
-                <h3>Application Status Distribution</h3>
-                <canvas id="statusChart"></canvas>
-            </div>
-            
-            <div class="chart-container">
-                <h3>Applications Over Time</h3>
-                <canvas id="timeChart"></canvas>
-            </div>
-            
-            <div class="chart-container">
-                <h3>Applications by Portal</h3>
-                <canvas id="portalChart"></canvas>
-            </div>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Application Status Distribution</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Applications Over Time</h3>
+                    <canvas id="timeChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Applications by Portal</h3>
+                    <canvas id="portalChart"></canvas>
+                </div>
 
-            <div class="chart-container">
-                <h3>Success Rate by Portal</h3>
-                <canvas id="successChart"></canvas>
+                <div class="chart-container">
+                    <h3>Success Rate by Portal</h3>
+                    <canvas id="successChart"></canvas>
+                </div>
             </div>
         </div>
         
@@ -520,14 +523,6 @@
                 </div>
             </div>
 
-            <div class="form-section">
-                <h3>Backup & Restore</h3>
-                <div class="backup-section">
-                    <button class="btn" onclick="createBackup()">Create Backup</button>
-                    <button class="btn" onclick="restoreBackup()">Restore from Backup</button>
-                    <p><small>Backup includes all applications, contacts, resumes, and settings</small></p>
-                </div>
-            </div>
         </div>
     </div>
 
