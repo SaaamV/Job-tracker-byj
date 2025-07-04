@@ -480,6 +480,12 @@ class JobTrackerExtension {
       const element = document.getElementById(id);
       if (element && value) {
         element.value = value;
+        // Ensure the field is editable and not disabled
+        element.disabled = false;
+        element.readOnly = false;
+        // Clear any previous restrictions
+        element.style.pointerEvents = 'auto';
+        element.style.cursor = 'text';
       }
     });
 
@@ -495,6 +501,15 @@ class JobTrackerExtension {
       hiddenInput.value = this.jobData.jobUrl;
       document.getElementById('job-tracker-form').appendChild(hiddenInput);
     }
+    
+    // Ensure all form fields are interactive
+    const allFormFields = document.querySelectorAll('#job-tracker-form input, #job-tracker-form select, #job-tracker-form textarea');
+    allFormFields.forEach(field => {
+      field.disabled = false;
+      field.readOnly = false;
+      field.style.pointerEvents = 'auto';
+      field.style.cursor = field.tagName === 'SELECT' ? 'pointer' : 'text';
+    });
   }
 
   // FIXED: Enhanced save functionality with immediate website notification

@@ -1,105 +1,8 @@
-// Enhanced Chrome Extension Integration
+// Chrome Extension Integration - Cloud-Only
 (function() {
     'use strict';
     
-    console.log('Loading Chrome Extension Integration...');
-    
-    // Enhanced function to sync Chrome extension data
-    async function syncChromeExtensionData() {
-        try {
-            if (typeof chrome !== 'undefined' && chrome.storage) {
-                console.log('🔄 Syncing Chrome extension data...');
-                
-                const result = await new Promise((resolve) => {
-                    chrome.storage.local.get(['jobApplications', 'jobContacts', 'jobResumes'], resolve);
-                });
-                
-                let syncCount = 0;
-                
-                // Sync applications
-                if (result.jobApplications && result.jobApplications.length > 0) {
-                    const existingApps = JSON.parse(localStorage.getItem('jobApplications') || '[]');
-                    const existingIds = new Set(existingApps.map(app => app.id));
-                    
-                    const newApps = result.jobApplications.filter(app => !existingIds.has(app.id));
-                    
-                    if (newApps.length > 0) {
-                        const mergedApps = [...existingApps, ...newApps];
-                        localStorage.setItem('jobApplications', JSON.stringify(mergedApps));
-                        window.applications = mergedApps;
-                        syncCount += newApps.length;
-                        console.log(`✅ Synced ${newApps.length} new applications from extension`);
-                        
-                        // Refresh the applications display if on applications tab
-                        if (typeof renderApplications === 'function') {
-                            renderApplications();
-                        }
-                        if (typeof updateAnalytics === 'function') {
-                            updateAnalytics();
-                        }
-                    }
-                }
-                
-                // Sync contacts
-                if (result.jobContacts && result.jobContacts.length > 0) {
-                    const existingContacts = JSON.parse(localStorage.getItem('jobContacts') || '[]');
-                    const existingIds = new Set(existingContacts.map(contact => contact.id));
-                    
-                    const newContacts = result.jobContacts.filter(contact => !existingIds.has(contact.id));
-                    
-                    if (newContacts.length > 0) {
-                        const mergedContacts = [...existingContacts, ...newContacts];
-                        localStorage.setItem('jobContacts', JSON.stringify(mergedContacts));
-                        window.contacts = mergedContacts;
-                        console.log(`✅ Synced ${newContacts.length} new contacts from extension`);
-                        
-                        // Refresh contacts display if on contacts tab
-                        if (typeof renderContacts === 'function') {
-                            renderContacts();
-                        }
-                    }
-                }
-                
-                // Sync resumes
-                if (result.jobResumes && result.jobResumes.length > 0) {
-                    const existingResumes = JSON.parse(localStorage.getItem('jobResumes') || '[]');
-                    const existingIds = new Set(existingResumes.map(resume => resume.id));
-                    
-                    const newResumes = result.jobResumes.filter(resume => !existingIds.has(resume.id));
-                    
-                    if (newResumes.length > 0) {
-                        const mergedResumes = [...existingResumes, ...newResumes];
-                        localStorage.setItem('jobResumes', JSON.stringify(mergedResumes));
-                        window.resumes = mergedResumes;
-                        console.log(`✅ Synced ${newResumes.length} new resumes from extension`);
-                        
-                        // Refresh resumes display if available
-                        if (typeof renderResumes === 'function') {
-                            renderResumes();
-                        }
-                        if (typeof updateResumeDropdown === 'function') {
-                            updateResumeDropdown();
-                        }
-                    }
-                }
-                
-                if (syncCount > 0) {
-                    showNotification(`✅ Synced ${syncCount} new items from Chrome extension!`, 'success');
-                    console.log(`🎉 Total synced: ${syncCount} items from Chrome extension`);
-                } else {
-                    console.log('📱 Chrome extension data is already up to date');
-                }
-                
-                return syncCount;
-            } else {
-                console.log('📱 Chrome extension API not available');
-                return 0;
-            }
-        } catch (error) {
-            console.error('❌ Failed to sync Chrome extension data:', error);
-            return 0;
-        }
-    }
+    console.log('🔌 Loading Chrome Extension Integration (Cloud-Only)...');
     
     // Enhanced notification system
     function showNotification(message, type = 'info', duration = 5000) {
@@ -148,32 +51,13 @@
         }, duration);
     }
     
-    // Auto-sync function that runs periodically
-    async function autoSync() {
-        try {
-            await syncChromeExtensionData();
-        } catch (error) {
-            console.error('Auto-sync failed:', error);
-        }
-    }
-    
     // Listen for extension sync requests and window messages
     function setupExtensionListener() {
         try {
             // Chrome extension runtime messages
             if (typeof chrome !== 'undefined' && chrome.runtime) {
                 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-                    console.log('Received message from extension:', request);
-                    
-                    if (request.action === 'syncData') {
-                        syncChromeExtensionData().then(syncCount => {
-                            sendResponse({ success: true, synced: syncCount });
-                        }).catch(error => {
-                            console.error('Sync failed:', error);
-                            sendResponse({ success: false, error: error.message });
-                        });
-                        return true; // Keep message channel open for async response
-                    }
+                    console.log('📨 Received message from extension:', request);
                     
                     if (request.action === 'applicationAdded') {
                         handleNewApplicationFromExtension(request.application);
@@ -181,7 +65,7 @@
                     }
                     
                     if (request.action === 'requestSync') {
-                        autoSync();
+                        refreshAllData();
                         sendResponse({ success: true });
                     }
                 });
@@ -191,13 +75,13 @@
             // Window postMessage listener for cross-window communication
             window.addEventListener('message', (event) => {
                 if (event.data && event.data.type === 'NEW_APPLICATION_FROM_EXTENSION') {
-                    console.log('Received new application from extension via postMessage:', event.data.application);
+                    console.log('📨 Received new application from extension via postMessage:', event.data.application);
                     handleNewApplicationFromExtension(event.data.application);
                 }
             });
             
         } catch (error) {
-            console.error('Failed to setup extension listener:', error);
+            console.error('❌ Failed to setup extension listener:', error);
         }
     }
 
@@ -206,22 +90,22 @@
         try {
             console.log('📋 Processing new application from extension:', applicationData.jobTitle);
             
-            // Reload applications from the backend to get the latest data
+            // Reload applications from the cloud to get the latest data
             if (window.ApplicationsModule && window.ApplicationsModule.loadApplications) {
                 await window.ApplicationsModule.loadApplications();
                 showNotification(`✅ New application "${applicationData.jobTitle}" synced from extension!`, 'success');
-            } else if (window.loadAllData) {
-                await window.loadAllData();
-                showNotification(`✅ Application data refreshed from extension!`, 'success');
             } else {
-                // Fallback: refresh the page
-                showNotification(`✅ New application added! Refreshing...`, 'success');
-                setTimeout(() => window.location.reload(), 2000);
+                // Fallback: refresh all data
+                await refreshAllData();
+                showNotification(`✅ Application data refreshed from extension!`, 'success');
             }
             
             // Switch to applications tab if not already there
             if (window.switchTab && window.jobTracker && window.jobTracker.currentTab !== 'applications') {
-                window.switchTab('applications', document.querySelector('.tab[onclick*="applications"]'));
+                const appsTab = document.querySelector('.tab[onclick*="applications"]');
+                if (appsTab) {
+                    window.switchTab('applications', appsTab);
+                }
             }
             
         } catch (error) {
@@ -230,24 +114,39 @@
         }
     }
     
-    // Storage change listener
-    function setupStorageListener() {
+    // Refresh all data from cloud
+    async function refreshAllData() {
         try {
-            if (typeof chrome !== 'undefined' && chrome.storage) {
-                chrome.storage.onChanged.addListener((changes, namespace) => {
-                    if (namespace === 'local') {
-                        console.log('Chrome storage changed:', Object.keys(changes));
-                        
-                        // Automatically sync when storage changes
-                        setTimeout(() => {
-                            autoSync();
-                        }, 1000); // Small delay to allow other operations to complete
-                    }
-                });
-                console.log('📱 Storage change listener setup complete');
+            console.log('🔄 Refreshing all data from cloud...');
+            
+            // Load all modules data from cloud
+            const promises = [];
+            
+            if (window.ApplicationsModule && window.ApplicationsModule.loadApplications) {
+                promises.push(window.ApplicationsModule.loadApplications());
             }
+            
+            if (window.ContactsModule && window.ContactsModule.loadContacts) {
+                promises.push(window.ContactsModule.loadContacts());
+            }
+            
+            if (window.ResumesModule && window.ResumesModule.loadResumes) {
+                promises.push(window.ResumesModule.loadResumes());
+            }
+            
+            await Promise.all(promises);
+            
+            // Update analytics if available
+            if (window.updateAnalytics) {
+                window.updateAnalytics();
+            }
+            
+            console.log('✅ All data refreshed from cloud');
+            showNotification('✅ Data refreshed from cloud!', 'success');
+            
         } catch (error) {
-            console.error('Failed to setup storage listener:', error);
+            console.error('❌ Failed to refresh data:', error);
+            showNotification('❌ Failed to refresh data from cloud', 'error');
         }
     }
     
@@ -257,7 +156,7 @@
         if (header && !document.getElementById('chrome-sync-btn')) {
             const syncButton = document.createElement('button');
             syncButton.id = 'chrome-sync-btn';
-            syncButton.innerHTML = '📱 Sync Extension Data';
+            syncButton.innerHTML = '🔄 Refresh from Cloud';
             syncButton.style.cssText = `
                 position: absolute;
                 top: 10px;
@@ -276,24 +175,26 @@
             
             syncButton.addEventListener('click', async () => {
                 syncButton.disabled = true;
-                syncButton.textContent = '🔄 Syncing...';
+                syncButton.textContent = '🔄 Refreshing...';
                 
                 try {
-                    const syncCount = await syncChromeExtensionData();
-                    syncButton.textContent = syncCount > 0 ? `✅ Synced ${syncCount} items` : '✅ Up to date';
+                    await refreshAllData();
+                    syncButton.textContent = '✅ Refreshed!';
                 } catch (error) {
-                    syncButton.textContent = '❌ Sync failed';
+                    syncButton.textContent = '❌ Failed';
                 }
                 
                 setTimeout(() => {
                     syncButton.disabled = false;
-                    syncButton.textContent = '📱 Sync Extension Data';
+                    syncButton.textContent = '🔄 Refresh from Cloud';
                 }, 3000);
             });
             
             syncButton.addEventListener('mouseenter', () => {
-                syncButton.style.transform = 'translateY(-2px)';
-                syncButton.style.boxShadow = '0 4px 12px rgba(0, 122, 255, 0.3)';
+                if (!syncButton.disabled) {
+                    syncButton.style.transform = 'translateY(-2px)';
+                    syncButton.style.boxShadow = '0 4px 12px rgba(0, 122, 255, 0.3)';
+                }
             });
             
             syncButton.addEventListener('mouseleave', () => {
@@ -306,44 +207,41 @@
         }
     }
     
-    // URL change detection for single page applications
-    function detectURLChanges() {
-        let currentURL = window.location.href;
-        
-        setInterval(() => {
-            if (window.location.href !== currentURL) {
-                currentURL = window.location.href;
-                console.log('URL changed, triggering sync...');
-                setTimeout(autoSync, 1000);
+    // Check for extension sync requests
+    function checkExtensionConnection() {
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            try {
+                // Test connection to extension
+                chrome.runtime.sendMessage({ action: 'ping' }, (response) => {
+                    if (!chrome.runtime.lastError) {
+                        console.log('📱 Chrome extension connected');
+                        showNotification('📱 Chrome extension connected', 'success', 2000);
+                    }
+                });
+            } catch (error) {
+                console.log('📱 Chrome extension not available');
             }
-        }, 2000);
+        }
     }
     
     // Initialize everything
     function initializeChromeIntegration() {
-        console.log('🚀 Initializing Chrome Extension Integration...');
+        console.log('🚀 Initializing Chrome Extension Integration (Cloud-Only)...');
         
         // Set up listeners
         setupExtensionListener();
-        setupStorageListener();
         
         // Add manual sync button
         setTimeout(addSyncButton, 1000);
         
-        // Initial sync on page load
-        setTimeout(autoSync, 2000);
-        
-        // Periodic auto-sync every 30 seconds
-        setInterval(autoSync, 30000);
-        
-        // URL change detection
-        detectURLChanges();
+        // Check extension connection
+        setTimeout(checkExtensionConnection, 2000);
         
         // Expose functions globally for manual use
-        window.syncChromeExtensionData = syncChromeExtensionData;
+        window.refreshAllData = refreshAllData;
         window.showSyncNotification = showNotification;
         
-        console.log('✅ Chrome Extension Integration initialized');
+        console.log('✅ Chrome Extension Integration initialized (Cloud-Only)');
     }
     
     // Add required CSS animations
@@ -380,5 +278,5 @@
         initializeChromeIntegration();
     }
     
-    console.log('Chrome Extension Integration module loaded');
+    console.log('🔌 Chrome Extension Integration module loaded (Cloud-Only)');
 })();

@@ -1,5 +1,6 @@
-// Load environment variables first
-require('dotenv').config();
+// Load environment configuration
+const { getConfig, isDevelopment } = require('./config/environment');
+const config = getConfig();
 
 const express = require('express');
 const cors = require('cors');
@@ -10,10 +11,11 @@ const app = express();
 // Import routes
 const applicationsRouter = require('./routes/applications');
 const contactsRouter = require('./routes/contacts');
+const resumesRouter = require('./routes/resumes');
 
 // CORS configuration
 app.use(cors({
-  origin: '*',
+  origin: config.security.corsOrigin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -28,7 +30,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: config.nodeEnv,
     mongodb: 'Connected',
     mode: 'Cloud-only',
     version: '1.0.0'
@@ -42,7 +44,8 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/api/health',
       applications: '/api/applications',
-      contacts: '/api/contacts'
+      contacts: '/api/contacts',
+      resumes: '/api/resumes'
     },
     version: '1.0.0'
   });
@@ -51,17 +54,12 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api/applications', applicationsRouter);
 app.use('/api/contacts', contactsRouter);
+app.use('/api/resumes', resumesRouter);
 
 
 // Initialize database connection
 async function initializeDatabase() {
   try {
-    if (!process.env.MONGODB_URI) {
-      console.error('❌ MONGODB_URI not found in environment variables');
-      console.error('Available env vars:', Object.keys(process.env).filter(key => key.includes('MONGO')));
-      process.exit(1);
-    }
-    
     console.log('🚀 Connecting to MongoDB...');
     await connectDB();
     console.log('✅ Database connected successfully');
@@ -85,9 +83,10 @@ if (process.env.VERCEL) {
   module.exports = app;
 } else {
   // For local development
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+  app.listen(config.port, () => {
+    console.log(`🚀 Server running on port ${config.port}`);
+    console.log(`📊 Environment: ${config.nodeEnv}`);
+    console.log(`🌐 CORS Origin: ${config.security.corsOrigin}`);
   });
 }
 

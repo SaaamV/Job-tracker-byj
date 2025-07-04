@@ -1,28 +1,57 @@
-// Resumes Feature Module - Simple File Management
-// Handles resume file uploads and management (client-side only)
+// Resumes Feature Module - Cloud-Only MongoDB Integration
+// Handles resume file uploads and management with MongoDB cloud database
 
 (function() {
   'use strict';
   
-  console.log('📄 Loading Resumes Module...');
+  console.log('📄 Loading Resumes Module (Cloud-Only)...');
   
   // Module state
   let resumes = [];
   let isInitialized = false;
   
   // Initialize the module
-  function initialize() {
+  async function initialize() {
     if (isInitialized) {
       console.log('✅ Resumes module already initialized');
       return;
     }
     
-    setupEventListeners();
-    renderResumes();
-    updateResumeDropdown();
-    
-    isInitialized = true;
-    console.log('📄 Resumes module initialized');
+    try {
+      await loadResumes();
+      setupEventListeners();
+      updateResumeDropdown();
+      
+      isInitialized = true;
+      console.log(`📄 Resumes module initialized with ${resumes.length} resumes`);
+    } catch (error) {
+      console.error('❌ Failed to initialize resumes module:', error);
+      showErrorMessage('Failed to load resumes. Please check your connection.');
+    }
+  }
+  
+  // Load resumes from cloud API
+  async function loadResumes() {
+    try {
+      if (!window.apiService) {
+        throw new Error('API service not available');
+      }
+      
+      resumes = await window.apiService.getResumes();
+      
+      // Update global reference for backward compatibility
+      window.resumes = resumes;
+      window.jobTracker.resumes = resumes;
+      
+      renderResumes();
+      
+    } catch (error) {
+      console.error('❌ Error loading resumes:', error);
+      resumes = [];
+      window.resumes = [];
+      window.jobTracker.resumes = [];
+      throw error;
+    }
   }
   
   // Setup event listeners
@@ -37,6 +66,12 @@
     const nameInput = document.getElementById('resumeName');
     if (nameInput) {
       nameInput.addEventListener('input', validateResumeForm);
+    }
+    
+    // Version input handler
+    const versionInput = document.getElementById('resumeVersionInput');
+    if (versionInput) {
+      versionInput.addEventListener('input', validateResumeForm);
     }
   }
   
@@ -65,14 +100,14 @@
     // Auto-fill resume name if empty
     const nameInput = document.getElementById('resumeName');
     if (nameInput && !nameInput.value.trim()) {
-      nameInput.value = file.name.replace(/\\.[^/.]+$/, ''); // Remove extension
+      nameInput.value = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
     }
     
     validateResumeForm();
   }
   
-  // Add resume
-  function addResume() {
+  // Add resume - Now saves to cloud
+  async function addResume() {
     const nameInput = document.getElementById('resumeName');
     const fileInput = document.getElementById('resumeFile');
     const versionInput = document.getElementById('resumeVersionInput');
@@ -101,30 +136,32 @@
       return;
     }
     
-    // Check for duplicate names
-    if (resumes.some(resume => resume.name.toLowerCase() === name.toLowerCase())) {
-      showErrorMessage('A resume with this name already exists');
-      return;
+    // Show loading state
+    const addButton = document.querySelector('#resumes .btn-success');
+    if (addButton) {
+      addButton.disabled = true;
+      addButton.textContent = 'Uploading...';
     }
     
-    // Create file reader to store file data
-    const reader = new FileReader();
-    reader.onload = function(e) {
+    try {
+      // Create file reader to get base64 data
+      const fileData = await readFileAsDataURL(file);
+      
       const resumeData = {
-        id: Date.now() + Math.random(),
         name: name,
         version: version,
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        fileData: e.target.result, // Base64 encoded file data
-        uploadDate: new Date().toISOString(),
+        fileData: fileData,
         isDefault: resumes.length === 0
       };
       
-      resumes.push(resumeData);
+      // Save to cloud
+      const savedResume = await window.apiService.saveResume(resumeData);
       
-      // Update global references
+      // Update local state
+      resumes.push(savedResume.data || savedResume);
       window.resumes = resumes;
       window.jobTracker.resumes = resumes;
       
@@ -134,16 +171,34 @@
       clearResumeForm();
       
       showSuccessMessage(`Resume "${name}" uploaded successfully!`);
-    };
-    
-    reader.onerror = function() {
-      showErrorMessage('Failed to read file');
-    };
-    
-    reader.readAsDataURL(file);
+      
+    } catch (error) {
+      console.error('Failed to add resume:', error);
+      showErrorMessage(`Failed to upload resume: ${error.message}`);
+    } finally {
+      // Reset button state
+      if (addButton) {
+        addButton.disabled = false;
+        addButton.textContent = 'Upload Resume';
+      }
+    }
   }
   
-  // Render resumes list
+  // Helper function to read file as data URL
+  function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        resolve(e.target.result);
+      };
+      reader.onerror = function() {
+        reject(new Error('Failed to read file'));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  
+  // Render resumes list - Simple list like contacts
   function renderResumes() {
     const resumesList = document.getElementById('resumesList');
     if (!resumesList) return;
@@ -161,27 +216,26 @@
       return;
     }
     
-    resumes.forEach((resume, index) => {
+    resumes.forEach((resume) => {
       const resumeCard = document.createElement('div');
-      resumeCard.className = 'resume-card';
-      if (resume.isDefault) {
-        resumeCard.classList.add('default-resume');
-      }
+      resumeCard.className = 'contact-card'; // Use same class as contacts
       
       resumeCard.innerHTML = `
-        <div class="resume-header">
-          <h4>${escapeHtml(resume.name)}</h4>
-          ${resume.isDefault ? '<span class="default-badge">Default</span>' : ''}
-        </div>
+        <h4>📄 ${escapeHtml(resume.name)} ${resume.isDefault ? '<span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.7rem; margin-left: 0.5rem;">DEFAULT</span>' : ''}</h4>
         <p><strong>Version:</strong> ${escapeHtml(resume.version)}</p>
         <p><strong>File:</strong> ${escapeHtml(resume.fileName)}</p>
         <p><strong>Size:</strong> ${formatFileSize(resume.fileSize)}</p>
-        <p><strong>Uploaded:</strong> ${formatDate(resume.uploadDate)}</p>
-        
-        <div class="resume-actions">
-          <button class="btn btn-sm btn-primary" onclick="window.ResumesModule.downloadResume('${resume.id}')">Download</button>
-          <button class="btn btn-sm" onclick="window.ResumesModule.setDefaultResume('${resume.id}')">Set Default</button>
-          <button class="btn btn-sm btn-danger" onclick="window.ResumesModule.confirmDeleteResume('${resume.id}')">Delete</button>
+        <p><strong>Uploaded:</strong> ${formatDate(resume.uploadDate || resume.createdAt)}</p>
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn btn-sm btn-primary" onclick="window.ResumesModule.downloadResume('${resume._id}')">
+            ⬇️ Download
+          </button>
+          ${!resume.isDefault ? `<button class="btn btn-sm btn-secondary" onclick="window.ResumesModule.setDefaultResume('${resume._id}')">
+            ⭐ Set Default
+          </button>` : ''}
+          <button class="btn btn-sm btn-danger" onclick="window.ResumesModule.confirmDeleteResume('${resume._id}')">
+            🗑️ Delete
+          </button>
         </div>
       `;
       
@@ -225,89 +279,90 @@
   
   // Download resume
   function downloadResume(id) {
-    // Convert id to number if it's a string
-    const numId = typeof id === 'string' ? parseFloat(id) : id;
-    const resume = resumes.find(r => r.id === numId);
+    const resume = resumes.find(r => r._id === id);
     if (!resume) {
       showErrorMessage('Resume not found');
       return;
     }
     
-    // Create download link
-    const link = document.createElement('a');
-    link.href = resume.fileData;
-    link.download = resume.fileName;
-    link.style.display = 'none';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    showSuccessMessage(`Downloading ${resume.name}`);
+    try {
+      // Create download link
+      const link = document.createElement('a');
+      link.href = resume.fileData;
+      link.download = resume.fileName;
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showSuccessMessage(`Downloading ${resume.name}`);
+    } catch (error) {
+      console.error('Download failed:', error);
+      showErrorMessage('Failed to download resume');
+    }
   }
   
-  // Set default resume
-  function setDefaultResume(id) {
-    // Convert id to number if it's a string
-    const numId = typeof id === 'string' ? parseFloat(id) : id;
-    
-    // Remove default from all resumes
-    resumes.forEach(resume => {
-      resume.isDefault = false;
-    });
-    
-    // Set new default
-    const resume = resumes.find(r => r.id === numId);
-    if (resume) {
-      resume.isDefault = true;
+  // Set default resume - Now uses cloud API
+  async function setDefaultResume(id) {
+    try {
+      await window.apiService.setDefaultResume(id);
+      
+      // Update local state
+      resumes.forEach(resume => {
+        resume.isDefault = resume._id === id;
+      });
+      
+      window.resumes = resumes;
+      window.jobTracker.resumes = resumes;
+      
       renderResumes();
       updateResumeDropdown();
+      
+      const resume = resumes.find(r => r._id === id);
       showSuccessMessage(`${resume.name} set as default resume`);
+      
+    } catch (error) {
+      console.error('Failed to set default resume:', error);
+      showErrorMessage(`Failed to set default resume: ${error.message}`);
     }
   }
   
   // Confirm delete resume
   function confirmDeleteResume(id) {
-    // Convert id to number if it's a string
-    const numId = typeof id === 'string' ? parseFloat(id) : id;
-    const resume = resumes.find(r => r.id === numId);
+    const resume = resumes.find(r => r._id === id);
     if (!resume) {
       showErrorMessage('Resume not found');
       return;
     }
     
-    if (confirm(`Are you sure you want to delete "${resume.name}"?`)) {
-      deleteResume(numId);
-    }
+    window.showCustomConfirmDialog(
+      'Delete Resume',
+      `Are you sure you want to delete "${resume.name}"?`,
+      () => deleteResume(id)
+    );
   }
   
-  // Delete resume
-  function deleteResume(id) {
-    // Convert id to number if it's a string
-    const numId = typeof id === 'string' ? parseFloat(id) : id;
-    const index = resumes.findIndex(r => r.id === numId);
-    if (index === -1) {
-      showErrorMessage('Resume not found');
-      return;
+  // Delete resume - Now uses cloud API
+  async function deleteResume(id) {
+    try {
+      await window.apiService.deleteResume(id);
+      
+      // Remove from local state
+      resumes = resumes.filter(r => r._id !== id);
+      window.resumes = resumes;
+      window.jobTracker.resumes = resumes;
+      
+      // Update UI
+      renderResumes();
+      updateResumeDropdown();
+      
+      showSuccessMessage('Resume deleted successfully');
+      
+    } catch (error) {
+      console.error('Failed to delete resume:', error);
+      showErrorMessage(`Failed to delete resume: ${error.message}`);
     }
-    
-    const deletedResume = resumes[index];
-    resumes.splice(index, 1);
-    
-    // If deleted resume was default and there are other resumes, set first one as default
-    if (deletedResume.isDefault && resumes.length > 0) {
-      resumes[0].isDefault = true;
-    }
-    
-    // Update global references
-    window.resumes = resumes;
-    window.jobTracker.resumes = resumes;
-    
-    // Update UI
-    renderResumes();
-    updateResumeDropdown();
-    
-    showSuccessMessage(`Resume "${deletedResume.name}" deleted successfully`);
   }
   
   // Clear resume form
@@ -328,7 +383,7 @@
     const nameInput = document.getElementById('resumeName');
     const fileInput = document.getElementById('resumeFile');
     const versionInput = document.getElementById('resumeVersionInput');
-    const addButton = document.querySelector('#resumes .btn-primary');
+    const addButton = document.querySelector('#resumes .btn-success');
     
     if (!nameInput || !fileInput || !versionInput || !addButton) return;
     
@@ -374,9 +429,11 @@
     }
   }
   
+  
   // Public API
   window.ResumesModule = {
     initialize,
+    loadResumes,
     addResume,
     downloadResume,
     setDefaultResume,
@@ -401,6 +458,6 @@
     initialize();
   }
   
-  console.log('📄 Resumes module loaded successfully');
+  console.log('📄 Resumes module loaded successfully (Cloud-Only)');
   
 })();

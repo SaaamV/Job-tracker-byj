@@ -8,6 +8,71 @@ window.jobTracker = {
   currentTab: 'applications'
 };
 
+// Global custom confirmation dialog
+window.showCustomConfirmDialog = function(title, message, onConfirm) {
+  // Remove existing modal if any
+  const existingModal = document.getElementById('custom-confirm-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  const modal = document.createElement('div');
+  modal.id = 'custom-confirm-modal';
+  modal.className = 'custom-confirm-modal';
+  modal.innerHTML = `
+    <div class="custom-confirm-overlay">
+      <div class="custom-confirm-content">
+        <div class="custom-confirm-header">
+          <h4>${escapeHtml(title)}</h4>
+        </div>
+        <div class="custom-confirm-body">
+          <p>${escapeHtml(message)}</p>
+        </div>
+        <div class="custom-confirm-actions">
+          <button class="btn btn-danger" id="confirm-yes">Yes, Delete</button>
+          <button class="btn btn-secondary" id="confirm-no">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Event listeners
+  modal.querySelector('#confirm-yes').addEventListener('click', () => {
+    modal.remove();
+    onConfirm();
+  });
+  
+  modal.querySelector('#confirm-no').addEventListener('click', () => {
+    modal.remove();
+  });
+  
+  // Close on overlay click
+  modal.querySelector('.custom-confirm-overlay').addEventListener('click', (e) => {
+    if (e.target.classList.contains('custom-confirm-overlay')) {
+      modal.remove();
+    }
+  });
+  
+  // Close on Escape key
+  const escapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove();
+      document.removeEventListener('keydown', escapeHandler);
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
+};
+
+// Global escape HTML function
+window.escapeHtml = function(text) {
+  if (typeof text !== 'string') return text;
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+};
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('🚀 Initializing Job Tracker with Apple-inspired design...');

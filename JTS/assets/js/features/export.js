@@ -496,7 +496,10 @@ function importCompleteBackup() {
                               `Resumes: ${(backupData.resumes || []).length}\n\n` +
                               `Current data will be replaced. Continue?`;
         
-        if (confirm(confirmMessage)) {
+        window.showCustomConfirmDialog(
+          'Restore Backup',
+          confirmMessage,
+          () => {
           // Restore all data
           applications = backupData.applications || [];
           contacts = backupData.contacts || [];
@@ -530,10 +533,12 @@ function importCompleteBackup() {
           showMessage('Complete backup restored successfully!', 'success');
           
           // Optionally reload page for fresh start
-          if (confirm('Reload page for complete refresh?')) {
-            window.location.reload();
-          }
-        }
+          window.showCustomConfirmDialog(
+            'Reload Page',
+            'Reload page for complete refresh?',
+            () => window.location.reload()
+          );
+        });
         
       } catch (error) {
         console.error('Restore failed:', error);

@@ -337,9 +337,11 @@
       return;
     }
     
-    if (confirm(`Are you sure you want to delete the application for ${app.jobTitle} at ${app.company}?`)) {
-      deleteApplicationById(id);
-    }
+    window.showCustomConfirmDialog(
+      'Delete Application',
+      `Are you sure you want to delete the application for ${app.jobTitle} at ${app.company}?`,
+      () => deleteApplicationById(id)
+    );
   }
   
   // Delete application by ID

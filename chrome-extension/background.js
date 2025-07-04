@@ -212,11 +212,14 @@ class JobTrackerBackground {
 
   async testCloudConnection() {
     try {
-      const response = await fetch(`${this.apiUrl}/health`, {
+      // Add /api prefix to the health endpoint
+      const response = await fetch(`${this.apiUrl}/api/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(5000)
       });
 
       if (response.ok) {
@@ -227,7 +230,11 @@ class JobTrackerBackground {
         throw new Error(`Health check failed: ${response.status}`);
       }
     } catch (error) {
-      console.error('❌ Cloud API connection failed:', error);
+      if (error.name === 'TimeoutError') {
+        console.warn('⚠️ API health check timed out - server may be starting up');
+      } else {
+        console.warn('⚠️ Cloud API connection check failed:', error.message);
+      }
       return false;
     }
   }

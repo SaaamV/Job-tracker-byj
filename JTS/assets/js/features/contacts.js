@@ -281,9 +281,11 @@
       return;
     }
     
-    if (confirm(`Are you sure you want to delete ${contact.name}?`)) {
-      deleteContactById(id);
-    }
+    window.showCustomConfirmDialog(
+      'Delete Contact',
+      `Are you sure you want to delete ${contact.name}?`,
+      () => deleteContactById(id)
+    );
   }
   
   // Delete contact by ID

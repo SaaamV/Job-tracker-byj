@@ -236,15 +236,82 @@ class APIService {
     }
   }
 
+  // Resumes API - Cloud-only
+  async getResumes() {
+    try {
+      const response = await this.request('/resumes');
+      return response.data || response;
+    } catch (error) {
+      console.error('❌ Failed to fetch resumes:', error.message);
+      throw error;
+    }
+  }
+
+  async saveResume(resumeData) {
+    try {
+      const result = await this.request('/resumes', {
+        method: 'POST',
+        body: JSON.stringify(resumeData)
+      });
+      
+      console.log('☁️ Resume saved to cloud');
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to save resume:', error.message);
+      throw error;
+    }
+  }
+
+  async updateResume(id, resumeData) {
+    try {
+      const result = await this.request(`/resumes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(resumeData)
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to update resume:', error);
+      throw error;
+    }
+  }
+
+  async deleteResume(id) {
+    try {
+      const result = await this.request(`/resumes/${id}`, {
+        method: 'DELETE'
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to delete resume:', error);
+      throw error;
+    }
+  }
+
+  async setDefaultResume(id) {
+    try {
+      const result = await this.request(`/resumes/${id}/default`, {
+        method: 'PATCH'
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to set default resume:', error);
+      throw error;
+    }
+  }
+
   // Chrome extension compatibility - Cloud sync only
   async getChromeStorageData() {
     try {
-      const [applications, contacts] = await Promise.all([
+      const [applications, contacts, resumes] = await Promise.all([
         this.getApplications(),
-        this.getContacts()
+        this.getContacts(),
+        this.getResumes()
       ]);
       
-      return { applications, contacts };
+      return { applications, contacts, resumes };
     } catch (error) {
       console.error('❌ Failed to fetch data for Chrome extension:', error.message);
       throw error;

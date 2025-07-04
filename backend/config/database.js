@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { getConfig } = require('./environment');
 
 let isConnected = false;
 
@@ -9,21 +10,15 @@ const connectDB = async () => {
   }
 
   try {
-    const mongoUri = process.env.MONGODB_URI;
-    
-    if (!mongoUri) {
-      throw new Error('MONGODB_URI environment variable is not defined');
-    }
+    const config = getConfig();
+    const mongoUri = config.mongodb.uri;
 
     console.log('Connecting to MongoDB Cloud...');
 
     const conn = await mongoose.connect(mongoUri, {
-      // Modern MongoDB connection options for Mongoose 6+
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 60000,
+      ...config.mongodb.options,
+      // Additional MongoDB connection options for Mongoose 6+
       bufferCommands: false,
-      // Connection timeout
       connectTimeoutMS: 30000,
     });
 

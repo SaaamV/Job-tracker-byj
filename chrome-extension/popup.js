@@ -2,8 +2,8 @@
 
 class JobTrackerPopup {
   constructor() {
-    this.frontendUrl = 'https://job-tracker-chi-eight.vercel.app'; // Vercel frontend URL
-    this.apiUrl = 'https://job-tracker-chi-eight.vercel.app'; // Vercel backend API URL
+    this.frontendUrl = 'http://localhost:8080'; // Local frontend URL
+    this.apiUrl = 'http://localhost:3001'; // Local backend API URL
     this.init();
   }
 

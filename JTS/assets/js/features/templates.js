@@ -284,12 +284,16 @@ function updateTemplateDropdown() {
 }
 
 function deleteCustomTemplate(templateId) {
-    if (confirm('Are you sure you want to delete this custom template?')) {
-        customTemplates = customTemplates.filter(t => t.id !== templateId);
-        localStorage.setItem('customEmailTemplates', JSON.stringify(customTemplates));
-        updateTemplateDropdown();
-        showMessage('Custom template deleted!', 'success');
-    }
+    window.showCustomConfirmDialog(
+        'Delete Template',
+        'Are you sure you want to delete this custom template?',
+        () => {
+            customTemplates = customTemplates.filter(t => t.id !== templateId);
+            localStorage.setItem('customEmailTemplates', JSON.stringify(customTemplates));
+            updateTemplateDropdown();
+            showMessage('Custom template deleted!', 'success');
+        }
+    );
 }
 
 function replaceTemplatePlaceholders() {

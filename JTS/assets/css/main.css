@@ -3148,6 +3148,233 @@ textarea:focus-visible {
   font-family: inherit;
 }
 
+/* Resume cards now use contact-card styling - no custom styles needed */
+
+/* Resume section styling to match other form sections */
+#resumes .form-section {
+  /* Use default form-section styling */
+}
+
+#resumesList {
+  /* Use default styling */
+}
+
+/* Custom Confirmation Modal */
+.custom-confirm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-confirm-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+.custom-confirm-content {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--glass-shadow);
+  max-width: 400px;
+  width: 90%;
+  margin: 0 auto;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.custom-confirm-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-lg);
+}
+
+.custom-confirm-body p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: var(--spacing-xl);
+}
+
+.custom-confirm-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.custom-confirm-actions .btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.custom-confirm-actions .btn-danger {
+  background: linear-gradient(135deg, #ff4757, #ff3742);
+  color: white;
+  border: none;
+}
+
+.custom-confirm-actions .btn-danger:hover {
+  background: linear-gradient(135deg, #ff3742, #ff2d3a);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+}
+
+.custom-confirm-actions .btn-secondary {
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.custom-confirm-actions .btn-secondary:hover {
+  background: var(--surface-tertiary);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .custom-confirm-content {
+    width: 95%;
+    padding: var(--spacing-lg);
+  }
+  
+  .custom-confirm-actions {
+    flex-direction: column;
+  }
+  
+  .custom-confirm-actions .btn {
+    width: 100%;
+  }
+}
+
+/* ===== Enhanced Contact Cards ===== */
+.contact-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.contact-card:hover {
+  box-shadow: var(--shadow-large);
+  border-color: var(--primary);
+}
+
+.contact-card h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.contact-card h4::before {
+  content: '👤';
+  font-size: 1.1rem;
+}
+
+.contact-card p {
+  margin: var(--spacing-xs) 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.contact-card p strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  min-width: 80px;
+  display: inline-block;
+}
+
+.contact-card a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.contact-card a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.status-badge {
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.contact-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.contact-actions .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-md);
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: fit-content;
+}
+
+/* Contact Grid for larger screens */
+@media (min-width: 992px) {
+  #contactsList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-lg);
+  }
+  
+  .contact-card {
+    margin-bottom: 0;
+    height: fit-content;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .form-actions {
@@ -3166,5 +3393,40 @@ textarea:focus-visible {
   .resume-actions .btn {
     width: 100%;
     text-align: center;
+    flex: none;
+  }
+  
+  .contact-actions {
+    flex-direction: column;
+  }
+  
+  .contact-actions .btn {
+    width: 100%;
+    flex: none;
+  }
+  
+  .resume-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .detail-value {
+    text-align: left;
+    max-width: 100%;
+  }
+  
+  .resume-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .default-badge {
+    margin-left: 0;
+    align-self: flex-start;
   }
 }
