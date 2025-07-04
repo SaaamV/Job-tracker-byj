@@ -13,7 +13,9 @@
       "Bash(npm install)",
       "Bash(pkill:*)",
       "Bash(true)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

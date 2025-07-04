@@ -59,7 +59,12 @@
         "https://*.lever.co/*",
         "https://*.greenhouse.io/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "modules/site-detectors.js",
+        "modules/ui-manager.js", 
+        "modules/data-manager.js",
+        "content.js"
+      ],
       "css": ["content.css"],
       "run_at": "document_end"
     }

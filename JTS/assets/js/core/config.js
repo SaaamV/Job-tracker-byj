@@ -148,7 +148,7 @@
       export: true,
       chromeExtension: true,
       darkMode: true,
-      animations: !CONFIG?.ui?.performance?.reducedMotion
+      animations: !window.matchMedia('(prefers-reduced-motion: reduce)').matches
     },
     
     // Debug Configuration
@@ -167,11 +167,11 @@
     isDevelopment: window.location.hostname === 'localhost',
     isProduction: window.location.hostname !== 'localhost',
     isExtension: typeof chrome !== 'undefined' && chrome.runtime,
-    isOnline: navigator.onLine,
-    userAgent: navigator.userAgent,
-    isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-    isAppleDevice: /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent),
-    supportsServiceWorker: 'serviceWorker' in navigator,
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+    isMobile: typeof navigator !== 'undefined' ? /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) : false,
+    isAppleDevice: typeof navigator !== 'undefined' ? /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent) : false,
+    supportsServiceWorker: typeof navigator !== 'undefined' && 'serviceWorker' in navigator,
     supportsLocalStorage: typeof Storage !== 'undefined'
   };
   
