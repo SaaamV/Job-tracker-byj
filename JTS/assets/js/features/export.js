@@ -586,3 +586,398 @@ function quickExportContacts() {
 function quickExportAll() {
   exportToExcel();
 }
+
+// PDF Export functionality
+function exportToPDF() {
+  // Check if user has premium access
+  if (window.PaymentsModule && !window.PaymentsModule.canUseFeature('pdfExports')) {
+    showMessage('PDF export requires a Premium subscription. Please upgrade your plan.', 'error');
+    return;
+  }
+
+  try {
+    showMessage('Generating PDF report...', 'info');
+    
+    // Create a comprehensive PDF report
+    const reportData = generatePDFReportData();
+    createPDFDocument(reportData);
+    
+    // Track usage if payments module is available
+    if (window.PaymentsModule) {
+      window.PaymentsModule.trackUsage('pdfExports');
+    }
+    
+  } catch (error) {
+    console.error('PDF export failed:', error);
+    showMessage('Failed to generate PDF. Please try again.', 'error');
+  }
+}
+
+function generatePDFReportData() {
+  const now = new Date();
+  const analytics = getDetailedAnalytics();
+  
+  return {
+    title: 'Job Search Report',
+    subtitle: `Generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`,
+    summary: {
+      totalApplications: applications.length,
+      totalContacts: contacts.length,
+      responseRate: calculateResponseRate(),
+      interviewRate: analytics.performance?.interviewRate || 0,
+      offerRate: analytics.performance?.offerRate || 0,
+      avgResponseTime: calculateAverageResponseTime(),
+      pendingFollowUps: calculatePendingFollowUps(),
+      last30Days: analytics.trends?.last30Days || 0
+    },
+    applications: applications.slice(0, 50), // Limit to recent 50 for PDF size
+    contacts: contacts.slice(0, 30), // Limit to recent 30
+    statusBreakdown: getStatusBreakdown(),
+    portalPerformance: calculatePortalPerformance().slice(0, 10),
+    monthlyTrends: getMonthlyTrends()
+  };
+}
+
+function createPDFDocument(data) {
+  // Create HTML content for PDF
+  const htmlContent = generatePDFHTML(data);
+  
+  // Create a hidden iframe to generate PDF
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'absolute';
+  iframe.style.left = '-9999px';
+  iframe.style.width = '8.5in';
+  iframe.style.height = '11in';
+  document.body.appendChild(iframe);
+  
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+  
+  // Wait for content to load then print
+  setTimeout(() => {
+    iframe.contentWindow.print();
+    
+    // Remove iframe after printing
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+      showMessage('PDF report generated successfully!', 'success');
+    }, 1000);
+  }, 500);
+}
+
+function generatePDFHTML(data) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${data.title}</title>
+  <style>
+    @page {
+      margin: 1in;
+      size: letter;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.4;
+      color: #333;
+      font-size: 11pt;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #2c3e50;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #2c3e50;
+      margin: 0;
+      font-size: 24pt;
+    }
+    .header .subtitle {
+      color: #666;
+      margin: 5px 0 0 0;
+      font-size: 10pt;
+    }
+    .section {
+      margin-bottom: 25px;
+      page-break-inside: avoid;
+    }
+    .section h2 {
+      color: #2c3e50;
+      border-bottom: 1px solid #bdc3c7;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+      font-size: 14pt;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .summary-item {
+      text-align: center;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+    .summary-value {
+      font-size: 18pt;
+      font-weight: bold;
+      color: #3498db;
+      display: block;
+    }
+    .summary-label {
+      font-size: 9pt;
+      color: #666;
+      margin-top: 3px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-size: 9pt;
+    }
+    th, td {
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .status-applied { color: #3498db; }
+    .status-interview { color: #f39c12; }
+    .status-offer { color: #27ae60; }
+    .status-rejected { color: #e74c3c; }
+    .chart-placeholder {
+      height: 150px;
+      background: #f8f9fa;
+      border: 1px dashed #bdc3c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-style: italic;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    .footer {
+      position: fixed;
+      bottom: 0.5in;
+      left: 1in;
+      right: 1in;
+      text-align: center;
+      font-size: 8pt;
+      color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${data.title}</h1>
+    <p class="subtitle">${data.subtitle}</p>
+  </div>
+
+  <div class="section">
+    <h2>📊 Executive Summary</h2>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <span class="summary-value">${data.summary.totalApplications}</span>
+        <div class="summary-label">Total Applications</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-value">${data.summary.totalContacts}</span>
+        <div class="summary-label">Professional Contacts</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-value">${data.summary.responseRate}%</span>
+        <div class="summary-label">Response Rate</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-value">${data.summary.interviewRate}%</span>
+        <div class="summary-label">Interview Rate</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-value">${data.summary.offerRate}%</span>
+        <div class="summary-label">Offer Rate</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-value">${data.summary.avgResponseTime}</span>
+        <div class="summary-label">Avg Response (Days)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📈 Application Status Breakdown</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Count</th>
+          <th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.statusBreakdown.map(item => `
+          <tr>
+            <td class="status-${item.Status.toLowerCase().replace(/\s+/g, '-')}">${item.Status}</td>
+            <td>${item.Count}</td>
+            <td>${item.Percentage}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>🌐 Portal Performance</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Portal</th>
+          <th>Applications</th>
+          <th>Response Rate</th>
+          <th>Interview Rate</th>
+          <th>Offer Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.portalPerformance.map(portal => `
+          <tr>
+            <td>${portal.Portal}</td>
+            <td>${portal.Applications}</td>
+            <td>${portal['Response Rate']}</td>
+            <td>${portal['Interview Rate']}</td>
+            <td>${portal['Offer Rate']}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="section">
+    <h2>📋 Recent Applications (Last 50)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Position</th>
+          <th>Company</th>
+          <th>Status</th>
+          <th>Portal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.applications.map(app => `
+          <tr>
+            <td>${app.applicationDate}</td>
+            <td>${app.jobTitle}</td>
+            <td>${app.company}</td>
+            <td class="status-${app.status.toLowerCase().replace(/\s+/g, '-')}">${app.status}</td>
+            <td>${app.jobPortal || 'N/A'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>👥 Key Contacts (Last 30)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Company</th>
+          <th>Position</th>
+          <th>Relationship</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.contacts.map(contact => `
+          <tr>
+            <td>${contact.name}</td>
+            <td>${contact.company || 'N/A'}</td>
+            <td>${contact.position || 'N/A'}</td>
+            <td>${contact.relationship}</td>
+            <td>${contact.status}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Generated by Job Tracker System | ${new Date().toLocaleDateString()} | Page 1
+  </div>
+</body>
+</html>
+  `;
+}
+
+function getStatusBreakdown() {
+  const statusCount = {};
+  const total = applications.length;
+  
+  applications.forEach(app => {
+    statusCount[app.status] = (statusCount[app.status] || 0) + 1;
+  });
+  
+  return Object.entries(statusCount).map(([status, count]) => ({
+    Status: status,
+    Count: count,
+    Percentage: total > 0 ? Math.round((count / total) * 100) + '%' : '0%'
+  }));
+}
+
+function getMonthlyTrends() {
+  const trends = {};
+  const months = [];
+  
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    const monthKey = date.toISOString().slice(0, 7); // YYYY-MM format
+    months.push(monthKey);
+    trends[monthKey] = 0;
+  }
+  
+  applications.forEach(app => {
+    const appMonth = app.applicationDate?.slice(0, 7);
+    if (trends.hasOwnProperty(appMonth)) {
+      trends[appMonth]++;
+    }
+  });
+  
+  return months.map(month => ({
+    month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+    applications: trends[month]
+  }));
+}
+
+// Enhanced PDF with charts (requires Chart.js)
+function exportAdvancedPDF() {
+  if (window.PaymentsModule && !window.PaymentsModule.canUseFeature('pdfExports')) {
+    showMessage('PDF export requires a Premium subscription. Please upgrade your plan.', 'error');
+    return;
+  }
+
+  // This would create a more advanced PDF with actual charts
+  // For now, falls back to basic PDF
+  exportToPDF();
+}

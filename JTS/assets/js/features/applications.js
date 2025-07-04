@@ -525,7 +525,13 @@
     
     try {
       const savedApp = await addApplication(applicationData);
-      showSuccessMessage('Application added successfully!');
+      
+      // Check if it was saved locally as fallback
+      if (savedApp._isLocalOnly) {
+        showSuccessMessage('⚠️ Application saved locally. Will sync to cloud when connection is restored.');
+      } else {
+        showSuccessMessage('✅ Application added successfully and synced to cloud!');
+      }
       
       // Ensure UI is updated
       renderApplications();
@@ -538,7 +544,21 @@
       clearForm();
     } catch (error) {
       console.error('Error in addApplicationFromForm:', error);
-      showErrorMessage('Failed to add application: ' + error.message);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to add application: ';
+      
+      if (error.message.includes('timeout')) {
+        userMessage += 'Connection timed out. Please check your internet connection and try again.';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        userMessage += 'Network error. Please check your connection.';
+      } else if (error.message.includes('Cloud save failed') && error.message.includes('Local save also failed')) {
+        userMessage += 'Unable to save. Please check the form data and try again.';
+      } else {
+        userMessage += error.message;
+      }
+      
+      showErrorMessage(userMessage);
     }
   }
   
@@ -561,3 +581,7 @@
   console.log('📋 Applications module loaded successfully (Cloud-Only)');
   
 })();
+
+// All API calls now routed to microservices via APIService
+// Example: window.apiService.getApplications() -> http://localhost:4001/api/applications
+// Example: window.apiService.saveApplication() -> http://localhost:4001/api/applications

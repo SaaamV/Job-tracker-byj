@@ -33,6 +33,7 @@
             <button class="tab" onclick="switchTab('resumes', this)">Resumes</button>
             <button class="tab" onclick="switchTab('templates', this)">Email Templates</button>
             <button class="tab" onclick="switchTab('export', this)">Export/Sync</button>
+            <button class="tab" onclick="switchTab('billing', this)">💳 Billing</button>
         </div>
         
         <!-- Applications Tab -->
@@ -537,6 +538,7 @@
   <script src="assets/js/features/analytics.js"></script>
   <script src="assets/js/features/export.js"></script>
   <script src="assets/js/features/templates.js"></script>
+  <script src="assets/js/features/payments.js"></script>
   
   <!-- Integration JavaScript (Load Third) -->
   <script src="assets/js/integrations/chrome-extension.js"></script>
@@ -719,6 +721,112 @@ ${generatedCoverLetter.split('\n').slice(7).join('\n')}
     window.clearCoverLetterForm = clearCoverLetterForm;
   </script>
 
+        <!-- Billing Tab -->
+        <div id="billing" class="tab-content">
+            <div class="form-section">
+                <h3>💳 Billing & Subscription</h3>
+                
+                <div class="billing-overview">
+                    <div class="current-plan">
+                        <h4>Current Plan</h4>
+                        <div class="plan-card">
+                            <div class="plan-name">Free Plan</div>
+                            <div class="plan-price">$0 / month</div>
+                            <div class="plan-features">
+                                <span class="feature">✓ Up to 50 applications</span>
+                                <span class="feature">✓ Basic analytics</span>
+                                <span class="feature">✓ Email templates</span>
+                                <span class="feature">✗ PDF export</span>
+                                <span class="feature">✗ Advanced analytics</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="upgrade-plans">
+                        <h4>Upgrade Plans</h4>
+                        <div class="plans-grid">
+                            <div class="plan-card premium">
+                                <div class="plan-name">Premium</div>
+                                <div class="plan-price">$9.99 / month</div>
+                                <div class="plan-features">
+                                    <span class="feature">✓ Unlimited applications</span>
+                                    <span class="feature">✓ Advanced analytics</span>
+                                    <span class="feature">✓ PDF export</span>
+                                    <span class="feature">✓ Priority support</span>
+                                    <span class="feature">✓ Data backup</span>
+                                </div>
+                                <button class="btn btn-primary" onclick="upgradeToPlan('premium')">Upgrade to Premium</button>
+                            </div>
+                            
+                            <div class="plan-card professional">
+                                <div class="plan-name">Professional</div>
+                                <div class="plan-price">$19.99 / month</div>
+                                <div class="plan-features">
+                                    <span class="feature">✓ Everything in Premium</span>
+                                    <span class="feature">✓ Team collaboration</span>
+                                    <span class="feature">✓ Custom integrations</span>
+                                    <span class="feature">✓ API access</span>
+                                    <span class="feature">✓ White-label options</span>
+                                </div>
+                                <button class="btn btn-primary" onclick="upgradeToPlan('professional')">Upgrade to Professional</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="billing-history">
+                    <h4>Billing History</h4>
+                    <div class="history-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="billingHistoryTable">
+                                <tr>
+                                    <td colspan="5" class="text-center">No billing history available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="payment-methods">
+                    <h4>Payment Methods</h4>
+                    <div class="payment-cards">
+                        <div class="add-card">
+                            <button class="btn btn-outline" onclick="addPaymentMethod()">+ Add Payment Method</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="usage-stats">
+                    <h4>Usage Statistics</h4>
+                    <div class="usage-grid">
+                        <div class="usage-item">
+                            <div class="usage-label">Applications Created</div>
+                            <div class="usage-value" id="applicationsCount">0</div>
+                            <div class="usage-limit">/ 50 (Free Plan)</div>
+                        </div>
+                        <div class="usage-item">
+                            <div class="usage-label">PDF Exports</div>
+                            <div class="usage-value" id="pdfExports">0</div>
+                            <div class="usage-limit">/ 0 (Upgrade Required)</div>
+                        </div>
+                        <div class="usage-item">
+                            <div class="usage-label">API Calls</div>
+                            <div class="usage-value" id="apiCalls">0</div>
+                            <div class="usage-limit">/ 1000 (Free Plan)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
   
   <!-- UI JavaScript (Load Last) -->
   <script src="assets/js/ui/animations.js"></script>

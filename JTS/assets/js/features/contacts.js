@@ -436,3 +436,7 @@
   console.log('👥 Contacts module loaded successfully (Cloud-Only)');
   
 })();
+
+// All API calls now routed to microservices via APIService
+// Example: window.apiService.getContacts() -> http://localhost:4002/api/contacts
+// Example: window.apiService.saveContact() -> http://localhost:4002/api/contacts

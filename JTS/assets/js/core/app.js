@@ -144,9 +144,110 @@ function switchTab(tabName, tabElement) {
 
 // Setup event listeners
 function setupEventListeners() {
+  console.log('Setting up event listeners...');
+  
   // Online/offline status
   window.addEventListener('online', handleOnlineStatus);
   window.addEventListener('offline', handleOfflineStatus);
+  
+  // Applications form submission
+  const addAppButton = document.getElementById('addApplicationBtn');
+  if (addAppButton) {
+    addAppButton.addEventListener('click', addApplicationFromForm);
+  }
+  
+  // Applications form clear
+  const clearAppButton = document.getElementById('clearFormBtn');
+  if (clearAppButton) {
+    clearAppButton.addEventListener('click', clearApplicationForm);
+  }
+  
+  // Contacts form submission
+  const addContactButton = document.getElementById('addContactBtn');
+  if (addContactButton) {
+    addContactButton.addEventListener('click', addContactFromForm);
+  }
+  
+  // Contacts form clear
+  const clearContactButton = document.getElementById('clearContactFormBtn');
+  if (clearContactButton) {
+    clearContactButton.addEventListener('click', clearContactForm);
+  }
+  
+  // Filter inputs
+  const filterInputs = document.querySelectorAll('.filter-input');
+  filterInputs.forEach(input => {
+    input.addEventListener('input', function() {
+      const tabName = this.closest('.tab-content').id;
+      if (tabName === 'applications') {
+        filterApplications();
+      } else if (tabName === 'contacts') {
+        filterContacts();
+      }
+    });
+  });
+  
+  // Export buttons
+  const exportButtons = document.querySelectorAll('[onclick*="export"]');
+  exportButtons.forEach(button => {
+    const onclickAttr = button.getAttribute('onclick');
+    if (onclickAttr) {
+      button.removeAttribute('onclick');
+      if (onclickAttr.includes('exportToExcel')) {
+        button.addEventListener('click', exportToExcel);
+      } else if (onclickAttr.includes('exportToPDF')) {
+        button.addEventListener('click', exportToPDF);
+      } else if (onclickAttr.includes('exportReport')) {
+        button.addEventListener('click', exportReport);
+      }
+    }
+  });
+  
+  // Resume upload
+  const resumeUpload = document.getElementById('resumeUpload');
+  if (resumeUpload) {
+    resumeUpload.addEventListener('change', handleResumeUpload);
+  }
+  
+  // Template buttons
+  const templateButtons = document.querySelectorAll('[onclick*="Template"], [onclick*="Email"]');
+  templateButtons.forEach(button => {
+    const onclickAttr = button.getAttribute('onclick');
+    if (onclickAttr) {
+      button.removeAttribute('onclick');
+      if (onclickAttr.includes('loadTemplate')) {
+        button.addEventListener('click', () => loadTemplate(button.dataset.template));
+      } else if (onclickAttr.includes('copyEmail')) {
+        button.addEventListener('click', copyEmail);
+      } else if (onclickAttr.includes('openEmailClient')) {
+        button.addEventListener('click', openEmailClient);
+      } else if (onclickAttr.includes('saveTemplate')) {
+        button.addEventListener('click', saveTemplate);
+      }
+    }
+  });
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      switch(e.key) {
+        case 's':
+          e.preventDefault();
+          if (window.jobTracker.currentTab === 'applications') {
+            addApplicationFromForm();
+          } else if (window.jobTracker.currentTab === 'contacts') {
+            addContactFromForm();
+          }
+          break;
+        case 'e':
+          e.preventDefault();
+          exportToExcel();
+          break;
+      }
+    }
+  });
+  
+  console.log('Event listeners setup complete');
 }
 
 // Legacy function - now handled by ApplicationsModule
@@ -414,7 +515,8 @@ function calculateAverageResponseTime(applications) {
 
 function handleOnlineStatus() {
   window.jobTracker.isOnline = true;
-  showInfoMessage('Back online! Syncing data...');
+  updateConnectionStatus(true);
+  showInfoMessage('🌐 Back online! Syncing data...');
   
   // Try to sync pending data
   if (window.apiService && window.apiService.syncPendingData) {
@@ -424,8 +526,55 @@ function handleOnlineStatus() {
 
 function handleOfflineStatus() {
   window.jobTracker.isOnline = false;
-  showInfoMessage('Working offline. Data will sync when connection is restored.');
+  updateConnectionStatus(false);
+  showInfoMessage('📡 Working offline. Data will sync when connection is restored.');
 }
+
+function updateConnectionStatus(isOnline) {
+  // Update connection indicator if it exists
+  const statusIndicator = document.querySelector('.connection-status');
+  if (statusIndicator) {
+    statusIndicator.className = isOnline ? 'connection-status online' : 'connection-status offline';
+    statusIndicator.textContent = isOnline ? '🟢 Connected' : '🔴 Offline';
+  }
+  
+  // Update page title to show offline status
+  const originalTitle = document.title.replace(' (Offline)', '');
+  document.title = isOnline ? originalTitle : originalTitle + ' (Offline)';
+}
+
+// Add API health monitoring
+async function checkAPIHealth() {
+  if (!window.apiService) return false;
+  
+  try {
+    await window.apiService.checkHealth();
+    return true;
+  } catch (error) {
+    console.warn('⚠️ API health check failed:', error.message);
+    return false;
+  }
+}
+
+// Periodic API health check
+setInterval(async () => {
+  if (navigator.onLine) {
+    const apiHealthy = await checkAPIHealth();
+    if (!apiHealthy && window.jobTracker.isOnline) {
+      window.jobTracker.isOnline = false;
+      updateConnectionStatus(false);
+      showInfoMessage('⚠️ API connection lost. Working in offline mode.');
+    } else if (apiHealthy && !window.jobTracker.isOnline) {
+      window.jobTracker.isOnline = true;
+      updateConnectionStatus(true);
+      showInfoMessage('✅ API connection restored. Syncing data...');
+      
+      if (window.apiService && window.apiService.syncPendingData) {
+        window.apiService.syncPendingData();
+      }
+    }
+  }
+}, 30000); // Check every 30 seconds
 
 // Legacy function - now handled by ApplicationsModule
 function clearForm() {
@@ -439,5 +588,144 @@ function clearForm() {
 // Make functions globally available
 window.switchTab = switchTab;
 window.updateAnalytics = updateAnalytics;
+
+// Global wrapper functions for HTML onclick handlers
+window.addApplication = function() {
+  return addApplicationFromForm();
+};
+
+window.clearForm = function() {
+  return clearApplicationForm();
+};
+
+window.filterApplications = function() {
+  if (window.ApplicationsModule && window.ApplicationsModule.filterApplications) {
+    return window.ApplicationsModule.filterApplications();
+  }
+};
+
+window.addContact = function() {
+  return addContactFromForm();
+};
+
+window.clearContactForm = function() {
+  if (window.ContactsModule && window.ContactsModule.clearForm) {
+    return window.ContactsModule.clearForm();
+  }
+};
+
+window.filterContacts = function() {
+  if (window.ContactsModule && window.ContactsModule.filterContacts) {
+    return window.ContactsModule.filterContacts();
+  }
+};
+
+window.exportToExcel = function() {
+  if (window.ExportModule && window.ExportModule.exportToExcel) {
+    return window.ExportModule.exportToExcel();
+  }
+  showErrorMessage('Export functionality not available');
+};
+
+window.exportToPDF = function() {
+  if (window.ExportModule && window.ExportModule.exportToPDF) {
+    return window.ExportModule.exportToPDF();
+  }
+  showErrorMessage('PDF export functionality not available');
+};
+
+window.exportReport = function() {
+  if (window.ExportModule && window.ExportModule.exportReport) {
+    return window.ExportModule.exportReport();
+  }
+  showErrorMessage('Report export functionality not available');
+};
+
+window.importData = function() {
+  if (window.ExportModule && window.ExportModule.importData) {
+    return window.ExportModule.importData();
+  }
+  showErrorMessage('Import functionality not available');
+};
+
+window.createBackup = function() {
+  if (window.ExportModule && window.ExportModule.createBackup) {
+    return window.ExportModule.createBackup();
+  }
+  showErrorMessage('Backup functionality not available');
+};
+
+window.restoreBackup = function() {
+  if (window.ExportModule && window.ExportModule.restoreBackup) {
+    return window.ExportModule.restoreBackup();
+  }
+  showErrorMessage('Restore functionality not available');
+};
+
+window.loadTemplate = function(templateName) {
+  if (window.TemplatesModule && window.TemplatesModule.loadTemplate) {
+    return window.TemplatesModule.loadTemplate(templateName);
+  }
+  showErrorMessage('Template functionality not available');
+};
+
+window.copyEmail = function() {
+  if (window.TemplatesModule && window.TemplatesModule.copyEmail) {
+    return window.TemplatesModule.copyEmail();
+  }
+  showErrorMessage('Email copy functionality not available');
+};
+
+window.openEmailClient = function() {
+  if (window.TemplatesModule && window.TemplatesModule.openEmailClient) {
+    return window.TemplatesModule.openEmailClient();
+  }
+  showErrorMessage('Email client functionality not available');
+};
+
+window.saveTemplate = function() {
+  if (window.TemplatesModule && window.TemplatesModule.saveTemplate) {
+    return window.TemplatesModule.saveTemplate();
+  }
+  showErrorMessage('Template save functionality not available');
+};
+
+// Global wrapper functions for module methods
+window.addApplicationFromForm = function() {
+  if (window.ApplicationsModule && window.ApplicationsModule.addApplicationFromForm) {
+    return window.ApplicationsModule.addApplicationFromForm();
+  }
+  return addApplicationLegacy();
+};
+
+window.clearApplicationForm = function() {
+  if (window.ApplicationsModule && window.ApplicationsModule.clearForm) {
+    return window.ApplicationsModule.clearForm();
+  }
+  // Fallback to manual form clearing
+  const formInputs = document.querySelectorAll('#applications input, #applications select, #applications textarea');
+  formInputs.forEach(input => {
+    if (input.type === 'checkbox' || input.type === 'radio') {
+      input.checked = false;
+    } else {
+      input.value = '';
+    }
+  });
+  setDefaultValues();
+};
+
+window.addContactFromForm = function() {
+  if (window.ContactsModule && window.ContactsModule.addContactFromForm) {
+    return window.ContactsModule.addContactFromForm();
+  }
+  showErrorMessage('Contact functionality not available');
+};
+
+window.handleResumeUpload = function(event) {
+  if (window.ResumesModule && window.ResumesModule.handleResumeUpload) {
+    return window.ResumesModule.handleResumeUpload(event);
+  }
+  showErrorMessage('Resume upload functionality not available');
+};
 
 console.log('Enhanced Job Tracker app.js loaded successfully');

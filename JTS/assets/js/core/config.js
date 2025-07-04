@@ -18,7 +18,7 @@
     // API Configuration
     api: {
       baseURL: determineAPIBaseURL(),
-      timeout: 15000,
+      timeout: 30000,
       retryAttempts: 3,
       retryDelay: 1000,
       endpoints: {
@@ -150,8 +150,8 @@
     const port = window.location.port;
     
     if (hostname === 'localhost') {
-      // Development environment
-      return port === '8080' ? 'http://localhost:3001' : 'http://localhost:3001';
+      // Development environment - API Gateway runs on port 3000
+      return 'http://localhost:3000';
     } else {
       // Production environment (Vercel)
       return window.location.origin;

@@ -9,15 +9,14 @@ class JobTrackerBackground {
   }
   
   determineApiUrl() {
-    // For development, use localhost
-    // For production, use your deployed API URL
+    // Use the new API Gateway for all requests
     const isDevelopment = chrome.runtime.getManifest().version_name?.includes('dev');
     
     if (isDevelopment) {
-      return 'http://localhost:3001/api';
+      return 'http://localhost:3000/api';
     } else {
-      // Update this with your actual production API URL
-      return 'https://your-production-api.vercel.app/api';
+      // Update this with your actual production API Gateway URL
+      return 'https://your-api-gateway-url.com/api';
     }
   }
 

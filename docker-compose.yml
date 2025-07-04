@@ -1,0 +1,214 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7
+    container_name: job-tracker-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-jobtracker}
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - job-tracker-network
+
+  # API Gateway - Single entry point for all requests
+  api-gateway:
+    build: ./microservices/api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - APPLICATIONS_SERVICE_URL=http://applications-service:4001
+      - CONTACTS_SERVICE_URL=http://contacts-service:4002
+      - ANALYTICS_SERVICE_URL=http://analytics-service:4003
+      - RESUMES_SERVICE_URL=http://resumes-service:4004
+      - EXPORT_SERVICE_URL=http://export-service:4005
+      - TEMPLATES_SERVICE_URL=http://templates-service:4006
+      - CHROME_EXTENSION_SERVICE_URL=http://chrome-extension-service:4007
+      - PAYMENTS_SERVICE_URL=http://payments-service:4008
+    depends_on:
+      - applications-service
+      - contacts-service
+      - analytics-service
+      - resumes-service
+      - export-service
+      - templates-service
+      - chrome-extension-service
+      - payments-service
+    networks:
+      - job-tracker-network
+
+  # Applications Service - Job applications CRUD
+  applications-service:
+    build: ./microservices/applications-service
+    ports:
+      - "4001:4001"
+    environment:
+      - NODE_ENV=development
+      - PORT=4001
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/jobtracker?authSource=admin
+    volumes:
+      - ./microservices/applications-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+  # Contacts Service - Professional contacts CRUD
+  contacts-service:
+    build: ./microservices/contacts-service
+    ports:
+      - "4002:4002"
+    environment:
+      - NODE_ENV=development
+      - PORT=4002
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/jobtracker?authSource=admin
+    volumes:
+      - ./microservices/contacts-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+  # Analytics Service - Statistics and insights
+  analytics-service:
+    build: ./microservices/analytics-service
+    ports:
+      - "4003:4003"
+    environment:
+      - NODE_ENV=development
+      - PORT=4003
+      - APPLICATIONS_SERVICE_URL=http://applications-service:4001
+      - CONTACTS_SERVICE_URL=http://contacts-service:4002
+    volumes:
+      - ./microservices/analytics-service:/app
+      - /app/node_modules
+    depends_on:
+      - applications-service
+      - contacts-service
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+  # Resumes Service - Resume file management
+  resumes-service:
+    build: ./microservices/resumes-service
+    ports:
+      - "4004:4004"
+    environment:
+      - NODE_ENV=development
+      - PORT=4004
+    volumes:
+      - ./microservices/resumes-service:/app
+      - /app/node_modules
+      - resumes-uploads:/app/uploads
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+  # Export Service - Data export functionality
+  export-service:
+    build: ./microservices/export-service
+    ports:
+      - "4005:4005"
+    environment:
+      - NODE_ENV=development
+      - PORT=4005
+      - APPLICATIONS_SERVICE_URL=http://applications-service:4001
+      - CONTACTS_SERVICE_URL=http://contacts-service:4002
+    volumes:
+      - ./microservices/export-service:/app
+      - /app/node_modules
+    depends_on:
+      - applications-service
+      - contacts-service
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+  # Templates Service - Job application templates
+  templates-service:
+    build: ./microservices/templates-service
+    ports:
+      - "4006:4006"
+    environment:
+      - NODE_ENV=development
+      - PORT=4006
+    volumes:
+      - ./microservices/templates-service:/app
+      - /app/node_modules
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+  # Chrome Extension Service - Extension API endpoints
+  chrome-extension-service:
+    build: ./microservices/chrome-extension-service
+    ports:
+      - "4007:4007"
+    environment:
+      - NODE_ENV=development
+      - PORT=4007
+      - APPLICATIONS_SERVICE_URL=http://applications-service:4001
+      - CONTACTS_SERVICE_URL=http://contacts-service:4002
+    volumes:
+      - ./microservices/chrome-extension-service:/app
+      - /app/node_modules
+    depends_on:
+      - applications-service
+      - contacts-service
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+  # Payments Service - Stripe integration
+  payments-service:
+    build: ./microservices/payments-service
+    ports:
+      - "4008:4008"
+    environment:
+      - NODE_ENV=development
+      - PORT=4008
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_PRO_PRICE_ID=${STRIPE_PRO_PRICE_ID}
+      - STRIPE_ENTERPRISE_PRICE_ID=${STRIPE_ENTERPRISE_PRICE_ID}
+    volumes:
+      - ./microservices/payments-service:/app
+      - /app/node_modules
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+  # Frontend Service - Optional: Serve the frontend
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./JTS:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - job-tracker-network
+    restart: unless-stopped
+
+networks:
+  job-tracker-network:
+    driver: bridge
+
+volumes:
+  resumes-uploads:
+    driver: local
+  mongodb_data:
+    driver: local
