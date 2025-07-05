@@ -6,6 +6,7 @@ const Application = require('../models/Application');
 // GET all applications
 router.get('/', async (req, res) => {
   try {
+    console.log('Entering GET /applications');
     const applications = await Application.find().sort({ dateAdded: -1 });
     res.json(applications);
   } catch (error) {
@@ -16,12 +17,13 @@ router.get('/', async (req, res) => {
 // POST new application
 router.post('/', async (req, res) => {
   try {
-    if ('_id' in req.body) {
-      delete req.body._id;
-    }
-    if ('id' in req.body) {
-      delete req.body.id;
-    }
+    console.log('Entering POST /applications with body:');
+    // if ('_id' in req.body) {
+    //   delete req.body._id;
+    // }
+    // if ('id' in req.body) {
+    //   delete req.body.id;
+    // }
     const application = new Application(req.body);
     const savedApplication = await application.save();
     res.status(201).json(savedApplication);

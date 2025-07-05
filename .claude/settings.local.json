@@ -8,7 +8,8 @@
       "Bash(open:*)",
       "Bash(curl:*)",
       "Bash(lsof:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
