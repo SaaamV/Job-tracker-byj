@@ -1543,6 +1543,19 @@ input[type="datetime-local"]:focus {
   100% { transform: rotate(360deg); }
 }
 
+/* Remove borders from My Resume section only - keep glassmorphism */
+#resumes .form-section {
+  border: none !important;
+}
+
+#resumes .form-section .empty-state {
+  border: none !important;
+}
+
+#resumes .contact-card {
+  border: none !important;
+}
+
 /* Ripple Effect Styles */
 .ripple {
   position: absolute;
@@ -2370,60 +2383,233 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: transparent !important;
 }
 
-/* Resume cards should match the gray theme like other form sections */
-#resumesList > div,
-#resumesList div[style*="background"],
-div[style*="border: 1px solid #ddd"],
-.resume-card {
-  background: #f5f5f7 !important; /* Same gray as input fields */
-  color: #333 !important;
-  border: 1px solid #e5e5e7 !important; /* Same border as inputs */
-  border-radius: 8px !important;
-  padding: 16px !important;
-  margin: 10px 0 !important;
+/* ===== NEW MODULAR MY RESUME DESIGN ===== */
+/* Modern glassmorphism design with modular cards */
+
+/* Main container */
+#resumesList {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 20px !important;
+  padding: 20px 0 !important;
+  background: transparent !important;
 }
 
-/* Resume text should be clearly visible */
+/* Resume cards - Modern glassmorphism design */
+#resumesList > div,
+#resumesList .contact-card,
+#resumesList .resume-card,
+#resumesList div[style*="background"],
+div[style*="border: 1px solid #ddd"] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+  margin: 0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Hover effects for cards */
+#resumesList > div:hover,
+#resumesList .contact-card:hover,
+#resumesList .resume-card:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Card content styling */
 #resumesList h4,
 #resumesList p,
 #resumesList strong,
 #resumesList span,
 #resumesList div {
-  color: #333 !important;
+  color: var(--text-primary, #333) !important;
   background: transparent !important;
 }
 
-.resume-card h4 {
-  color: #333 !important;
-  margin: 0 0 8px 0 !important;
-  font-weight: 600;
+/* Resume card header styling */
+#resumesList h4 {
+  color: var(--text-primary, #333) !important;
+  margin: 0 0 16px 0 !important;
+  font-weight: 700 !important;
+  font-size: 1.2rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
-.resume-card p {
-  color: #666 !important;
-  margin: 4px 0 !important;
+/* Resume card content */
+#resumesList p {
+  color: var(--text-secondary, #666) !important;
+  margin: 8px 0 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.4 !important;
 }
 
-.resume-card strong {
-  color: #333 !important;
+#resumesList strong {
+  color: var(--text-primary, #333) !important;
+  font-weight: 600 !important;
 }
 
-/* Resume buttons - keep them properly styled */
-.resume-card button,
+/* Empty state styling */
+#resumesList .empty-state {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 2px dashed rgba(255, 255, 255, 0.2) !important;
+  border-radius: 24px !important;
+  padding: 48px 24px !important;
+  text-align: center !important;
+  grid-column: 1 / -1 !important;
+  transition: all 0.3s ease !important;
+}
+
+#resumesList .empty-state:hover {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+#resumesList .empty-state div:first-child {
+  font-size: 4rem !important;
+  margin-bottom: 16px !important;
+  opacity: 0.8 !important;
+}
+
+#resumesList .empty-state h3 {
+  color: var(--text-primary, #333) !important;
+  margin: 16px 0 8px 0 !important;
+  font-weight: 600 !important;
+  font-size: 1.4rem !important;
+}
+
+#resumesList .empty-state p {
+  color: var(--text-secondary, #666) !important;
+  margin: 0 !important;
+  font-size: 1rem !important;
+}
+
+/* Modern button styling */
 #resumesList button {
-  background: #007bff !important;
-  color: white !important;
-  border: none !important;
-  padding: 6px 12px !important;
-  border-radius: 4px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: var(--text-primary, #333) !important;
+  padding: 10px 16px !important;
+  border-radius: 12px !important;
   cursor: pointer !important;
-  margin-right: 8px !important;
+  margin: 4px 4px 4px 0 !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
 }
 
-.resume-card .btn-danger,
-#resumesList .btn-danger {
-  background: #dc3545 !important;
+#resumesList button:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Primary button (Download) */
+#resumesList .btn-primary {
+  background: rgba(0, 123, 255, 0.8) !important;
   color: white !important;
+  border-color: rgba(0, 123, 255, 0.9) !important;
+}
+
+#resumesList .btn-primary:hover {
+  background: rgba(0, 123, 255, 0.9) !important;
+  border-color: rgba(0, 123, 255, 1) !important;
+}
+
+/* Secondary button (Set Default) */
+#resumesList .btn-secondary {
+  background: rgba(108, 117, 125, 0.8) !important;
+  color: white !important;
+  border-color: rgba(108, 117, 125, 0.9) !important;
+}
+
+#resumesList .btn-secondary:hover {
+  background: rgba(108, 117, 125, 0.9) !important;
+}
+
+/* Danger button (Delete) */
+#resumesList .btn-danger {
+  background: rgba(220, 53, 69, 0.8) !important;
+  color: white !important;
+  border-color: rgba(220, 53, 69, 0.9) !important;
+}
+
+#resumesList .btn-danger:hover {
+  background: rgba(220, 53, 69, 0.9) !important;
+}
+
+/* Button container */
+#resumesList div[style*="margin-top: 1rem"] {
+  margin-top: 20px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+/* Badge styling for DEFAULT label */
+#resumesList span[style*="background: var(--success)"] {
+  background: linear-gradient(135deg, #28a745, #20c997) !important;
+  color: white !important;
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  margin-left: 8px !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3) !important;
+}
+
+/* File info styling */
+#resumesList p {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Resume card glass accent border */
+#resumesList > div::before,
+#resumesList .contact-card::before,
+#resumesList .resume-card::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.3)) !important;
+  border-radius: 20px 20px 0 0 !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  #resumesList {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 16px 0 !important;
+  }
+  
+  #resumesList > div,
+  #resumesList .contact-card,
+  #resumesList .resume-card {
+    padding: 20px !important;
+  }
+  
+  #resumesList button {
+    font-size: 0.8rem !important;
+    padding: 8px 12px !important;
+  }
 }
 
 /* CV Preview should also match the theme */
@@ -2511,168 +2697,34 @@ div[style*="border: 1px solid #ddd"],
   }
 }
 
-/* ===== My Resumes Fix ===== */
-/* TARGETED FIX: My Resumes Section Background */
+/* ===== MODULAR MY RESUME STYLES (COMPLETE) ===== */
+/* All resume styling is handled above in the main section */
 
-/* Force the My Resumes section to have gray background like other sections */
-#resumesList,
-#resumesList > div,
-#resumesList .resume-card {
-  background: #f5f5f7 !important;
-  border: 1px solid #e5e5e7 !important;
-  color: #333 !important;
-}
-
-/* Specifically target the resume cards in the list */
-div[style*="border: 1px solid #ddd"],
-div[style*="background: #f9f9f9"] {
-  background: #f5f5f7 !important;
-  border: 1px solid #e5e5e7 !important;
-}
-
-/* Override any inline styles that might be setting white background */
-#resumesList div[style] {
-  background: #f5f5f7 !important;
-  border: 1px solid #e5e5e7 !important;
-  color: #333 !important;
-}
-
-/* Make sure text is visible */
-#resumesList h4,
-#resumesList p,
-#resumesList strong,
-#resumesList span {
-  color: #333 !important;
-  background: transparent !important;
-}
-
-/* Ensure buttons remain properly styled */
-#resumesList button {
-  background: #007bff !important;
-  color: white !important;
-  border: none !important;
-}
-
-#resumesList .btn-danger {
-  background: #dc3545 !important;
-  color: white !important;
-}
-
-/* Dark mode support */
+/* Dark mode support for modular resume design */
 @media (prefers-color-scheme: dark) {
-  #resumesList,
   #resumesList > div,
+  #resumesList .contact-card,
   #resumesList .resume-card,
-  div[style*="border: 1px solid #ddd"],
-  div[style*="background: #f9f9f9"] {
-    background: #2c2c2e !important;
-    border: 1px solid #48484a !important;
-    color: #ffffff !important;
-  }
-  
-  #resumesList h4,
-  #resumesList strong {
-    color: #ffffff !important;
-  }
-  
-  #resumesList p {
-    color: #a1a1a6 !important;
-  }
-}
-
-/* ===== Resume Final Fix ===== */
-/* DEFINITIVE FIX: Keep My Resumes Gray After Upload */
-
-/* Target the My Resumes container and all its content */
-#resumesList {
-  background: transparent !important;
-}
-
-/* Force ALL divs inside resumesList to be gray */
-#resumesList div,
-#resumesList > div,
-.resume-card,
-div[style*="background: #f9f9f9"],
-div[style*="border: 1px solid #ddd"] {
-  background: #f5f5f7 !important;
-  border: 1px solid #e5e5e7 !important;
-  border-radius: 8px !important;
-  color: #333 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-/* Override any JavaScript-generated inline styles */
-#resumesList div[style] {
-  background: #f5f5f7 !important;
-  border: 1px solid #e5e5e7 !important;
-  color: #333 !important;
-}
-
-/* Ensure text remains visible */
-#resumesList h4,
-#resumesList p,
-#resumesList strong,
-#resumesList span,
-#resumesList div:not(.resume-actions) {
-  background: transparent !important;
-  color: #333 !important;
-}
-
-/* Keep buttons properly styled */
-#resumesList button {
-  background: #007bff !important;
-  color: white !important;
-  border: none !important;
-  padding: 6px 12px !important;
-  border-radius: 4px !important;
-  margin-right: 8px !important;
-}
-
-#resumesList .btn-danger,
-#resumesList button[onclick*="deleteResume"] {
-  background: #dc3545 !important;
-  color: white !important;
-}
-
-/* Aggressive override for any potential white backgrounds */
-#resumesList * {
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-/* Make sure the empty state message also follows the theme */
-#resumesList p:only-child {
-  background: transparent !important;
-  color: #999 !important;
-  padding: 20px !important;
-  text-align: center !important;
-  font-style: italic !important;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  #resumesList div,
-  #resumesList > div,
-  .resume-card,
-  div[style*="background: #f9f9f9"],
+  #resumesList div[style*="background"],
   div[style*="border: 1px solid #ddd"] {
-    background: #2c2c2e !important;
-    border: 1px solid #48484a !important;
-    color: #ffffff !important;
+    background: rgba(44, 44, 46, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+  
+  #resumesList .empty-state {
+    background: rgba(44, 44, 46, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
   }
   
   #resumesList h4,
-  #resumesList strong {
+  #resumesList strong,
+  #resumesList .empty-state h3 {
     color: #ffffff !important;
   }
   
-  #resumesList p {
+  #resumesList p,
+  #resumesList .empty-state p {
     color: #a1a1a6 !important;
-  }
-  
-  #resumesList p:only-child {
-    color: #8e8e93 !important;
   }
 }
 
@@ -3162,13 +3214,7 @@ textarea:focus-visible {
 /* Resume cards now use contact-card styling - no custom styles needed */
 
 /* Resume section styling to match other form sections */
-#resumes .form-section {
-  /* Use default form-section styling */
-}
 
-#resumesList {
-  /* Use default styling */
-}
 
 /* Custom Confirmation Modal */
 .custom-confirm-modal {

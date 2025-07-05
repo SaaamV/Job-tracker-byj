@@ -347,13 +347,24 @@
   window.ConfigUtils = Utils;
   window.Performance = Performance;
   
-  // Initialize theme based on user preference
-  if (ENVIRONMENT.isAppleDevice) {
-    document.body.classList.add('apple-device');
+  // Initialize theme based on user preference (wait for DOM to be ready)
+  function initializeTheme() {
+    if (document.body) {
+      if (ENVIRONMENT.isAppleDevice) {
+        document.body.classList.add('apple-device');
+      }
+      
+      if (CONFIG.ui.performance.reducedMotion) {
+        document.body.classList.add('reduced-motion');
+      }
+    }
   }
   
-  if (CONFIG.ui.performance.reducedMotion) {
-    document.body.classList.add('reduced-motion');
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTheme);
+  } else {
+    initializeTheme();
   }
   
   console.log('⚙️ Configuration module loaded successfully');

@@ -207,10 +207,13 @@
     
     if (resumes.length === 0) {
       resumesList.innerHTML = `
-        <div class="empty-state" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
-          <h3>No resumes uploaded</h3>
-          <p>Upload your first resume to get started.</p>
+        <div class="empty-state">
+          <div>📄</div>
+          <h3>No Resumes Yet</h3>
+          <p>Upload your first resume to start tracking your applications</p>
+          <div style="margin-top: 24px; padding: 16px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2);">
+            <p style="font-size: 0.9rem; margin: 0; opacity: 0.8;">💡 Tip: You can upload multiple versions (Technical, Senior, etc.) and set a default</p>
+          </div>
         </div>
       `;
       return;
@@ -221,11 +224,32 @@
       resumeCard.className = 'contact-card'; // Use same class as contacts
       
       resumeCard.innerHTML = `
-        <h4>📄 ${escapeHtml(resume.name)} ${resume.isDefault ? '<span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.7rem; margin-left: 0.5rem;">DEFAULT</span>' : ''}</h4>
-        <p><strong>Version:</strong> ${escapeHtml(resume.version)}</p>
-        <p><strong>File:</strong> ${escapeHtml(resume.fileName)}</p>
-        <p><strong>Size:</strong> ${formatFileSize(resume.fileSize)}</p>
-        <p><strong>Uploaded:</strong> ${formatDate(resume.uploadDate || resume.createdAt)}</p>
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px;">
+          <h4 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+            📄 ${escapeHtml(resume.name)}
+            ${resume.isDefault ? '<span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.7rem;">DEFAULT</span>' : ''}
+          </h4>
+          <div style="opacity: 0.7; font-size: 0.8rem; color: var(--text-secondary);">
+            ${formatDate(resume.uploadDate || resume.createdAt)}
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div style="background: rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2);">
+            <div style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 4px;">Version</div>
+            <div style="font-weight: 600;">${escapeHtml(resume.version)}</div>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2);">
+            <div style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 4px;">Size</div>
+            <div style="font-weight: 600;">${formatFileSize(resume.fileSize)}</div>
+          </div>
+        </div>
+        
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 16px;">
+          <div style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 4px;">📎 File</div>
+          <div style="font-weight: 500; word-break: break-all;">${escapeHtml(resume.fileName)}</div>
+        </div>
+        
         <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
           <button class="btn btn-sm btn-primary" onclick="window.ResumesModule.downloadResume('${resume._id}')">
             ⬇️ Download
